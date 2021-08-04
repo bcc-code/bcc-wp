@@ -134,7 +134,7 @@ class BCC_Login_Visibility {
      * @return WP_Query
      */
     function filter_pre_get_posts( $query ) {
-        if ( current_user_can( 'edit_posts' ) || $query->is_single ) {
+        if ( current_user_can( 'edit_posts' ) || $query->is_singular ) {
             return $query;
         }
 
