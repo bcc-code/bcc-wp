@@ -20,9 +20,24 @@ class BCC_Login_Client {
     function end_login() {
         if ( ! empty( $_COOKIE['oidc_token_id'] ) ) {
             $token_id = $_COOKIE['oidc_token_id'];
+            $state = get_transient( 'oidc_state_' . $token_id );
+            if ( $state ) {
+                delete_transient( 'oidc_token_id_' . $state );
+            }
+            delete_transient( 'oidc_state_' . $token_id );
             delete_transient( 'oidc_access_token_' . $token_id );
-            delete_transient( 'oidc_id_token' . $token_id );
+            delete_transient( 'oidc_id_token_' . $token_id );            
         }
+    }
+
+    /** Determines if the session is still valid (i.e. hasn't been ended via a global backchannel sign-out) */
+    function is_session_valid( ) {
+        if ( ! empty( $_COOKIE['oidc_token_id'] ) ) {
+            $token_id = $_COOKIE['oidc_token_id'];
+            $state = get_transient( 'oidc_state_' . $token_id );
+            return ! ( ! $state );
+        }
+        return false;
     }
 
     private function create_authentication_state() : Auth_State{
@@ -30,7 +45,7 @@ class BCC_Login_Client {
         $obj_state = new Auth_State();
         $obj_state->state = md5( mt_rand() . microtime( true ) );
         $obj_state->return_url = $this->get_current_url();
-        set_transient( 'auth-state--' . $obj_state->state, $obj_state, $this->STATE_TIME_LIMIT );
+        set_transient( 'oidc_auth_state_' . $obj_state->state, $obj_state, $this->STATE_TIME_LIMIT );
 
         return $obj_state;
     }
@@ -52,7 +67,7 @@ class BCC_Login_Client {
             exit;
         }
 
-        $obj_state = get_transient( 'auth-state--' . $state );
+        $obj_state = get_transient( 'oidc_auth_state_' . $state );
 
         if ( is_object( $obj_state ) ) {
             $tokens = $this->request_tokens( $code );
@@ -60,7 +75,7 @@ class BCC_Login_Client {
             $access_token = $tokens['access_token'];
 
             $user_claims = $this->get_user_claims( $id_token );
-            $this->login_user( $user_claims, $access_token, $id_token );
+            $this->login_user( $user_claims, $access_token, $id_token, $state );
 
             wp_redirect( $obj_state->return_url );
         } else {
@@ -68,7 +83,7 @@ class BCC_Login_Client {
         }
     }
 
-    private function login_user( $user_claims, $access_token, $id_token  ) {
+    private function login_user( $user_claims, $access_token, $id_token, $state  ) {
         $person_id = $user_claims['https://login.bcc.no/claims/personId'];
         $email = $user_claims['email'];
 
@@ -99,31 +114,30 @@ class BCC_Login_Client {
         $token = $manager->create( $expiration );
 
         // Save access token to session
-        $this->save_tokens( $expiration, $access_token, $id_token );
+        $this->save_tokens( $expiration, $access_token, $id_token, $state );
 
         // You did great, have a cookie!
         wp_set_auth_cookie( $user->ID, false, '', $token );
         do_action( 'wp_login', $user->user_login, $user );
     }
 
-    function save_tokens( $expiration, $access_token, $id_token ) {
+    function save_tokens( $expiration, $access_token, $id_token, $state ) {
         if ( ! empty( $access_token ) ) {
             $token_id = uniqid( '', true );
             $timeout = ( (int) $expiration ) - time();
 
             setcookie( 'oidc_token_id', $token_id, $expiration, '/' , '', true, true );
             set_transient( 'oidc_access_token_' . $token_id, $access_token, $timeout );
+            set_transient( 'oidc_state_' . $token_id, $state, $timeout );
+            set_transient( 'oidc_token_id_' . $state, $token_id, $timeout );
+
             $_SESSION['oidc_access_token'] = $access_token;
 
             if ( ! empty( $id_token ) ) {
-                set_transient( 'oidc_id_token' . $token_id, $id_token, $timeout );
+                set_transient( 'oidc_id_token_' . $token_id, $id_token, $timeout );
                 $_SESSION['oidc_id_token'] = $id_token;
             }
         }
-    }
-
-    function get_access_token() {
-        return isset( $_SESSION['oidc_access_token'] ) ? $_SESSION['oidc_access_token'] : '';
     }
 
     function create_new_user( $person_id, $email, $user_claims ) {

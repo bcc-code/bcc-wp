@@ -55,6 +55,13 @@ class BCC_Login_Visibility {
      */
     function on_template_redirect() {
 
+        $session_is_valid = $this->_client->is_session_valid();
+        if ( is_user_logged_in() && !$session_is_valid ) {
+            $this->_client->end_login();
+            $this->_client->start_login();
+            return;
+        }
+
         if ( current_user_can( 'edit_posts' ) ) {
             return;
         }
