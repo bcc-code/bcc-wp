@@ -49,6 +49,12 @@ jobs:
           echo 'Package version $package_version ---'
           echo $package_version
           echo '---'
+          echo $GITHUB_RUN_NUMBER
+          echo '----'
+
+          build_version="$(echo $package_version | sed 's/([0-9]+\.[0-9]+\.)[0-9]+/\1$GITHUB_RUN_NUMBER/')"
+
+          echo $build_version
 
           cd ..
           zip -r bcc-login.zip .
