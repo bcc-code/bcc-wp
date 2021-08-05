@@ -9,6 +9,7 @@ on:
     branches: [ master ]
     paths:
       - plugins/bcc-login/**
+      - .github/workflows/bcc-login-plugin-release.yml
   pull_request:
     branches: [ master ]
     paths:
@@ -45,7 +46,9 @@ jobs:
             | awk -F: '{ print $2 }' \
             | sed 's/[",]//g')
           
-          echo 'Package version ${package_version}'
+          echo 'Package version $package_version ---'
+          echo $package_version
+          echo '---'
 
           cd ..
           zip -r bcc-login.zip .
