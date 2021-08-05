@@ -22,11 +22,7 @@ class BCC_Login_Widgets {
 
     function render_topbar() {
         if ( is_user_logged_in() && $this->settings->topbar ) {
-            if ( preg_match( '/localhost/i', site_url() ) ) {
-                echo '<script id="script-bcc-topbar" data-authentication-type="inline-access-token" data-access-token="'. $this->client->get_access_token() . '" src="https://widgets.bcc.no/widgets/TopbarJs" defer></script>' . PHP_EOL;
-            } else {
-                echo '<script id="script-bcc-topbar" data-authentication-type="WebApp" data-authentication-location="'. site_url( 'bcc-login/access-token/' ) . '" src="https://widgets.bcc.no/widgets/TopbarJs" defer></script>' . PHP_EOL;
-            }
+            echo '<script id="script-bcc-topbar" data-authentication-type="WebApp" data-authentication-location="'. site_url( 'bcc-login/access-token/' ) . '" src="https://widgets.bcc.no/widgets/TopbarJs" defer></script>' . PHP_EOL;
         }
     }
 }
