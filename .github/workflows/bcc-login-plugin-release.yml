@@ -13,6 +13,7 @@ on:
     branches: [ master ]
     paths:
       - plugins/bcc-login/**
+      - .github/workflows/bcc-login-plugin-release.yml
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -32,8 +33,19 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Build and zip plugin
         run: |
+          # Build javascript
           npm install
           cd plugins/bcc-login
           yarn build
+
+          # Get package version
+          package_version=$(cat package.json \
+            | grep version \
+            | head -1 \
+            | awk -F: '{ print $2 }' \
+            | sed 's/[",]//g')
+          
+          echo 'Package version $package_version' 
+
           cd ..
           zip -r bcc-login.zip .
