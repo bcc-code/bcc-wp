@@ -34,7 +34,7 @@ jobs:
       - name: Build and zip plugin
         run: |
           # Build javascript
-          npm install
+          yarn install --frozen-lockfile 
           cd plugins/bcc-login
           yarn build
 
@@ -45,7 +45,7 @@ jobs:
             | awk -F: '{ print $2 }' \
             | sed 's/[",]//g')
           
-          echo 'Package version $package_version' 
+          echo 'Package version ${package_version}'
 
           cd ..
           zip -r bcc-login.zip .
