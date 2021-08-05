@@ -75,19 +75,31 @@ class BCC_Login_Settings_Provider {
 
         // Set settings from options
         $settings->default_visibility = get_option( 'default_visibility', $settings->default_visibility ?? 1 ); // default to public
-        $settings->member_organization_name = get_option( 'member_organization_name', $settings->member_organization_name ?? get_bloginfo( 'blog_name' ) );
+        $settings->member_organization_name = get_option( 'member_organization_name', $settings->member_organization_name );
 
 
         // Backwards compatibility with old plugin configuration.
         if ( ! isset( $settings->client_id ) ) {
-            $old_settings = (array) get_option( 'openid_connect_generic_settings', array () );
-            if ( isset( $old_settings['client_id'] ) ) {
-                $settings->client_id = $old_settings['client_id'];
+            $old_oidc_settings = (array) get_option( 'openid_connect_generic_settings', array () );
+            if ( isset( $old_oidc_settings['client_id'] ) ) {
+                $settings->client_id = $old_oidc_settings['client_id'];
             }
-            if ( isset( $old_settings['client_secret'] ) ) {
-                $settings->client_secret = $old_settings['client_secret'];
+            if ( isset( $old_oidc_settings['client_secret'] ) ) {
+                $settings->client_secret = $old_oidc_settings['client_secret'];
             }
         }
+        $old_signon_settings = (array) get_option( 'bcc-signon-plugin-settings-group' , array () );
+        if ( $old_signon_settings ) {
+            if ( ! $settings->member_organization_name) {
+                if ( isset ($old_signon_settings['bcc_local_church']) ) {
+                    $settings->member_organization_name = $old_signon_settings['bcc_local_church'];
+                }
+            }
+        }
+
+        // Set defaults
+        $settings->member_organization_name = $settings->member_organization_name ? $settings->member_organization_name :  get_bloginfo( 'blog_name' );
+
         $this->_settings = $settings;
 
         add_action( 'admin_menu', array( $this, 'add_options_page' ) );
@@ -116,6 +128,22 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'member_organization_name' );
 
         add_settings_section( 'general', '', null, $this->options_page );
+
+        
+        add_settings_field(
+            'client_id',
+            __( 'ClientID', 'bcc-login' ),
+            array( $this, 'render_text_field' ),
+            $this->options_page,
+            'general',
+            array(
+                'name' => 'client_id',
+                'value' => $this->_settings->client_id,
+                'label' => __( 'ClientID', 'client_id' ),
+                'readonly' => 1,
+                'description' => 'OIDC variables can be configured using environment variables or constants in wpconfig.php'
+            )
+        );
 
         add_settings_field(
             'bcc_topbar',
@@ -191,6 +219,7 @@ class BCC_Login_Settings_Provider {
             <?php echo isset( $args['label'] ) ? $args['label'] : ''; ?>
         <label>
         <?php
+        $this->render_field_description( $args );
     }
 
 
@@ -201,10 +230,13 @@ class BCC_Login_Settings_Provider {
         <input
             type="text"
             id="<?php echo $args['name']; ?>"
-            name="<?php echo $args['name']; ?>"                
+            name="<?php echo $args['name']; ?>"   
+            class="large-text"             
             value="<?php echo htmlspecialchars($args['value']); ?>"
+            <?php echo isset( $args['readonly'] ) && $args['readonly'] ? 'readonly onclick="return false;"' : ''; ?>
         >
         <?php
+        $this->render_field_description( $args );
     }
 
         /**
@@ -215,6 +247,7 @@ class BCC_Login_Settings_Provider {
             <select
                 id="<?php echo $args['name']; ?>"
                 name="<?php echo $args['name']; ?>"
+                <?php echo isset( $args['readonly'] ) && $args['readonly'] ? 'readonly onclick="return false;"' : ''; ?>
             >
             <?php
                 foreach($args['values'] as $value => $label) {
@@ -228,6 +261,7 @@ class BCC_Login_Settings_Provider {
             </select>
         <label>
         <?php
+        $this->render_field_description( $args );
     }
 
     /**
