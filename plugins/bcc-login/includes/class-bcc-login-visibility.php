@@ -5,12 +5,17 @@ class BCC_Login_Visibility {
     private BCC_Login_Settings $_settings;
     private BCC_Login_Client $_client;
 
-    private $default_level = 0;
+    
+    public const VISIBILITY_DEFAULT = 0;
+    public const VISIBILITY_PUBLIC = 1;
+    public const VISIBILITY_SUBSCRIBER = 2;
+    public const VISIBILITY_MEMBER = 3;
 
     // A mapping of role -> level.
     private $levels = array(
-        'bcc-login-member' => 2,
-        'subscriber'       => 1,
+        'bcc-login-member' => self::VISIBILITY_MEMBER,
+        'subscriber'       => self::VISIBILITY_SUBSCRIBER,
+        'public'           => self::VISIBILITY_PUBLIC
     );
 
     private $post_types = array( 'post', 'page' );
@@ -38,7 +43,7 @@ class BCC_Login_Visibility {
                 'show_in_rest' => current_user_can( 'edit_posts' ),
                 'single'       => true,
                 'type'         => 'number',
-                'default'      => $this->default_level,
+                'default'      => self::VISIBILITY_DEFAULT,
             ) );
         }
     }
@@ -49,14 +54,21 @@ class BCC_Login_Visibility {
      * @return void
      */
     function on_template_redirect() {
-        $post = get_post();
 
-        if ( current_user_can( 'edit_posts' ) || ! $post ) {
+        if ( current_user_can( 'edit_posts' ) ) {
             return;
         }
 
+        $post = get_post();
+
         $level      = $this->get_current_user_level();
-        $visibility = (int) get_post_meta( $post->ID, 'bcc_login_visibility', true );
+        $visibility = $this->_settings->default_visibility;
+        if ( $post ) {
+            $post_visibility = (int) get_post_meta( $post->ID, 'bcc_login_visibility', true );
+            if ( $post_visibility ) {
+                $visibility = $post_visibility;
+            }
+        }
 
         if ( $visibility && $visibility > $level ) {
             if ( is_user_logged_in() ) {
@@ -88,7 +100,7 @@ class BCC_Login_Visibility {
      * @return void
      */
     function on_meta_saved( $mid, $post_id, $key, $value ) {
-        if ( $key == 'bcc_login_visibility' && (int) $value == $this->default_level ) {
+        if ( $key == 'bcc_login_visibility' && (int) $value == self::VISIBILITY_DEFAULT ) {
             delete_post_meta( $post_id, $key );
         }
     }
@@ -118,8 +130,8 @@ class BCC_Login_Visibility {
         wp_add_inline_script(
             $scrcipt_handle,
             'var bccLoginPostVisibility = ' . json_encode( array(
-                'localName'    => $this->_settings->local_organization_name ?? get_bloginfo( 'blog_name' ),
-                'defaultLevel' => $this->default_level,
+                'localName'    => $this->_settings->member_organization_name,
+                'defaultLevel' => self::VISIBILITY_DEFAULT,
                 'levels'       => $this->levels,
             ) ),
             'before'
@@ -138,21 +150,38 @@ class BCC_Login_Visibility {
             return $query;
         }
 
-        $query->set(
-            'meta_query',
-            array(
-                'relation' => 'OR',
+        if ( $this->_settings->default_visibility == self::VISIBILITY_PUBLIC ) {
+            // If default visibility is public, show posts where visibility matches current user level OR where visibility isn't defined
+            $query->set(
+                'meta_query',
                 array(
-                    'key'     => 'bcc_login_visibility',
-                    'compare' => '<=',
-                    'value'   => $this->get_current_user_level(),
-                ),
+                    'relation' => 'OR',
+                    array(
+                        'key'     => 'bcc_login_visibility',
+                        'compare' => '<=',
+                        'value'   => $this->get_current_user_level(),
+                    ),
+                    array(
+                        'key'     => 'bcc_login_visibility',
+                        'compare' => 'NOT EXISTS',
+                    ),
+                )
+            );
+        } else {
+            // Don't include posts where visibility isn't specified if default visibility isn't public
+            $query->set(
+                'meta_query',
                 array(
-                    'key'     => 'bcc_login_visibility',
-                    'compare' => 'NOT EXISTS',
-                ),
-            )
-        );
+                    array(
+                        'key'     => 'bcc_login_visibility',
+                        'compare' => '<=',
+                        'value'   => $this->get_current_user_level(),
+                    )
+                )
+            );
+        }
+
+
 
         return $query;
     }
@@ -181,6 +210,9 @@ class BCC_Login_Visibility {
 
             if ( in_array( $item->object, $this->post_types, true ) ) {
                 $visibility = (int) get_post_meta( $item->object_id, 'bcc_login_visibility', true );
+                if (!$visibility) {
+                    $visibility = $this->_settings->default_visibility;
+                }
 
                 if ( $visibility && $visibility > $level ) {
                     $removed[] = $item->ID;
@@ -204,7 +236,7 @@ class BCC_Login_Visibility {
             }
         }
 
-        return 0;
+        return self::VISIBILITY_PUBLIC;
     }
 
     /**
@@ -222,6 +254,10 @@ class BCC_Login_Visibility {
 
         if ( isset( $block['attrs']['bccLoginVisibility'] ) ) {
             $visibility = (int) $block['attrs']['bccLoginVisibility'];
+            if (!$visibility) {
+                $visibility = $this->_settings->default_visibility;
+            }
+
             $level      = $this->get_current_user_level();
 
             if ( $visibility && $visibility > $level ) {

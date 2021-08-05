@@ -12,9 +12,10 @@ class BCC_Login_Settings {
     public $scope;
     public $redirect_uri;
     public $create_missing_users;
-    public $local_organization_name;
-    public $local_organization_claim_type;
+    public $member_organization_name;
+    public $member_organization_claim_type;
     public $topbar;
+    public $default_visibility;
 }
 
 /**
@@ -42,7 +43,8 @@ class BCC_Login_Settings_Provider {
         'authority'                 => 'OIDC_AUTHORITY',
         'scope'                     => 'OIDC_SCOPE',
         'create_missing_users'      => 'OIDC_CREATE_USERS',
-        'local_organization_name'   => 'BCC_WP_LOCAL_ORGANIZATION_NAME'
+        'default_visibility'        => 'OIDC_DEFAULT_VISIBILITY',
+        'member_organization_name'   => 'BCC_WP_member_organization_NAME'
     );
 
     function __construct () {
@@ -56,7 +58,7 @@ class BCC_Login_Settings_Provider {
         $settings->scope = 'email openid profile church';
         $settings->redirect_uri = 'oidc-authorize';
         $settings->create_missing_users = false;
-        $settings->local_organization_claim_type = 'https://login.bcc.no/claims/churchName';
+        $settings->member_organization_claim_type = 'https://login.bcc.no/claims/churchName';
         $settings->topbar = get_option( 'bcc_topbar', 1 );
 
         // Set settings from environment variables.
@@ -70,6 +72,11 @@ class BCC_Login_Settings_Provider {
                 }
             }
         }
+
+        // Set settings from options
+        $settings->default_visibility = get_option( 'default_visibility', $settings->default_visibility ?? 1 ); // default to public
+        $settings->member_organization_name = get_option( 'member_organization_name', $settings->member_organization_name ?? get_bloginfo( 'blog_name' ) );
+
 
         // Backwards compatibility with old plugin configuration.
         if ( ! isset( $settings->client_id ) ) {
@@ -105,6 +112,8 @@ class BCC_Login_Settings_Provider {
      */
     function register_settings() {
         register_setting( $this->option_name, 'bcc_topbar' );
+        register_setting( $this->option_name, 'default_visibility' );
+        register_setting( $this->option_name, 'member_organization_name' );
 
         add_settings_section( 'general', '', null, $this->options_page );
 
@@ -118,6 +127,35 @@ class BCC_Login_Settings_Provider {
                 'name' => 'bcc_topbar',
                 'value' => $this->_settings->topbar,
                 'label' => __( 'Show the BCC topbar', 'bcc-login' )
+            )
+        );
+
+        add_settings_field(
+            'default_visibility',
+            __( 'Default Access', 'bcc-login' ),
+            array( $this, 'render_select_field' ),
+            $this->options_page,
+            'general',
+            array(
+                'name' => 'default_visibility',
+                'value' => $this->_settings->default_visibility,
+                'values' => array(
+                    1 => __( 'Public', 'bcc-login' ),
+                    2 => __( 'Authenticated Users', 'bcc-login' ),    
+                    3 => __( 'Members', 'bcc-login' ),                   
+                )
+            )
+        );
+
+        add_settings_field(
+            'member_organization_name',
+            __( 'Member Organization', 'bcc-login' ),
+            array( $this, 'render_text_field' ),
+            $this->options_page,
+            'general',
+            array(
+                'name' => 'member_organization_name',
+                'value' => $this->_settings->member_organization_name
             )
         );
     }
@@ -151,6 +189,43 @@ class BCC_Login_Settings_Provider {
                 <?php echo isset( $args['readonly'] ) && $args['readonly'] ? 'readonly onclick="return false;"' : ''; ?>
             >
             <?php echo isset( $args['label'] ) ? $args['label'] : ''; ?>
+        <label>
+        <?php
+    }
+
+
+        /**
+     * Renders a text box in settings page.
+     */
+    function render_text_field( $args ) { ?>
+        <input
+            type="text"
+            id="<?php echo $args['name']; ?>"
+            name="<?php echo $args['name']; ?>"                
+            value="<?php echo htmlspecialchars($args['value']); ?>"
+        >
+        <?php
+    }
+
+        /**
+     * Renders a select field in settings page.
+     */
+    function render_select_field( $args ) { ?>
+        <label for="<?php echo $args['name']; ?>">
+            <select
+                id="<?php echo $args['name']; ?>"
+                name="<?php echo $args['name']; ?>"
+            >
+            <?php
+                foreach($args['values'] as $value => $label) {
+                    if ( $value == $args['value'] ) {
+                        echo '<option selected value="' . $value . '">' . htmlspecialchars($label) . '</option>';
+                    } else {
+                        echo '<option value="' . $value . '">' . htmlspecialchars($label) . '</option>';
+                    }
+                }
+            ?>
+            </select>
         <label>
         <?php
     }

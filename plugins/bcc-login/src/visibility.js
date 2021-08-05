@@ -12,7 +12,7 @@ const { defaultLevel, levels, localName } = window.bccLoginPostVisibility
 
 const visibilityOptions = [
   {
-    value: defaultLevel,
+    value: levels.public,
     label: __('Public'),
   },
   {
