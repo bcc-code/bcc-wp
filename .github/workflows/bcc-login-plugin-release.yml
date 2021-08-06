@@ -47,7 +47,7 @@ jobs:
             | awk -F: '{ print $2 }' \
             | sed 's/[",]//g')
           
-          echo 'Package version $package_version ---'
+          echo 'Package version ${package_version} ---'
           echo $package_version
           echo '---'
           echo $GITHUB_RUN_NUMBER
@@ -57,7 +57,9 @@ jobs:
 
           echo $build_version
 
-          sed -i -e "s/${package_version}/${build_version}/g" package.json
+          package_json=$(cat package.json)
+          package_json=$(sed "s/$package_version/$build_version/g" <<< "$package_json")
+          echo "$package_json" > package.json
 
           git config user.email "it@bcc.no"
           git config user.name "bcc-bot"
