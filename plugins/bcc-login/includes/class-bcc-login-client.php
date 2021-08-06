@@ -13,6 +13,9 @@ class BCC_Login_Client {
     function start_login() {
         $state = $this->create_authentication_state();
         $auth_url = $this->get_authorization_url( $state );
+
+        // WP Engine doesn't cache pages with wordpress_* cookie set
+        setcookie('wordpress_wpengine_nocache', 'true');
         wp_redirect( $auth_url );
         exit;
     }
