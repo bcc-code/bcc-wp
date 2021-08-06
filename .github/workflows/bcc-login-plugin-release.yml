@@ -54,24 +54,18 @@ jobs:
           # Get package version
           package_version=${{steps.version.outputs.prop}}
           
-          echo 'Package version ${package_version} ---'
-          echo $package_version
-          echo '---'
-          echo $GITHUB_RUN_NUMBER
-          echo '----'
+
 
           build_version="$(echo $package_version | sed -re 's/([0-9]+\.[0-9]+\.)[0-9]+/\1/')${GITHUB_RUN_NUMBER}"
 
-          echo $build_version
 
           sed -i "s|$package_version|$build_version|g" package.json
-          package_json=$(cat package.json)
-          echo $package_json
 
-          git config user.email "it@bcc.no"
+
+          #git config user.email "it@bcc.no"
           git config user.name "bcc-bot"
           git tag "version-bump-v${build_version}"
-          git commit -am "Version bump"
+          git commit -am "Released bcc-login plugin v${build_version}"
           git push
 
           cd ..
