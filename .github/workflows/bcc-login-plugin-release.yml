@@ -44,7 +44,7 @@ jobs:
 
       # Runs a set of commands using the runners shell
       - id: build-and-zip
-        name: Build and zip plugin
+        name: Build and Zip Plugin
         run: |
           # Build javascript
           yarn install --frozen-lockfile 
@@ -62,7 +62,6 @@ jobs:
           sed -i "s|$package_version|$build_version|g" package.json
 
 
-          #git config user.email "it@bcc.no"
           git config user.name "bcc-bot"
           git tag "version-bump-v${build_version}"
           git commit -am "Released bcc-login plugin v${build_version}"
@@ -77,6 +76,7 @@ jobs:
 
 
       - uses: ncipollo/release-action@v1
+        name: Create Release
         with:
           artifacts: "plugins/bcc-login.zip"
           tag: ${{steps.build-and-zip.outputs.tag_name}}
