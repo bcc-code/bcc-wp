@@ -62,6 +62,6 @@ jobs:
           cd ..
           zip -r bcc-login.zip .
 
-          tag_name="bcc-login v${build_version}"
+          tag_name="bcc-login-v${build_version}"
           git tag -a $tag_name -m "BCC Login plugin v${build_version}"
-          
+
