@@ -31,11 +31,9 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-        env:
-          GITHUB_TOKEN: '${{secrets.GITHUB_TOKEN}}'
-
       # Runs a set of commands using the runners shell
-      - name: Build and zip plugin
+      - id: build-and-zip
+        name: Build and zip plugin
         run: |
           # Build javascript
           yarn install --frozen-lockfile 
@@ -61,7 +59,13 @@ jobs:
 
           cd ..
           zip -r bcc-login.zip .
+          cd ..
 
-          tag_name="bcc-login-v${build_version}"
-          git tag -a $tag_name -m "BCC Login plugin v${build_version}"
+          echo "::set-output name=tag_name::bcc-login-${build_version}"
+
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "plugins/bcc-login/bcc-login.zip"
+          tag: ${{steps.build-and-zip.outputs.tag_name}}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
