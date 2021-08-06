@@ -61,10 +61,8 @@ jobs:
 
           echo $build_version
 
+          sed -i "s|$package_version|$build_version|g" package.json
           package_json=$(cat package.json)
-          package_json=$(sed "s/$package_version/$build_version/g" <<< "$package_json")
-          echo "$package_json" > package.json
-
           echo $package_json
 
           git config user.email "it@bcc.no"
