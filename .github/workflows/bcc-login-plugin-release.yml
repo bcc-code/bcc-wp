@@ -58,7 +58,7 @@ jobs:
           echo $build_version
 
           cd ..
-          zip -r bcc-login.zip .
+          zip -r bcc-login.zip bcc-login
           cd ..
 
           echo "::set-output name=tag_name::bcc-login-v${build_version}"
