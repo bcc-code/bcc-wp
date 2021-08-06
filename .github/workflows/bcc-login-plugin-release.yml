@@ -61,11 +61,11 @@ jobs:
           zip -r bcc-login.zip .
           cd ..
 
-          echo "::set-output name=tag_name::bcc-login-${build_version}"
+          echo "::set-output name=tag_name::bcc-login-v${build_version}"
 
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "plugins/bcc-login/bcc-login.zip"
+          artifacts: "plugins/bcc-login.zip"
           tag: ${{steps.build-and-zip.outputs.tag_name}}
           token: ${{ secrets.GITHUB_TOKEN }}
 
