@@ -10,11 +10,15 @@ on:
     paths:
       - plugins/bcc-login/**
       - .github/workflows/bcc-login-plugin-release.yml
+    tags-ignore:
+      - '**'
   pull_request:
     branches: [ master ]
     paths:
       - plugins/bcc-login/**
       - .github/workflows/bcc-login-plugin-release.yml
+    tags-ignore:
+      - '**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -65,6 +69,7 @@ jobs:
 
           git config user.email "it@bcc.no"
           git config user.name "bcc-bot"
+          git tag "version-bump-v${build_version}"
           git commit -am "Version bump"
           git push
 
