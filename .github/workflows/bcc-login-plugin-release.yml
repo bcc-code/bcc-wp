@@ -39,7 +39,7 @@ jobs:
         id: version
         uses: notiz-dev/github-action-json-property@release
         with: 
-            path: 'plugins/bcc-code/package.json'
+            path: 'plugins/bcc-login/package.json'
             prop_path: 'version'
 
       # Runs a set of commands using the runners shell
