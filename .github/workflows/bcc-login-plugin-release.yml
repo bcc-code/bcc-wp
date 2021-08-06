@@ -10,6 +10,8 @@ on:
     paths:
       - plugins/bcc-login/**
       - .github/workflows/bcc-login-plugin-release.yml
+    paths-ignore:
+      - plugins/bcc-login/package.json
   pull_request:
     branches: [ master ]
     paths:
