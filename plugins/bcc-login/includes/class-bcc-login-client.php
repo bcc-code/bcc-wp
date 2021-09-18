@@ -46,7 +46,7 @@ class BCC_Login_Client {
     private function create_authentication_state() : Auth_State{
         // New state w/ timestamp.
         $obj_state = new Auth_State();
-        $obj_state->state = md5( mt_rand() . microtime( true ) );
+        $obj_state->state = md5( openssl_random_pseudo_bytes(16) . microtime( true ) );
         $obj_state->return_url = $this->get_current_url();
         set_transient( 'oidc_auth_state_' . $obj_state->state, $obj_state, $this->STATE_TIME_LIMIT );
 
@@ -126,7 +126,10 @@ class BCC_Login_Client {
 
     function save_tokens( $expiration, $access_token, $id_token, $state ) {
         if ( ! empty( $access_token ) ) {
-            $token_id = uniqid( '', true );
+            $length = 16;
+            $strong_result = false;
+            $token_id = base64_encode( openssl_random_pseudo_bytes($length, $strong_result) );
+            if(!$strong_result) error_log('Token_id not random enough! openssl_random_pseudo_bytes($length, $strong_result) was used to generate a cryptographically secure token_id, but the function concluded that it\'s not secure enough. Please read https://www.php.net/manual/en/function.openssl-random-pseudo-bytes.php');
             $timeout = ( (int) $expiration ) - time();
 
             setcookie( 'oidc_token_id', $token_id, $expiration, '/' , '', true, true );
