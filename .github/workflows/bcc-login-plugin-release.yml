@@ -53,6 +53,7 @@ jobs:
 
           # Get package version
           package_version=${{steps.version.outputs.prop}}
+          current_date=$(echo date -u +"%Y-%m-%d %H:%M:%S")
           
 
 
@@ -60,6 +61,7 @@ jobs:
 
 
           sed -i "s|$package_version|$build_version|g" package.json
+          sed -i "s|<DATE>|$current_date|g" package.json
 
 
           git config user.name "bcc-bot"

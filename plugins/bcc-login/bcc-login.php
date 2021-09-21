@@ -17,6 +17,7 @@ require_once( 'includes/class-bcc-login-endpoints.php' );
 require_once( 'includes/class-bcc-login-visibility.php' );
 require_once( 'includes/class-bcc-login-users.php' );
 require_once( 'includes/class-bcc-login-widgets.php' );
+require_once( 'includes/class-bcc-login-updater.php');
 
 class BCC_Login {
 
