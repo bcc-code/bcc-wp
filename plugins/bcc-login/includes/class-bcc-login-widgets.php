@@ -11,6 +11,7 @@ class BCC_Login_Widgets {
 
         add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
         add_action( 'wp_head', array( $this, 'render_topbar' ) );
+        add_filter( 'body_class', array( $this, 'body_class' ) );
     }
 
     function enqueue_styles() {
@@ -24,5 +25,12 @@ class BCC_Login_Widgets {
         if ( is_user_logged_in() && $this->settings->topbar ) {
             echo '<script id="script-bcc-topbar" data-authentication-type="WebApp" data-authentication-location="'. site_url( 'bcc-login/access-token/' ) . '" src="https://widgets.bcc.no/widgets/TopbarJs" defer></script>' . PHP_EOL;
         }
+    }
+
+    function body_class( $body_class ) {
+        if ( is_user_logged_in() && $this->settings->topbar ) {
+            $body_class[] = 'bcc-widget-topbar';
+        }
+        return $body_class;
     }
 }
