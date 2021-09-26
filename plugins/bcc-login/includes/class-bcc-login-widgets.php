@@ -15,22 +15,26 @@ class BCC_Login_Widgets {
     }
 
     function enqueue_styles() {
-        if ( is_user_logged_in() && $this->settings->topbar ) {
+        if ( $this->should_show_topbar() ) {
             wp_enqueue_style( 'bcc-login-widgets', 'https://widgets.bcc.no/styles/widgets.css' );
             wp_add_inline_style( 'bcc-login-widgets', 'body{margin-top:48px!important;}.portal-top-bar-spacer{display:none;}.admin-bar .portal-top-bar{top:32px;}@media screen and (max-width: 600px){.admin-bar .portal-top-bar{position:absolute;top:46px;}}@media screen and (max-width: 782px){.admin-bar .portal-top-bar{top:46px;}}' );
         }
     }
 
     function render_topbar() {
-        if ( is_user_logged_in() && $this->settings->topbar ) {
+        if ( $this->should_show_topbar() ) {
             echo '<script id="script-bcc-topbar" data-authentication-type="WebApp" data-authentication-location="'. site_url( 'bcc-login/access-token/' ) . '" src="https://widgets.bcc.no/widgets/TopbarJs" defer></script>' . PHP_EOL;
         }
     }
 
     function body_class( $body_class ) {
-        if ( is_user_logged_in() && $this->settings->topbar ) {
+        if ( $this->should_show_topbar() ) {
             $body_class[] = 'bcc-widget-topbar';
         }
         return $body_class;
+    }
+
+    function should_show_topbar() {
+        return is_user_logged_in() && $this->settings->topbar && ! is_customize_preview();
     }
 }
