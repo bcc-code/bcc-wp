@@ -55,6 +55,7 @@ jobs:
           package_version=${{steps.version.outputs.prop}}
           current_date=$(date -u +'%Y-%m-%d %H:%M:%S')
           
+          echo $current_date
 
 
           build_version="$(echo $package_version | sed -re 's/([0-9]+\.[0-9]+\.)[0-9]+/\1/')${GITHUB_RUN_NUMBER}"
