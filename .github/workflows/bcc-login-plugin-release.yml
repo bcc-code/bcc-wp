@@ -53,7 +53,7 @@ jobs:
 
           # Get package version
           package_version=${{steps.version.outputs.prop}}
-          current_date="$(date -u +'%Y-%m-%d %H:%M:%S')"
+          current_date=$(date -u +'%Y-%m-%d %H:%M:%S')
           
 
 
