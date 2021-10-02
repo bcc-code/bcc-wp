@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "bcc-login",
-  "version": "1.0.32",
+  "version": "1.0.34",
 	"slug" : "bcc-login",
 	"author" : "<a href='https://github.com/bcc-code'>BCC Code</a>",
 	"author_profile" : "https://github.com/bcc-code",
