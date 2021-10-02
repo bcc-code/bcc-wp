@@ -43,7 +43,7 @@ jobs:
             prop_path: 'version'
       
       - name: Get Previous Updated
-        id: last_updated
+        id: lastupdated
         uses: notiz-dev/github-action-json-property@release
         with: 
             path: 'plugins/bcc-login/package.json'
@@ -60,10 +60,7 @@ jobs:
 
           # Get package version
           package_version=${{steps.version.outputs.prop}}
-          previous_date=${{steps.last_updated.outputs.prop}}
-
-          echo $previous_date
-
+          previous_date="${{steps.lastupdated.outputs.prop}}"
           current_date=$(date -u +'%Y-%m-%d %H:%M:%S')
       
           build_version="$(echo $package_version | sed -re 's/([0-9]+\.[0-9]+\.)[0-9]+/\1/')${GITHUB_RUN_NUMBER}"
