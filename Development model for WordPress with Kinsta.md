@@ -37,8 +37,7 @@ _Note: that is to exclude everything else from WordPress which won't be edited d
 - _REPLACE_THIS_WITH_PROJECT_NAME_IN_KINSTA_
 - _REPLACE_THIS_WITH_PROJECT_ID_IN_KINSTA_
 <br><br>
-_Note 1: the necessary info can be found in [MyKinsta](https://my.kinsta.com/sites) and choosing the corresponding project<br>
-_Note 2: pushing to develop will deploy to the staging environment, while pushing to master will deploy to the live env)_
+_Note: the necessary info can be found in [MyKinsta](https://my.kinsta.com/sites) and choosing the corresponding project<br>
 
 
 ## Set up the connection from the Kinsta server to GitHub
@@ -80,7 +79,17 @@ Note down the following replacements you have to make:
 - **{sitefolder_xxxxxxx}** is the project name concatenated with the project id in Kinsta (found under the **Path** field in **MyKinsta**)
 
 
-## Deploy to Kinsta
+## Push to GitHub (will deploy to Kinsta)
 
-1. When you're ready with the first version, you can _Push to staging_ from **DevKinsta**, and from **MyKinsta** you can deploy staging to production.<br>
-_Note: One disadvantage when deploying from **DevKinsta** is you have to remove known hosts and reconfirm the fingerprint for the production server.)_
+When you now push to GitHub, the **kinsta.yml** workflow should be triggered.<br>
+If the commit is to **develop** it will deploy the changes to the **staging** environment, and if it is **master** it will deploy to the **live** env.
+
+
+## Deploy to Kinsta from **DevKinsta**
+
+You may also deploy the entire application (database, WordPress files, etc.) to Kinsta. To do so, you will:
+
+1. _Push to staging_ from **DevKinsta**. This will take a few minutes.
+
+2. Once that is done, you can deploy **staging** to **production** from **MyKinsta**.<br>
+_Note: One disadvantage when deploying from **DevKinsta** is that you have to remove the registration of the production server from the known hosts_
