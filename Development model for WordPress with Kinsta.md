@@ -84,6 +84,8 @@ Note down the following replacements you have to make:
 When you now push to GitHub, the **kinsta.yml** workflow should be triggered.<br>
 If the commit is to **develop** it will deploy the changes to the **staging** environment, and if it is **master** it will deploy to the **live** env.
 
+Kinsta accepts the push from the GitHub action because the **BCC IT** account in Kinsta has the _kinsta_ public key added in Settings > SSH keys.
+
 
 ## Deploy to Kinsta from **DevKinsta**
 
