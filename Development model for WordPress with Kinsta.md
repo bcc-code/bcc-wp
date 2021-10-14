@@ -13,8 +13,8 @@
 _Note 1: this will contain only the editable files (themes and plugins) from WordPress_<br>
 _Note 2: remember to give access to **BCC IT Publishing** with Admin role and add it to the [Publishing Team](https://github.com/orgs/bcc-code/projects/3) dashboard_
 
-2. Search for **Kinsta SSH** in LastPass and open it.
-    1. Go to Settings > Secrets in GitHub and add a new repository secret called **KINSTA_SSH_KEY_PRIVATE** with the value of the private key from LastPass<br>
+2. Get the ssh keys from the **Kinsta SSH** item.
+    1. Go to Settings > Secrets in GitHub and add a new repository secret called **KINSTA_SSH_KEY_PRIVATE** with the value of the private key<br>
     _Note: this step is required for private repositories while we are on a Free plan on GitHub_
 
     2. Create a file on your local, name it **kinsta** and save it in a safe place (best is the C:/Users/[YourUser]/.ssh folder) and give it permission access (e.g. `chmod 400 kinsta`).<br>
