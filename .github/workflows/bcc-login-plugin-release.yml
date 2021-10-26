@@ -68,6 +68,8 @@ jobs:
 
           sed -i "s|$package_version|$build_version|g" package.json
           sed -i "s|$previous_date|$current_date|g" package.json
+          sed -i "s|<VERSION>|$build_version|g" bcc-login.php
+          sed -i "s|$package_version|$build_version|g" bcc-login.php
 
 
           git config user.name "bcc-bot"

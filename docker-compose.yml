@@ -40,6 +40,7 @@ services:
     volumes:
       - "./plugins/bcc-login:/var/www/html/wp-content/plugins/bcc-login"
       - "./plugins/bcc-wp-proxy:/var/www/html/wp-content/plugins/bcc-wp-proxy"
+      - "./plugins/misha-update-checker:/var/www/html/wp-content/plugins/misha-update-checker"
       - ".htaccess:/var/www/html/.htaccess"
     networks:
       - wp

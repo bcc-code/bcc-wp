@@ -3,7 +3,7 @@
 /**
  * Plugin Name: BCC Login
  * Description: Integration to BCC's Login System.
- * Version: $_PluginVersion_$
+ * Version: <VERSION>
  * Author: BCC IT
  * License: GPL2
  */
@@ -27,6 +27,10 @@ class BCC_Login {
      * @var BCC_Login
      */
     private static $instance = null;
+    private $plugin_version = "<VERSION>";
+    private $plugin;
+    private $plugin_slug;
+    private $plugin_name = "BCC Login";
 
     private BCC_Login_Settings $_settings;
     private BCC_Login_Endpoints $_endpoints;
@@ -34,6 +38,8 @@ class BCC_Login {
     private BCC_Login_Users $_users;
     private BCC_Login_Visibility $_visibility;
     private BCC_Login_Widgets $_widgets;
+    private BCC_Login_Updater $_updater;
+
 
     /**
      * Initialize the plugin.
@@ -41,12 +47,16 @@ class BCC_Login {
     private function __construct(){
         $settings_provider = new BCC_Login_Settings_Provider();
 
+        $this->plugin = plugin_basename( __FILE__ );
+		$this->plugin_slug = plugin_basename( __DIR__ );
+
         $this->_settings = $settings_provider->get_settings();
         $this->_endpoints = new BCC_Login_Endpoints( $this->_settings );
         $this->_client = new BCC_Login_Client($this->_settings);
         $this->_users = new BCC_Login_Users($this->_settings);
         $this->_visibility = new BCC_Login_Visibility( $this->_settings, $this->_client );
         $this->_widgets = new BCC_Login_Widgets( $this->_settings, $this->_client );
+        $this->_updater = new BCC_Login_Updater( $this->plugin, $this->plugin_slug, $this->plugin_version, $this->plugin_name );
 
         add_action( 'init', array( $this, 'redirect_login' ) );
         add_action( 'init', array( $this, 'start_session' ), 1 );
@@ -57,6 +67,9 @@ class BCC_Login {
         register_deactivation_hook( __FILE__, array( 'BCC_Login', 'deactivate_plugin' ) );
         register_uninstall_hook( __FILE__, array( 'BCC_Login', 'uninstall_plugin' ) );
     }
+
+
+    
 
     function redirect_login() {
         global $pagenow;
