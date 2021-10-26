@@ -1,0 +1,19 @@
+# ignore everything in the root except the "wp-content" directory.
+/*
+!wp-content/
+
+# ignore everything in the "wp-content" directory, except:
+# "plugins", "themes" directory
+wp-content/*
+!wp-content/plugins/
+!wp-content/themes/
+
+# Ignore everything in the "plugins" directory, except the plugins you
+# specify (see the commented-out example.)
+wp-content/plugins/*
+#!wp-content/plugins/bcc-plugin/
+
+# Ignore everything in the "themes" directory, except the themes you
+# specify (see the commented-out example.)
+wp-content/themes/*
+#!wp-content/themes/bcc-theme/

@@ -1,0 +1,39 @@
+name: Deploy to Kinsta
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+
+      - name: Set SSH private key
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.KINSTA_SSH_KEY_PRIVATE }}
+
+      - name: Set (production) variables
+        if: endsWith(github.ref, '/master')
+        run: |
+          echo "REMOTE_PORT=__REPLACE_THIS_WITH_KINSTA_PRODUCTION_PORT__" >> $GITHUB_ENV
+
+      - name: Set (staging) variables
+        if: endsWith(github.ref, '/develop')
+        run: |
+          echo "REMOTE_PORT=__REPLACE_THIS_WITH_KINSTA_STAGING_PORT__" >> $GITHUB_ENV
+
+      - name: Set shared variables
+        run: |
+          echo "KINSTA_HOST=__REPLACE_THIS_WITH_KINSTA_HOST__" >> $GITHUB_ENV
+          echo "KINSTA_PROJECT_NAME=__REPLACE_THIS_WITH_PROJECT_NAME_IN_KINSTA__" >> $GITHUB_ENV
+          echo "KINSTA_PROJECT_ID=__REPLACE_THIS_WITH_PROJECT_ID_IN_KINSTA__" >> $GITHUB_ENV
+
+      - name: Deploy to Kinsta
+        run: |
+          # Fetch from repo
+          git fetch --prune --unshallow
+
+          # Push to the server
+          ssh -o StrictHostKeyChecking=no -T ssh://${{ env.KINSTA_PROJECT_NAME }}@${{ env.KINSTA_HOST }}:${{ env.REMOTE_PORT }}
+          git remote add production ssh://${{ env.KINSTA_PROJECT_NAME }}@${{ env.KINSTA_HOST }}:${{ env.REMOTE_PORT }}/www/${{ env.KINSTA_PROJECT_NAME }}_${{ env.KINSTA_PROJECT_ID }}/private/${{ env.KINSTA_PROJECT_NAME }}.git
+          git push production HEAD:master --force
