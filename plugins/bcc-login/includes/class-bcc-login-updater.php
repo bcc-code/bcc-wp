@@ -26,7 +26,7 @@ class BCC_Login_Updater {
 		$this->plugin_slug = $slug;
 		$this->version = $version;
 		$this->cache_key = $slug . '_updater';
-		$this->cache_allowed = false;
+		$this->cache_allowed = true;
 
 		add_filter( 'plugins_api', array( $this, 'info' ), 20, 3 );
 		add_filter( 'site_transient_update_plugins', array( $this, 'update' ) );
@@ -59,7 +59,7 @@ class BCC_Login_Updater {
 				return false;
 			}
 
-			set_transient( $this->cache_key, $remote, DAY_IN_SECONDS );
+			set_transient( $this->cache_key, $remote, HOUR_IN_SECONDS );
 
 		}
 
