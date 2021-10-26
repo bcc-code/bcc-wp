@@ -32,6 +32,10 @@ class BCC_Login_Visibility {
         add_filter( 'pre_get_posts', array( $this, 'filter_pre_get_posts' ) );
         add_filter( 'wp_get_nav_menu_items', array( $this, 'filter_menu_items' ), 20 );
         add_filter( 'render_block', array( $this, 'on_render_block' ), 10, 2 );
+
+        add_filter( 'the_content_feed', array( $this, 'on_render_feed' ), 999 );
+		add_filter( 'the_excerpt_rss', array( $this, 'on_render_feed' ), 999 );
+		add_filter( 'comment_text_rss', array( $this, 'on_render_feed' ), 999 );
     }
 
     /**
@@ -56,12 +60,15 @@ class BCC_Login_Visibility {
     function on_template_redirect() {
 
         $session_is_valid = $this->_client->is_session_valid();
+
+        // Initiate new login if session has expired
         if ( is_user_logged_in() && !$session_is_valid ) {
             $this->_client->end_login();
             $this->_client->start_login();
             return;
         }
 
+        // Show everything to editors
         if ( current_user_can( 'edit_posts' ) ) {
             return;
         }
@@ -95,6 +102,24 @@ class BCC_Login_Visibility {
                 $this->_client->start_login();
             }
         }
+    }
+
+
+    /**
+     * Feed visibility is based on default visibility for site.
+     */
+    function on_render_feed( $content ) {
+        if ( is_admin() || is_super_admin() ) {
+            return $content;
+        }
+
+        $level      = $this->get_current_user_level();
+        $visibility = $this->_settings->default_visibility;
+        if ( $visibility && $visibility > $level ) {
+            return $content;
+        }      
+
+        return "";
     }
 
     /**
@@ -275,8 +300,11 @@ class BCC_Login_Visibility {
         return $block_content;
     }
 
+
+
+
     /**
-     * Delets all `bcc_login_visibility` values from the database.
+     * Deletes all `bcc_login_visibility` values from the database.
      */
     static function on_uninstall() {
         delete_metadata( 'post', 0, 'bcc_login_visibility', '', true );

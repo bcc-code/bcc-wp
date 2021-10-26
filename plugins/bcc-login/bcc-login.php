@@ -63,12 +63,19 @@ class BCC_Login {
         add_action( 'wp_authenticate', array( $this, 'end_session' ) );
         add_action( 'wp_logout', array( $this, 'end_session' ) );
 
+        add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'plugin_settings_link'));
+
         register_activation_hook( __FILE__, array( 'BCC_Login', 'activate_plugin' ) );
         register_deactivation_hook( __FILE__, array( 'BCC_Login', 'deactivate_plugin' ) );
         register_uninstall_hook( __FILE__, array( 'BCC_Login', 'uninstall_plugin' ) );
     }
 
-
+    function plugin_settings_link( $links ) {
+        $links[] = '<a href="' .
+            admin_url( 'options-general.php?page=bcc_login' ) .
+            '">' . __('Settings') . '</a>';
+        return $links;
+    }
     
 
     function redirect_login() {
