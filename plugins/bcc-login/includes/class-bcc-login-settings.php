@@ -16,6 +16,7 @@ class BCC_Login_Settings {
     public $member_organization_claim_type;
     public $topbar;
     public $default_visibility;
+    public $feed_key;
 }
 
 /**
@@ -44,7 +45,8 @@ class BCC_Login_Settings_Provider {
         'scope'                     => 'OIDC_SCOPE',
         'create_missing_users'      => 'OIDC_CREATE_USERS',
         'default_visibility'        => 'OIDC_DEFAULT_VISIBILITY',
-        'member_organization_name'  => 'BCC_WP_MEMBER_ORGANIZATION_NAME'
+        'member_organization_name'  => 'BCC_WP_MEMBER_ORGANIZATION_NAME',
+        'feed_key'                  => 'BCC_WP_FEED_KEY'
     );
 
     function __construct () {
@@ -60,6 +62,7 @@ class BCC_Login_Settings_Provider {
         $settings->create_missing_users = false;
         $settings->member_organization_claim_type = 'https://login.bcc.no/claims/churchName';
         $settings->topbar = get_option( 'bcc_topbar', 1 );
+        $settings->feed_key = get_option('bcc_feed_key', get_option('private_newsfeed_link', '') );
 
         // Set settings from environment variables.
         foreach ( $this->environment_variables as $key => $constant ) {
@@ -74,8 +77,8 @@ class BCC_Login_Settings_Provider {
         }
 
         // Set settings from options
-        $settings->default_visibility = get_option( 'default_visibility', $settings->default_visibility ?? 2 ); // default to authenticated users
-        $settings->member_organization_name = get_option( 'member_organization_name', $settings->member_organization_name );
+        $settings->default_visibility = get_option( 'bcc_default_visibility', $settings->default_visibility ?? 2 ); // default to authenticated users
+        $settings->member_organization_name = get_option( 'bcc_member_organization_name', $settings->member_organization_name );
 
 
         // Backwards compatibility with old plugin configuration.
@@ -87,18 +90,22 @@ class BCC_Login_Settings_Provider {
             if ( isset( $old_oidc_settings['client_secret'] ) ) {
                 $settings->client_secret = $old_oidc_settings['client_secret'];
             }
+        }       
+        if ( empty( $settings->member_organization_name )) {
+            $settings->member_organization_name = get_option('bcc_local_church'); // Replaced by bcc_member_organization_name
         }
-        $old_signon_settings = (array) get_option( 'bcc-signon-plugin-settings-group' , array () );
-        if ( $old_signon_settings ) {
-            if ( ! $settings->member_organization_name) {
-                if ( isset ($old_signon_settings['bcc_local_church']) ) {
-                    $settings->member_organization_name = $old_signon_settings['bcc_local_church'];
-                }
-            }
-        }
+        
 
         // Set defaults
         $settings->member_organization_name = $settings->member_organization_name ? $settings->member_organization_name :  get_bloginfo( 'blog_name' );
+
+
+        // Generate feed key if not assigned
+        if ( empty($settings->feed_key) ) {
+            $settings->feed_key = strtolower(str_replace("-","",trim($this->createGUID(), '{}')));
+            update_option('bcc_feed_key', $settings->feed_key);   
+        }
+
 
         $this->_settings = $settings;
 
@@ -126,8 +133,9 @@ class BCC_Login_Settings_Provider {
     function register_settings() {
 
         register_setting( $this->option_name, 'bcc_topbar' );
-        register_setting( $this->option_name, 'default_visibility' );
-        register_setting( $this->option_name, 'member_organization_name' );
+        register_setting( $this->option_name, 'bcc_default_visibility' );
+        register_setting( $this->option_name, 'bcc_member_organization_name' );
+        register_setting( $this->option_name, 'bcc_feed_key' );
 
         add_settings_section( 'general', '', null, $this->options_page );
 
@@ -147,6 +155,51 @@ class BCC_Login_Settings_Provider {
             )
         );
 
+        
+        add_settings_field(
+            'bcc_default_visibility',
+            __( 'Default Content Access', 'bcc-login' ),
+            array( $this, 'render_select_field' ),
+            $this->options_page,
+            'general',
+            array(
+                'name' => 'bcc_default_visibility',
+                'value' => $this->_settings->default_visibility,
+                'values' => array(
+                    1 => __( 'Public', 'bcc-login' ),
+                    2 => __( 'Authenticated Users', 'bcc-login' ),    
+                    3 => __( 'Members', 'bcc-login' ),                   
+                )
+            )
+        );
+
+        add_settings_field(
+            'bcc_member_organization_name',
+            __( 'Member Organization', 'bcc-login' ),
+            array( $this, 'render_text_field' ),
+            $this->options_page,
+            'general',
+            array(
+                'name' => 'bcc_member_organization_name',
+                'value' => $this->_settings->member_organization_name
+            )
+        );
+
+        add_settings_field(
+            'bcc_feed_key',
+            __( 'Feed Key', 'bcc-login' ),
+            array( $this, 'render_text_field' ),
+            $this->options_page,
+            'general',
+            array(
+                'name' => 'bcc_feed_key',
+                'value' => $this->_settings->feed_key,
+                'label' => __( 'Feed', 'feed_key' ),
+                'readonly' => 0,
+                'description' => 'The following link can be used to retrieve protected content: <a target="_blank" href="' . get_site_url(null,'/feed') . '?id=' . $this->_settings->feed_key . '">' . get_site_url(null,'/feed') . '?id=' . $this->_settings->feed_key . '</a>'
+            )
+        );
+
         add_settings_field(
             'bcc_topbar',
             __( 'Topbar', 'bcc-login' ),
@@ -160,34 +213,6 @@ class BCC_Login_Settings_Provider {
             )
         );
 
-        add_settings_field(
-            'default_visibility',
-            __( 'Default Access', 'bcc-login' ),
-            array( $this, 'render_select_field' ),
-            $this->options_page,
-            'general',
-            array(
-                'name' => 'default_visibility',
-                'value' => $this->_settings->default_visibility,
-                'values' => array(
-                    1 => __( 'Public', 'bcc-login' ),
-                    2 => __( 'Authenticated Users', 'bcc-login' ),    
-                    3 => __( 'Members', 'bcc-login' ),                   
-                )
-            )
-        );
-
-        add_settings_field(
-            'member_organization_name',
-            __( 'Member Organization', 'bcc-login' ),
-            array( $this, 'render_text_field' ),
-            $this->options_page,
-            'general',
-            array(
-                'name' => 'member_organization_name',
-                'value' => $this->_settings->member_organization_name
-            )
-        );
     }
 
 
@@ -340,4 +365,28 @@ class BCC_Login_Settings_Provider {
     public function get_settings() : BCC_Login_Settings {
         return $this->_settings;
     }
+
+    	/**
+	 * Helper to create the GUID
+	 */
+	private function createGUID() {
+		if (function_exists('com_create_guid')) {
+			return com_create_guid();
+		} else {
+			mt_srand((double)microtime()*10000);
+			//optional for php 4.2.0 and up.
+			$set_charid = strtoupper(md5(uniqid(rand(), true)));
+			$set_hyphen = chr(45);
+			// "-"
+			$set_uuid = chr(123)
+				.substr($set_charid, 0, 8).$set_hyphen
+				.substr($set_charid, 8, 4).$set_hyphen
+				.substr($set_charid,12, 4).$set_hyphen
+				.substr($set_charid,16, 4).$set_hyphen
+				.substr($set_charid,20,12)
+				.chr(125);
+				// "}"
+			return $set_uuid;
+		}
+	}
 }

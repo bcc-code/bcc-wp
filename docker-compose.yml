@@ -39,6 +39,7 @@ services:
       BCC_WP_PROXY_KEY: wp_proxy_key
     volumes:
       - "./plugins/bcc-login:/var/www/html/wp-content/plugins/bcc-login"
+      - "./plugins/bcc-signon:/var/www/html/wp-content/plugins/bcc-signon"
       - "./plugins/bcc-wp-proxy:/var/www/html/wp-content/plugins/bcc-wp-proxy"
       - ".htaccess:/var/www/html/.htaccess"
     networks:

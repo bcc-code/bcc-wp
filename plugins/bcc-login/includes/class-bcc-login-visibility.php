@@ -32,10 +32,6 @@ class BCC_Login_Visibility {
         add_filter( 'pre_get_posts', array( $this, 'filter_pre_get_posts' ) );
         add_filter( 'wp_get_nav_menu_items', array( $this, 'filter_menu_items' ), 20 );
         add_filter( 'render_block', array( $this, 'on_render_block' ), 10, 2 );
-
-        add_filter( 'the_content_feed', array( $this, 'on_render_feed' ), 999 );
-		add_filter( 'the_excerpt_rss', array( $this, 'on_render_feed' ), 999 );
-		add_filter( 'comment_text_rss', array( $this, 'on_render_feed' ), 999 );
     }
 
     /**
@@ -99,28 +95,11 @@ class BCC_Login_Visibility {
                     )
                 );
             } else {
-                $this->_client->start_login();
+               $this->_client->start_login();
             }
         }
     }
 
-
-    /**
-     * Feed visibility is based on default visibility for site.
-     */
-    function on_render_feed( $content ) {
-        if ( is_admin() || is_super_admin() ) {
-            return $content;
-        }
-
-        $level      = $this->get_current_user_level();
-        $visibility = $this->_settings->default_visibility;
-        if ( $visibility && $visibility > $level ) {
-            return $content;
-        }      
-
-        return "";
-    }
 
     /**
      * Removes the default level from the database.
@@ -179,6 +158,11 @@ class BCC_Login_Visibility {
      */
     function filter_pre_get_posts( $query ) {
         if ( current_user_can( 'edit_posts' ) || $query->is_singular ) {
+            return $query;
+        }
+
+        // Allow feeds to be accessed using key
+        if ( $query->is_feed && ! empty($this->_settings->feed_key) && $this->_settings->feed_key == $_GET['id'] ) {
             return $query;
         }
 

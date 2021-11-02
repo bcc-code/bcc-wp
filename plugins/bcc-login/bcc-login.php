@@ -17,6 +17,7 @@ require_once( 'includes/class-bcc-login-endpoints.php' );
 require_once( 'includes/class-bcc-login-visibility.php' );
 require_once( 'includes/class-bcc-login-users.php' );
 require_once( 'includes/class-bcc-login-widgets.php' );
+require_once( 'includes/class-bcc-login-feed.php' );
 require_once( 'includes/class-bcc-login-updater.php');
 
 class BCC_Login {
@@ -38,6 +39,7 @@ class BCC_Login {
     private BCC_Login_Users $_users;
     private BCC_Login_Visibility $_visibility;
     private BCC_Login_Widgets $_widgets;
+    private BCC_Login_Feed $_feed;
     private BCC_Login_Updater $_updater;
 
 
@@ -56,6 +58,7 @@ class BCC_Login {
         $this->_users = new BCC_Login_Users($this->_settings);
         $this->_visibility = new BCC_Login_Visibility( $this->_settings, $this->_client );
         $this->_widgets = new BCC_Login_Widgets( $this->_settings, $this->_client );
+        $this->_feed = new BCC_Login_Feed( $this->_settings, $this->_client );
         $this->_updater = new BCC_Login_Updater( $this->plugin, $this->plugin_slug, $this->plugin_version, $this->plugin_name );
 
         add_action( 'init', array( $this, 'redirect_login' ) );
