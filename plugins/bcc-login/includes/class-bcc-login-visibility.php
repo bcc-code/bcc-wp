@@ -168,36 +168,35 @@ class BCC_Login_Visibility {
 
         if ( $this->_settings->default_visibility == self::VISIBILITY_PUBLIC ) {
             // If default visibility is public, show posts where visibility matches current user level OR where visibility isn't defined
-            $query->set(
-                'meta_query',
-                array(
-                    'relation' => 'OR',
+            $query->set('meta_query', 
+                array_merge((array)$query->query_vars['meta_query'], array(
                     array(
-                        'key'     => 'bcc_login_visibility',
-                        'compare' => '<=',
-                        'value'   => $this->get_current_user_level(),
-                    ),
-                    array(
-                        'key'     => 'bcc_login_visibility',
-                        'compare' => 'NOT EXISTS',
-                    ),
-                )
+                        'relation' => 'OR',
+                        array(
+                            'key'     => 'bcc_login_visibility',
+                            'compare' => '<=',
+                            'value'   => $this->get_current_user_level(),
+                        ),
+                        array(
+                            'key'     => 'bcc_login_visibility',
+                            'compare' => 'NOT EXISTS',
+                        ),
+                    )
+                ))
             );
         } else {
             // Don't include posts where visibility isn't specified if default visibility isn't public
             $query->set(
                 'meta_query',
-                array(
+                array_merge((array)$query->query_vars['meta_query'], array(
                     array(
                         'key'     => 'bcc_login_visibility',
                         'compare' => '<=',
                         'value'   => $this->get_current_user_level(),
                     )
-                )
+                ))
             );
         }
-
-
 
         return $query;
     }
