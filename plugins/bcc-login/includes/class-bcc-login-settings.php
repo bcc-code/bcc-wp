@@ -229,7 +229,7 @@ class BCC_Login_Settings_Provider {
                 <?php submit_button(); ?>
             </form>
             <?php $this->render_delete_subscribers_button( ); ?>
-            <?php settings_errors('general'); ?>
+            <?php settings_errors('subscribers_deleted'); ?>
         </div>
         <?php
     }
@@ -272,7 +272,7 @@ class BCC_Login_Settings_Provider {
                 }
             }
             add_settings_error(
-                'general',
+                'subscribers_deleted',
                 'subscribers_deleted',
                 __( 'All subscribers were successfully deleted.' ),
                 'success'
