@@ -168,34 +168,42 @@ class BCC_Login_Visibility {
 
         if ( $this->_settings->default_visibility == self::VISIBILITY_PUBLIC ) {
             // If default visibility is public, show posts where visibility matches current user level OR where visibility isn't defined
-            $query->set('meta_query', 
-                array_merge((array)$query->query_vars['meta_query'], array(
-                    array(
-                        'relation' => 'OR',
-                        array(
-                            'key'     => 'bcc_login_visibility',
-                            'compare' => '<=',
-                            'value'   => $this->get_current_user_level(),
-                        ),
-                        array(
-                            'key'     => 'bcc_login_visibility',
-                            'compare' => 'NOT EXISTS',
-                        ),
-                    )
-                ))
+ 
+            // Get original meta query
+            $meta_query = (array)$query->get('meta_query');
+
+            // Add visibility rules
+            $meta_query[] = array(
+                'relation' => 'OR',
+                array(
+                    'key'     => 'bcc_login_visibility',
+                    'compare' => '<=',
+                    'value'   => $this->get_current_user_level(),
+                ),
+                array(
+                    'key'     => 'bcc_login_visibility',
+                    'compare' => 'NOT EXISTS',
+                ),
             );
-        } else {
+
+            // Set the meta query to the complete, altered query
+            $query->set('meta_query', $meta_query);
+        } 
+        else {
             // Don't include posts where visibility isn't specified if default visibility isn't public
-            $query->set(
-                'meta_query',
-                array_merge((array)$query->query_vars['meta_query'], array(
-                    array(
-                        'key'     => 'bcc_login_visibility',
-                        'compare' => '<=',
-                        'value'   => $this->get_current_user_level(),
-                    )
-                ))
+
+            // Get original meta query
+            $meta_query = (array)$query->get('meta_query');
+
+            // Add visibility rules
+            $meta_query[] =  array(
+                'key'     => 'bcc_login_visibility',
+                'compare' => '<=',
+                'value'   => $this->get_current_user_level(),
             );
+
+            // Set the meta query to the complete, altered query
+            $query->set('meta_query', $meta_query);
         }
 
         return $query;
