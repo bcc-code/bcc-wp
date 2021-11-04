@@ -151,7 +151,7 @@ class BCC_Login_Settings_Provider {
                 'value' => $this->_settings->client_id,
                 'label' => __( 'ClientID', 'client_id' ),
                 'readonly' => 1,
-                'description' => 'OIDC variables can be configured using environment variables or constants in wpconfig.php. Commonly used variables: <i>OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_SCOPE</i>'
+                'description' => 'OIDC variables can be configured using environment variables or constants in wp-config.php. Commonly used variables: <i>OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_SCOPE</i>'
             )
         );
 
