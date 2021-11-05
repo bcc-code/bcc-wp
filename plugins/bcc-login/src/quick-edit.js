@@ -20,8 +20,6 @@ jQuery(function($) {
 		}
 	}
 
-	// Hide the post_audience column from the posts overview
-	// but we need to keep it in the DOM in order to populate the posts with the values.
-	$('.wp-admin table.posts .column-post_audience').addClass('hidden');
+	// Hide the setting from the Screen Options because we overwrite it with CSS
 	$('#screen-options-wrap :input[value="post_audience"]').parent().hide();
 });

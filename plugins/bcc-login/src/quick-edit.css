@@ -16,3 +16,9 @@
     vertical-align: baseline;
     padding-left: 0.15rem;
 }
+
+/* Hide the post_audience column from the posts overview
+but we need to keep it in the DOM in order to populate the posts with the values. */
+.wp-admin table.posts .column-post_audience {
+    display: none !important;
+}
