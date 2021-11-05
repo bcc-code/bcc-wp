@@ -18,6 +18,13 @@ class BCC_Login_Visibility {
         'public'           => self::VISIBILITY_PUBLIC
     );
 
+    // A mapping of level -> title.
+    private $titles = array(
+        self::VISIBILITY_PUBLIC => 'Public',
+        self::VISIBILITY_SUBSCRIBER => 'Authenticated Users',
+        self::VISIBILITY_MEMBER => 'Members'
+    );
+
     private $post_types = array( 'post', 'page' );
 
     function __construct( BCC_Login_Settings $settings, BCC_Login_Client $client ) {
@@ -32,6 +39,12 @@ class BCC_Login_Visibility {
         add_filter( 'pre_get_posts', array( $this, 'filter_pre_get_posts' ) );
         add_filter( 'wp_get_nav_menu_items', array( $this, 'filter_menu_items' ), 20 );
         add_filter( 'render_block', array( $this, 'on_render_block' ), 10, 2 );
+
+        add_filter( 'manage_post_posts_columns', array( $this, 'bcc_add_post_audience_column' ) );
+        add_action( 'manage_posts_custom_column', array( $this, 'bcc_populate_post_audience'), 10, 2 );
+        add_action( 'quick_edit_custom_box', array( $this, 'bcc_quick_edit_fields'), 10, 2 );
+        add_action( 'save_post', array( $this, 'bcc_quick_edit_save' ) );
+        add_action( 'admin_enqueue_scripts', array( $this, 'bcc_enqueue_quick_edit_scripts' ) );
     }
 
     /**
@@ -291,8 +304,70 @@ class BCC_Login_Visibility {
         return $block_content;
     }
 
+    // Quick Edit
+    function bcc_add_post_audience_column( $column_array ) {
+        $column_array['post_audience'] = 'Post Audience';
+        return $column_array;
+    }
 
+    function bcc_populate_post_audience( $column_name, $id ) {
+        switch( $column_name ) :
+            case 'post_audience': {
+                echo get_post_meta( $id, 'bcc_login_visibility', true );
+            }
+        endswitch;
+    }
 
+    function bcc_quick_edit_fields( $column_name, $post_type ) {
+        switch( $column_name ) :
+            case 'post_audience': {
+                wp_nonce_field( 'bcc_q_edit_nonce', 'bcc_nonce' );
+
+                echo '<fieldset class="inline-edit-col-right">
+                    <div class="inline-edit-col">
+                        <div class="inline-edit-group wp-clearfix">
+                            <label class="post-audience">
+                                <span class="title">Post Audience</span>
+                                <span class="input-text-wrap">';
+                                    foreach ($this->titles as $level => $title) {
+                                        echo '<input type="radio" name="bcc_login_visibility" id="option-'. $level .'" value="'. $level .'">
+                                            <label for="option-'. $level .'">'. $title .'</label>';
+                                    }
+                                echo '</span>
+                            </label>
+                        </div>
+                    </div>
+                </fieldset>';
+
+                break;
+            }
+        endswitch;
+    }
+
+    function bcc_quick_edit_save( $post_id ){
+        if ( !current_user_can( 'edit_post', $post_id ) ) {
+            return;
+        }
+
+        if ( !wp_verify_nonce( $_POST['bcc_nonce'], 'bcc_q_edit_nonce' ) ) {
+            return;
+        }
+
+        if ( isset( $_POST['bcc_login_visibility'] ) ) {
+            update_post_meta( $post_id, 'bcc_login_visibility', $_POST['bcc_login_visibility'] );
+        }
+    }
+
+    function bcc_enqueue_quick_edit_scripts( $pagehook ) {
+        // do nothing if we are not on the target pages
+        if ( 'edit.php' != $pagehook ) {
+            return;
+        }
+
+        wp_enqueue_style( 'quick-edit-css', BCC_LOGIN_URL . 'src/quick-edit.css' );
+        wp_enqueue_script( 'quick-edit-js', BCC_LOGIN_URL . 'src/quick-edit.js', array( 'jquery' ) );
+    }
+    // end Quick Edit
 
     /**
      * Deletes all `bcc_login_visibility` values from the database.

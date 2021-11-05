@@ -1,0 +1,18 @@
+.inline-edit-row fieldset .post-audience {
+    pointer-events: none;
+}
+.inline-edit-row fieldset .post-audience input {
+    pointer-events: all;
+    display: inline-block;
+    margin-right: 0px;
+    margin-left: 15px;
+}
+.inline-edit-row fieldset .post-audience input:first-child {
+    margin-left: 5px;
+}
+.inline-edit-row fieldset .post-audience label {
+    pointer-events: all;
+    display: inline-block;
+    vertical-align: baseline;
+    padding-left: 0.15rem;
+}
