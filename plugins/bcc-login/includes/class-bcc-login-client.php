@@ -227,9 +227,12 @@ class BCC_Login_Client {
 
     private function get_current_url() {
         global $wp;
-        return add_query_arg( $_SERVER['QUERY_STRING'], '', home_url( $wp->request ) );
-        //$current_url = add_query_arg( $wp->query_vars, home_url( $wp->request ) );
-        //return $current_url;
+
+        // If the Permalink Structure is set to Plain we use the old solution with $_SERVER
+        // We replace 'wp-login.php' to 'wp-admin' to avoid the redirect loop when logging through SSO directly to the admin dashboard
+        return get_option('permalink_structure') == ""
+            ? $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . str_replace('wp-login.php', 'wp-admin', $_SERVER['REQUEST_URI'])
+            : add_query_arg( $_SERVER['QUERY_STRING'], '', home_url( $wp->request ) );
     }
 
     private function get_authorization_url( Auth_State $state ) {
