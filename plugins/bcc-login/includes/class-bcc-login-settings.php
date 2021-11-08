@@ -23,7 +23,6 @@ class BCC_Login_Settings {
  * Provides settings
  */
 class BCC_Login_Settings_Provider {
-
     private BCC_Login_Settings $_settings;
 
     protected $option_name = 'bcc_login_settings';
@@ -80,7 +79,6 @@ class BCC_Login_Settings_Provider {
         $settings->default_visibility = get_option( 'bcc_default_visibility', $settings->default_visibility ?? 2 ); // default to authenticated users
         $settings->member_organization_name = get_option( 'bcc_member_organization_name', $settings->member_organization_name );
 
-
         // Backwards compatibility with old plugin configuration.
         if ( ! isset( $settings->client_id ) ) {
             $old_oidc_settings = (array) get_option( 'openid_connect_generic_settings', array () );
@@ -94,18 +92,15 @@ class BCC_Login_Settings_Provider {
         if ( empty( $settings->member_organization_name )) {
             $settings->member_organization_name = get_option('bcc_local_church'); // Replaced by bcc_member_organization_name
         }
-        
 
         // Set defaults
         $settings->member_organization_name = $settings->member_organization_name ? $settings->member_organization_name :  get_bloginfo( 'blog_name' );
-
 
         // Generate feed key if not assigned
         if ( empty($settings->feed_key) ) {
             $settings->feed_key = strtolower(str_replace("-","",trim($this->createGUID(), '{}')));
             update_option('bcc_feed_key', $settings->feed_key);   
         }
-
 
         $this->_settings = $settings;
 
@@ -126,12 +121,10 @@ class BCC_Login_Settings_Provider {
         );
     }
 
-
     /**
      * Registers settings for the settings page.
      */
     function register_settings() {
-
         register_setting( $this->option_name, 'bcc_topbar' );
         register_setting( $this->option_name, 'bcc_default_visibility' );
         register_setting( $this->option_name, 'bcc_member_organization_name' );
@@ -139,7 +132,6 @@ class BCC_Login_Settings_Provider {
 
         add_settings_section( 'general', '', null, $this->options_page );
 
-        
         add_settings_field(
             'client_id',
             __( 'ClientID', 'bcc-login' ),
@@ -154,7 +146,6 @@ class BCC_Login_Settings_Provider {
                 'description' => 'OIDC variables can be configured using environment variables or constants in wp-config.php. Commonly used variables: <i>OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_SCOPE</i>'
             )
         );
-
         
         add_settings_field(
             'bcc_default_visibility',
@@ -212,10 +203,7 @@ class BCC_Login_Settings_Provider {
                 'label' => __( 'Show the BCC topbar', 'bcc-login' )
             )
         );
-
     }
-
-
 
     /**
      * Renders the options page.
@@ -239,7 +227,7 @@ class BCC_Login_Settings_Provider {
      */
     function render_delete_subscribers_button () {
         if ( ! current_user_can('administrator') )
-                return;        
+            return;        
         ?> 	
             <hr>
             <h2><?php _e( 'Maintenance', 'bcc-login' ); ?></h2>		
@@ -280,7 +268,6 @@ class BCC_Login_Settings_Provider {
         }        
     }
 
-
     /**
      * Renders a checkbox field in settings page.
      */
@@ -300,8 +287,7 @@ class BCC_Login_Settings_Provider {
         $this->render_field_description( $args );
     }
 
-
-        /**
+    /**
      * Renders a text box in settings page.
      */
     function render_text_field( $args ) { ?>
@@ -317,7 +303,7 @@ class BCC_Login_Settings_Provider {
         $this->render_field_description( $args );
     }
 
-        /**
+    /**
      * Renders a select field in settings page.
      */
     function render_select_field( $args ) { ?>
@@ -366,7 +352,7 @@ class BCC_Login_Settings_Provider {
         return $this->_settings;
     }
 
-    	/**
+    /**
 	 * Helper to create the GUID
 	 */
 	private function createGUID() {
