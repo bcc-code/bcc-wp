@@ -41,7 +41,9 @@ class BCC_Login_Visibility {
         add_filter( 'render_block', array( $this, 'on_render_block' ), 10, 2 );
 
         add_filter( 'manage_post_posts_columns', array( $this, 'bcc_add_post_audience_column' ) );
+        add_filter( 'manage_page_posts_columns', array( $this, 'bcc_add_post_audience_column' ) );
         add_action( 'manage_posts_custom_column', array( $this, 'bcc_populate_post_audience'), 10, 2 );
+        add_action( 'manage_pages_custom_column', array( $this, 'bcc_populate_post_audience'), 10, 2 );
         add_action( 'quick_edit_custom_box', array( $this, 'bcc_quick_edit_fields'), 10, 2 );
         add_action( 'save_post', array( $this, 'bcc_quick_edit_save' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'bcc_enqueue_quick_edit_scripts' ) );
@@ -310,12 +312,12 @@ class BCC_Login_Visibility {
             case 'post_audience': {
                 wp_nonce_field( 'bcc_q_edit_nonce', 'bcc_nonce' );
 
-                echo '<fieldset class="inline-edit-col-right">
+                echo '<fieldset class="inline-edit-col-right bcc-quick-edit">
                     <div class="inline-edit-col">
                         <div class="inline-edit-group wp-clearfix">
                             <label class="post-audience">
                                 <span class="title">Post Audience</span>
-                                <span class="input-text-wrap">';
+                                <span>';
                                     foreach ($this->titles as $level => $title) {
                                         echo '<input type="radio" name="bcc_login_visibility" id="option-'. $level .'" value="'. $level .'">
                                             <label for="option-'. $level .'">'. $title .'</label>';
