@@ -17,7 +17,7 @@ _Note 2: remember to give access to **BCC IT Publishing** with Admin role and ad
     1. Go to **Settings > Secrets** in GitHub and add a new repository secret called **KINSTA_SSH_KEY_PRIVATE** with the value of the private key<br>
     _Note: this step is required for private repositories while we are on a Free plan on GitHub_
 
-    2. Create a file on your local, name it **kinsta** and save it in a safe place (best is the C:/Users/[YourUser]/.ssh folder) and give it permission access (e.g. `chmod 400 kinsta`).<br>
+    2. Create a file on your local, name it **kinsta**, add the content of the same private key and save it in a safe place (best is the C:/Users/[YourUser]/.ssh folder) and give it permission access (e.g. `chmod 400 kinsta`).<br>
     Open a cmd and type in `ssh-add C:/Users/[YourUser]/.ssh/kinsta` to add the secret key to your OS registry.
 
 3. Go to the folder where your project is located (probably **C:/Users/[YourUser]/DevKinsta/public/[ProjectName]**) and add the created repository as a remote.<br>
