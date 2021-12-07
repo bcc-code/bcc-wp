@@ -45,12 +45,12 @@ _Note: the necessary info can be found in [MyKinsta](https://my.kinsta.com/sites
 1. SSH into the Kinsta Server (a good idea is to use **Visual Code** with the **SSH Remote Server** extension)<br>
 _Note: server details can be found in MyKinsta_
 
-2. Run `git init --bare /private/{sitename}.git`
+2. Run `cd private`, `git init --bare {sitename}.git`
 
-3. Run `git init /public`
+3. Run `cd ../public`, `git init`
 
 4. Access the private repo hooks folder and create a post-receive hook.<br>
-`cd /www/{sitefolder_xxxxxxx}/private/{sitename}.git/hooks`<br>
+`cd ../private/{sitename}.git/hooks`<br>
 `nano post-receive`
 
 5. Add the following code inside the post-receive file, make the necessary changes, save and quit nano (CTRL+X -> Y -> Enter).
