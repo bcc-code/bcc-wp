@@ -18,7 +18,8 @@ _Note 2: remember to give access to **BCC IT Publishing** with Admin role and ad
     _Note: this step is required for private repositories while we are on a Free plan on GitHub_
 
     2. Create a file on your local, name it **kinsta**, add the content of the same private key and save it in a safe place (best is the C:/Users/[YourUser]/.ssh folder) and give it permission access (e.g. `chmod 400 kinsta`).<br>
-    Open a cmd and type in `ssh-add C:/Users/[YourUser]/.ssh/kinsta` to add the secret key to your OS registry.
+    Open a cmd and type in `ssh-add C:/Users/[YourUser]/.ssh/kinsta` to add the secret key to your OS registry.<br>
+    _Note: This is useful for a later step where you connect to the Kinsta server_
 
 3. Go to the folder where your project is located (probably **C:/Users/[YourUser]/DevKinsta/public/[ProjectName]**) and add a _.gitignore_ file starting from [this template](https://github.com/bcc-code/bcc-wp/blob/master/kinsta-gitignore-template).<br>
 _Note: that is to exclude everything else from WordPress which won't be edited during development_
