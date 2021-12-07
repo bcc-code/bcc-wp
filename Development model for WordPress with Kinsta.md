@@ -42,7 +42,7 @@ _Note: the necessary info can be found in [MyKinsta](https://my.kinsta.com/sites
 
 ## Set up the connection from the Kinsta server to GitHub
 
-1. SSH into the Kinsta Server (a good idea is to use **Visual Code** with the **SSH Remote Server** extension)
+1. SSH into the Kinsta Server (a good idea is to use **Visual Code** with the **SSH Remote Server** extension)<br>
 _Note: server details can be found in MyKinsta_
 
 2. Run `git init --bare /private/{sitename}.git`
