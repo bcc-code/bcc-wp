@@ -247,20 +247,6 @@ class BCC_Login_Settings_Provider {
      */
     function delete_subscribers_handler() {
         if ( strpos(wp_get_referer(), 'delete_subscribers=true') !== false) {
-            $user_query = new WP_User_Query( [
-		'role' => 'Subscriber',
-		'number' => 50
-	    ]);
-
-	    $results = $user_query->get_results();
-	    $total = count($results);
-	    while (! empty($results)) {
-		foreach ( $user_query->get_results() as $user ) {
-			wp_delete_user($user->ID);
-		}
-		$results = $user_query->get_results();
-		$total += count($results);
-	    }
 	    global $wpdb;
 	    $sql = "DELETE 
 		wp_users, 
