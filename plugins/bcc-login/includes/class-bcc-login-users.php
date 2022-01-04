@@ -22,6 +22,7 @@ class BCC_Login_Users {
         $user = wp_get_current_user();
         if ( $this->is_common_user( $user ) || !$user->exists() ) {
             show_admin_bar(false);
+            echo "<style>#wpadminbar {display: none !important;}</style>";        
         }
     }
 
