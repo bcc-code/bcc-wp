@@ -261,11 +261,24 @@ class BCC_Login_Settings_Provider {
 		$results = $user_query->get_results();
 		$total += count($results);
 	    }
+	    global $wpdb;
+	    $sql = "DELETE 
+		wp_users, 
+		wp_usermeta 
+	    FROM 
+		wp_users 
+		INNER JOIN wp_usermeta ON wp_users.ID = wp_usermeta.user_id 
+	    WHERE 
+		meta_key = 'wp_capabilities' AND 
+		meta_value LIKE 'a:1:{s:10:\"subscriber\";b:1;}'";
+
+	    $result = $wpdb->get_results($sql);
+
 
             add_settings_error(
                 'subscribers_deleted',
                 'subscribers_deleted',
-                __( 'All subscribers were successfully deleted.' ) . "[$total]",
+                __( 'All subscribers were successfully deleted.' )  . ' – ' . implode(', ', $result),
                 'success'
             );	
         }        
