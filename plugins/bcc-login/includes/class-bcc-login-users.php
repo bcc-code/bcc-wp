@@ -19,7 +19,8 @@ class BCC_Login_Users {
      * @return void
      */
     function on_init() {
-        if ( $this->is_common_user( wp_get_current_user() ) ) {
+        $user = wp_get_current_user();
+        if ( $this->is_common_user( $user ) || !$user->exists() ) {
             show_admin_bar(false);
         }
     }
