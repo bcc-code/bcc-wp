@@ -247,21 +247,27 @@ class BCC_Login_Settings_Provider {
      */
     function delete_subscribers_handler() {
         if ( strpos(wp_get_referer(), 'delete_subscribers=true') !== false) {
-	    $user_query = new WP_User_Query( [
-	        'role' => 'subscriber',
-	        'number' => 50
+            $user_query = new WP_User_Query( [
+		'role' => 'Subscriber',
+		'number' => 50
 	    ]);
 
-	    foreach ( $user_query->get_results() as $user ) {
-	        wp_delete_user($subscriber->ID);
+	    $results = $user_query->get_results();
+	    $total = count($results);
+	    while (! empty($results)) {
+		foreach ( $user_query->get_results() as $user ) {
+			wp_delete_user($user->ID);
+		}
+		$results = $user_query->get_results();
+		$total += count($results);
 	    }
 
             add_settings_error(
                 'subscribers_deleted',
                 'subscribers_deleted',
-                __( 'All subscribers were successfully deleted.' ),
+                __( 'All subscribers were successfully deleted.' ) . "[$total]",
                 'success'
-            );
+            );	
         }        
     }
 
