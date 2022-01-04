@@ -246,19 +246,16 @@ class BCC_Login_Settings_Provider {
      * Handles deletion of subscribers
      */
     function delete_subscribers_handler() {
-        if ( strpos(wp_get_referer(), 'delete_subscribers=true') !== false) {        
+        if ( strpos(wp_get_referer(), 'delete_subscribers=true') !== false) {
+	    $user_query = new WP_User_Query( [
+	        'role' => 'subscriber',
+	        'number' => 50
+	    ]);
 
-            $all_subscribers = get_users('role=subscriber');
+	    foreach ( $user_query->get_results() as $user ) {
+	        wp_delete_user($subscriber->ID);
+	    }
 
-            foreach ($all_subscribers as $subscriber) {
-                $user_meta = get_userdata($subscriber->ID);
-                $user_roles = $user_meta->roles;
-
-                // Check if 'subscriber' is the only role the user has
-                if ( count($user_roles) == 1 && $user_roles[0] == 'subscriber' ) {
-                    wp_delete_user($subscriber->ID);
-                }
-            }
             add_settings_error(
                 'subscribers_deleted',
                 'subscribers_deleted',
