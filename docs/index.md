@@ -1,4 +1,4 @@
-## Welcome to GitHub Pages
+## BCC Widgets
 
 You can use the [editor on GitHub](https://github.com/bcc-code/bcc-wp/edit/master/docs/index.md) to maintain and preview the content for your website in Markdown files.
 
