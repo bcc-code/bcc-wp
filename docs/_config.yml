@@ -1,1 +1,4 @@
-theme: jekyll-theme-cayman
+remote_theme: bcc-code/bcc-docs-theme
+title: BCC Members Docs
+plugins:
+- jekyll-remote-theme
