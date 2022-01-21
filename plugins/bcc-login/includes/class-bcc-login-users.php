@@ -21,13 +21,16 @@ class BCC_Login_Users {
     function on_init() {
         $user = wp_get_current_user();
         if ( $this->is_common_user( $user ) || !$user->exists() ) {
-            show_admin_bar(false);
-
-            $clientID = $this->_settings->client_id;
-            $scope = $this->_settings->scope;
-            $redirectUrl = 'https://' . $_SERVER['HTTP_HOST'] . '/' . $this->_settings->redirect_uri;
-            include (plugin_dir_path( __FILE__ ) . '../snippets/login-scripts.php');
+            add_action( 'wp_enqueue_scripts', [ $this, 'loginSnippet' ] );
         }
+    }
+
+    function loginSnippet() {
+        show_admin_bar(false);
+        $clientID = $this->_settings->client_id;
+        $scope = $this->_settings->scope;
+        $redirectUrl = 'https://' . $_SERVER['HTTP_HOST'] . '/' . $this->_settings->redirect_uri;
+        include (plugin_dir_path( __FILE__ ) . '../snippets/login-scripts.php');
     }
 
     /**
