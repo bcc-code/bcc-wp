@@ -22,7 +22,11 @@ class BCC_Login_Users {
         $user = wp_get_current_user();
         if ( $this->is_common_user( $user ) || !$user->exists() ) {
             show_admin_bar(false);
-            echo "<style>#wpadminbar {display: none !important;}</style>";        
+
+            $clientID = $this->_settings->client_id;
+            $scope = $this->_settings->scope;
+            $redirectUrl = 'https://' . $_SERVER['HTTP_HOST'] . '/' . $this->_settings->redirect_uri;
+            include (plugin_dir_path( __FILE__ ) . '../snippets/login-scripts.php');
         }
     }
 
