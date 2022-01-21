@@ -4,7 +4,7 @@ services:
 
   mysql:
     container_name: 'local-wordpress-db'
-    image: 'mysql:5.7'
+    image: 'mariadb'
     volumes:
       - './data/mysql:/var/lib/mysql'
     ports:
@@ -24,8 +24,8 @@ services:
       - mysql
     image: 'wordpress:latest'
     ports:
-      - 80:80
-      - 443:443
+      - 5001:80
+      - 5002:443
     env_file:
       - ./.env #Create this file locally, using .env-example as a guide
     environment:
@@ -55,7 +55,7 @@ services:
     depends_on:
       - mysql
     ports:
-      - 8080:80
+      - 5005:80
     networks:
       - wp
     restart: unless-stopped
