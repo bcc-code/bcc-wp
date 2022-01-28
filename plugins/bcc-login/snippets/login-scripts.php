@@ -19,7 +19,7 @@
         scope: '<?= $scope ?>',
         responseType: 'id_token',
         responseMode: 'fragment',
-        redirectUri: '<?= $redirectUrl ?>'
+        redirectUri: location.origin + '/<?= $redirectPath ?>'
     });
     setTimeout(function () {
         webAuth.checkSession({prompt: 'none'}, function (err, authResult) {

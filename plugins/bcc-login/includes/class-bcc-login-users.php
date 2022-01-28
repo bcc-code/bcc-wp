@@ -29,7 +29,7 @@ class BCC_Login_Users {
         show_admin_bar(false);
         $clientID = $this->_settings->client_id;
         $scope = $this->_settings->scope;
-        $redirectUrl = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/' . $this->_settings->redirect_uri;
+        $redirectPath = $this->_settings->redirect_uri;
         include (plugin_dir_path( __FILE__ ) . '../snippets/login-scripts.php');
     }
 

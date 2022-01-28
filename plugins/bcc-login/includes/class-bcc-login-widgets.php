@@ -35,6 +35,7 @@ class BCC_Login_Widgets {
     }
 
     function should_show_topbar() {
-        return is_user_logged_in() && $this->settings->topbar && ! is_customize_preview();
+        $user = wp_get_current_user();
+        return $user->exists() && $this->settings->topbar && ! is_customize_preview();
     }
 }
