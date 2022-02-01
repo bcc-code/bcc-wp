@@ -20,7 +20,10 @@ class BCC_Login_Users {
      */
     function on_init() {
         $user = wp_get_current_user();
-        if ( $this->is_common_user( $user ) || !$user->exists() ) {
+        if ( $this->is_common_user($user) ) {
+            show_admin_bar(false);
+        }
+        if ( !$user->exists() ) {
             add_action( 'wp_enqueue_scripts', [ $this, 'loginSnippet' ] );
         }
     }
