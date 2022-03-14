@@ -61,7 +61,6 @@ class BCC_Login {
         $this->_feed = new BCC_Login_Feed( $this->_settings, $this->_client );
         $this->_updater = new BCC_Login_Updater( $this->plugin, $this->plugin_slug, $this->plugin_version, $this->plugin_name );
 
-        add_action( 'init', array( $this, 'redirect_login' ) );
         add_action( 'init', array( $this, 'start_session' ), 1 );
         add_action( 'wp_authenticate', array( $this, 'end_session' ) );
         add_action( 'wp_logout', array( $this, 'end_session' ) );
@@ -78,28 +77,6 @@ class BCC_Login {
             admin_url( 'options-general.php?page=bcc_login' ) .
             '">' . __('Settings') . '</a>';
         return $links;
-    }
-    
-
-    function redirect_login() {
-        global $pagenow;
-
-        $action = isset( $_GET['action'] ) ? $_GET['action'] : '';
-        $login_action = get_query_var( 'bcc-login' );
-
-        if (
-            $pagenow != 'wp-login.php' ||
-            $pagenow == 'logout.php' ||
-            $login_action == 'logout' ||
-            isset( $_GET['loggedout'] ) ||
-            isset( $_POST['wp-submit'] ) ||
-            isset( $_GET['login-error'] ) ||
-            in_array( $action, array( 'logout', 'lostpassword', 'rp', 'resetpass', 'register' ) )
-        ) {
-            return;
-        }
-
-        $this->_client->start_login();
     }
 
     /**
