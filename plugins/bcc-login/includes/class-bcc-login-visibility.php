@@ -126,14 +126,10 @@ class BCC_Login_Visibility {
     function should_skip_auth() {
         global $pagenow;
 
-
         $action = isset( $_GET['action'] ) ? $_GET['action'] : '';
         $login_action = get_query_var( 'bcc-login' );
 
-        if (
-            $pagenow == 'wp-login.php' ||
-            $pagenow == 'logout.php' ||
-            $login_action == 'logout' ||
+        if ($login_action == 'logout' ||
             isset( $_GET['loggedout'] ) ||
             isset( $_POST['wp-submit'] ) ||
             isset( $_GET['login-error'] ) ||
