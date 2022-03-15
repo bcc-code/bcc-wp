@@ -22,6 +22,6 @@ jobs:
           destination_branch: 'master'
           destination_repo: 'bcc-code/bcc-code.github.io'
           destination_folder: 'projects/bcc-wp'
-          user_email: 'nicolai.velzel@gmail.com'
-          user_name: 'nvelinz'
+          user_email: 'bcc-docs-bot@bcc.no'
+          user_name: 'bcc-docs-bot'
           commit_message: 'Update Wordpress Project Docs'
