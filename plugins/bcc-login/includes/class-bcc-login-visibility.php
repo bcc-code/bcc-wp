@@ -72,7 +72,7 @@ class BCC_Login_Visibility {
         if($this->should_skip_auth()) {
             return;
         }
-        //return;
+
         $session_is_valid = $this->_client->is_session_valid();
 
         // Initiate new login if session has expired
@@ -124,17 +124,11 @@ class BCC_Login_Visibility {
      * @return bool
      */
     function should_skip_auth() {
-        error_log("Filtering login need.");
         global $pagenow;
 
 
         $action = isset( $_GET['action'] ) ? $_GET['action'] : '';
         $login_action = get_query_var( 'bcc-login' );
-
-        error_log("action is: $action");
-        error_log("login_action is: $login_action");
-        error_log("global page is: $pagenow");
-        error_log(wp_debug_backtrace_summary());;
 
         if (
             $pagenow == 'wp-login.php' ||
@@ -145,14 +139,10 @@ class BCC_Login_Visibility {
             isset( $_GET['login-error'] ) ||
             in_array( $action, array( 'logout', 'lostpassword', 'rp', 'resetpass', 'register' ) )
         ) {
-
-            error_log("Filter triggered.");
             return true;
         }
 
-        error_log("Filter NOT triggered");
         return false;
-        //$this->_client->start_login();
     }
 
     /**
