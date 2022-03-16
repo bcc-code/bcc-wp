@@ -61,7 +61,7 @@ class BCC_Login {
         $this->_feed = new BCC_Login_Feed( $this->_settings, $this->_client );
         $this->_updater = new BCC_Login_Updater( $this->plugin, $this->plugin_slug, $this->plugin_version, $this->plugin_name );
 
-        add_action( 'init', array( $this, 'redirect_login' ) );
+        // add_action( 'init', array( $this, 'redirect_login' ) );
         add_action( 'init', array( $this, 'start_session' ), 1 );
         add_action( 'wp_authenticate', array( $this, 'end_session' ) );
         add_action( 'wp_logout', array( $this, 'end_session' ) );
