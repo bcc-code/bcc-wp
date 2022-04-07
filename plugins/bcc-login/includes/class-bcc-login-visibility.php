@@ -40,11 +40,12 @@ class BCC_Login_Visibility {
         add_filter( 'wp_get_nav_menu_items', array( $this, 'filter_menu_items' ), 20 );
         add_filter( 'render_block', array( $this, 'on_render_block' ), 10, 2 );
 
-        add_filter( 'manage_post_posts_columns', array( $this, 'bcc_add_post_audience_column' ) );
-        add_filter( 'manage_page_posts_columns', array( $this, 'bcc_add_post_audience_column' ) );
-        add_action( 'manage_posts_custom_column', array( $this, 'bcc_populate_post_audience'), 10, 2 );
-        add_action( 'manage_pages_custom_column', array( $this, 'bcc_populate_post_audience'), 10, 2 );
-        add_action( 'quick_edit_custom_box', array( $this, 'bcc_quick_edit_fields'), 10, 2 );
+        foreach ( $this->post_types as $post_type ) {
+            add_filter( "manage_{$post_type}_posts_columns", array( $this, 'add_post_audience_column' ) );
+            add_action( "manage_{$post_type}_posts_custom_column", array( $this, 'populate_post_audience_column'), 10, 2 );
+        }
+
+        add_action( 'quick_edit_custom_box', array( $this, 'quick_edit_fields'), 10, 2 );
         add_action( 'save_post', array( $this, 'bcc_quick_edit_save' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'bcc_enqueue_quick_edit_scripts' ) );
     }
@@ -315,20 +316,33 @@ class BCC_Login_Visibility {
     }
 
     // Quick Edit
-    function bcc_add_post_audience_column( $column_array ) {
-        $column_array['post_audience'] = 'Post Audience';
-        return $column_array;
+    function add_post_audience_column( $columns ) {
+        $heading = __( 'Post Audience', 'bcc-login' );
+
+        $columns['post_audience'] = $heading;
+        $columns['post_audience_name'] = $heading;
+
+        return $columns;
     }
 
-    function bcc_populate_post_audience( $column_name, $id ) {
+    function populate_post_audience_column( $column_name, $id ) {
         switch( $column_name ) :
             case 'post_audience': {
                 echo get_post_meta( $id, 'bcc_login_visibility', true );
+                break;
+            }
+            case 'post_audience_name': {
+                $visibility = $this->_settings->default_visibility;
+                if ( $bcc_login_visibility = (int) get_post_meta( $id, 'bcc_login_visibility', true ) ) {
+                    $visibility = $bcc_login_visibility;
+                }
+                echo $this->titles[ $visibility ];
+                break;
             }
         endswitch;
     }
 
-    function bcc_quick_edit_fields( $column_name, $post_type ) {
+    function quick_edit_fields( $column_name, $post_type ) {
         switch( $column_name ) :
             case 'post_audience': {
                 wp_nonce_field( 'bcc_q_edit_nonce', 'bcc_nonce' );
