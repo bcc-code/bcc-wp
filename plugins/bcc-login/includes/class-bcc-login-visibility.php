@@ -84,6 +84,10 @@ class BCC_Login_Visibility {
      * @return void
      */
     function on_template_redirect() {
+        if ($this->should_skip_auth()) {
+            return;
+        }
+
         $session_is_valid = $this->_client->is_session_valid();
 
         // Initiate new login if session has expired
@@ -127,6 +131,23 @@ class BCC_Login_Visibility {
                $this->_client->start_login();
             }
         }
+    }
+
+    /**
+     * Determines whether authentication should be skipped for this action
+     */
+    function should_skip_auth() {
+        global $pagenow;
+
+        $login_action = get_query_var( 'bcc-login' );
+
+        if (
+            $login_action == 'logout'
+        ) {
+            return true;
+        }
+
+        return false;
     }
 
 
