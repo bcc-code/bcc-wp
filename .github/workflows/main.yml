@@ -26,24 +26,24 @@ jobs:
           user_name: 'bcc-docs-bot'
           commit_message: 'Update Wordpress Project Docs'
 
-        - name: Push Folder Content
-          uses: dmnemec/copy_file_to_another_repo_action@main
-          with:
-            source_file: 'docs/signon/.'
-            destination_branch: 'master'
-            destination_repo: 'bcc-code/bcc-code.github.io'
-            destination_folder: '_projects/bcc-wp/signon'
-            user_email: 'bcc-docs-bot@bcc.no'
-            user_name: 'bcc-docs-bot'
-            commit_message: 'Update Wordpress Project Docs'
+      - name: Push Folder Content
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        with:
+          source_file: 'docs/signon/.'
+          destination_branch: 'master'
+          destination_repo: 'bcc-code/bcc-code.github.io'
+          destination_folder: '_projects/bcc-wp/signon'
+          user_email: 'bcc-docs-bot@bcc.no'
+          user_name: 'bcc-docs-bot'
+          commit_message: 'Update Wordpress Project Docs'
 
-        - name: Push Folder Content
-          uses: dmnemec/copy_file_to_another_repo_action@main
-          with:
-            source_file: 'docs/api/.'
-            destination_branch: 'master'
-            destination_repo: 'bcc-code/bcc-code.github.io'
-            destination_folder: '_apis/bcc-wp'
-            user_email: 'bcc-docs-bot@bcc.no'
-            user_name: 'bcc-docs-bot'
-            commit_message: 'Update Wordpress Project Docs'
+      - name: Push Folder Content
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        with:
+          source_file: 'docs/api/.'
+          destination_branch: 'master'
+          destination_repo: 'bcc-code/bcc-code.github.io'
+          destination_folder: '_apis/bcc-wp'
+          user_email: 'bcc-docs-bot@bcc.no'
+          user_name: 'bcc-docs-bot'
+          commit_message: 'Update Wordpress Project Docs'
