@@ -43,7 +43,7 @@ jobs:
           source_file: 'docs/api/.'
           destination_branch: 'master'
           destination_repo: 'bcc-code/bcc-code.github.io'
-          destination_folder: '_apis/bcc-wp'
+          destination_folder: '_apis'
           user_email: 'bcc-docs-bot@bcc.no'
           user_name: 'bcc-docs-bot'
           commit_message: 'Update Wordpress Project Docs'
