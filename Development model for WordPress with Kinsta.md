@@ -13,18 +13,15 @@
 _Note 1: this will contain only the editable files (themes and plugins) from WordPress_<br>
 _Note 2: remember to give access to **BCC IT Publishing** with Admin role and add it to the [Publishing Team](https://github.com/orgs/bcc-code/projects/3) dashboard_
 
-2. Get the ssh keys from the **Kinsta SSH** item. Go to **Settings > Secrets** in GitHub and add a new repository secret called **KINSTA_SSH_KEY_PRIVATE** with the value of the private key.<br>
-_Note: this step is required for private repositories while we are on a Free plan on GitHub_
-
-3. Go to the folder where your project is located (probably **C:/Users/[YourUser]/DevKinsta/public/[ProjectName]**) and add a _.gitignore_ file starting from [this template](https://github.com/bcc-code/bcc-wp/blob/master/kinsta-gitignore-template).<br>
+2. Go to the folder where your project is located (probably **C:/Users/[YourUser]/DevKinsta/public/[ProjectName]**) and add a _.gitignore_ file starting from [this template](https://github.com/bcc-code/bcc-wp/blob/master/kinsta-gitignore-template).<br>
 _Note: that is to exclude everything else from WordPress which won't be edited during development_
 
-4. Open a cmd in the project folder and run the following commands which add the created repository as a remote:<br>
+3. Open a cmd in the project folder and run the following commands which add the created repository as a remote:<br>
 `git init`<br>
 `git add .`<br>
 `git remote add production https://github.com/bcc-code/[project-name].git`
 
-5. Create a workflow in GitHub (which will deploy the code to the Kinsta server on every push) starting from [this template](https://github.com/bcc-code/bcc-wp/blob/master/kinsta-workflow-template.yml).
+4. Create a workflow in GitHub (which will deploy the code to the Kinsta server on every push) starting from [this template](https://github.com/bcc-code/bcc-wp/blob/master/kinsta-workflow-template.yml).
 <br><br>
 **Replace:**
 - _REPLACE_THIS_WITH_KINSTA_PRODUCTION_PORT_
