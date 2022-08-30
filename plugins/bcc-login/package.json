@@ -8,7 +8,7 @@
 	"requires" : "3.0",
 	"tested" : "5.8",
 	"requires_php" : "5.3",
-	"last_updated" : "2022-08-30 18:15:19",
+	"last_updated" : "2022-08-30 18:52:21",
 	"sections" : {
 		"description" : "BCC Login",
 		"installation" : "Add OIDC_CLIENT_ID and OIDC_CLIENT_SECRET as environment variables or constants in wp-config.php, and active plugin",
