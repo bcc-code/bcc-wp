@@ -5,7 +5,6 @@ class BCC_Login_Visibility {
     private BCC_Login_Settings $_settings;
     private BCC_Login_Client $_client;
 
-    
     public const VISIBILITY_DEFAULT = 0;
     public const VISIBILITY_PUBLIC = 1;
     public const VISIBILITY_SUBSCRIBER = 2;
@@ -32,6 +31,7 @@ class BCC_Login_Visibility {
         $this->_client = $client;
 
         add_action( 'init', array( $this, 'on_init' ) );
+        add_action( 'wp_loaded', array( $this, 'register_block_visibility_attribute' ) );
         add_action( 'template_redirect', array( $this, 'on_template_redirect' ), 0 );
         add_action( 'added_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
         add_action( 'updated_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
@@ -65,12 +65,26 @@ class BCC_Login_Visibility {
     }
 
     /**
+     * Registers the `bccLoginVisibility` attribute server-side to make
+     * the `<ServerSideRender />` component render correctly in the Block Editor.
+     */
+    function register_block_visibility_attribute() {
+        $registered_blocks = WP_Block_Type_Registry::get_instance()->get_all_registered();
+
+        foreach( $registered_blocks as $name => $block ) {
+            $block->attributes['bccLoginVisibility'] = array(
+                'type'    => 'number',
+                'default' => self::VISIBILITY_DEFAULT,
+            );
+        }
+    }
+
+    /**
      * Redirects current user to login if the post requires a higher level.
      *
      * @return void
      */
     function on_template_redirect() {
-
         if ($this->should_skip_auth()) {
             return;
         }
