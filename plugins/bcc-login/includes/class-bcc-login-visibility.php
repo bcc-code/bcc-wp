@@ -40,6 +40,9 @@ class BCC_Login_Visibility {
         add_filter( 'wp_get_nav_menu_items', array( $this, 'filter_menu_items' ), 20 );
         add_filter( 'render_block', array( $this, 'on_render_block' ), 10, 2 );
 
+        add_action( 'wp_nav_menu_item_custom_fields', array( $this, 'on_render_menu_item' ), 0, 5 );
+        add_action( 'wp_update_nav_menu_item', array( $this, 'on_update_menu_item' ), 10, 3 );
+
         foreach ( $this->post_types as $post_type ) {
             add_filter( "manage_{$post_type}_posts_columns", array( $this, 'add_post_audience_column' ) );
             add_action( "manage_{$post_type}_posts_custom_column", array( $this, 'populate_post_audience_column'), 10, 2 );
@@ -329,6 +332,56 @@ class BCC_Login_Visibility {
         return $block_content;
     }
 
+    /**
+     * Shows "Menu Item Audience" options for custom menu items.
+     *
+     * @param int      $item_id Menu item ID.
+     * @param WP_Post  $item    Menu item data object.
+     * @param int      $depth   Depth of menu item. Used for padding.
+     * @param stdClass $args    An object of menu item arguments.
+     * @param int      $id      Nav menu ID.
+     */
+    function on_render_menu_item( $item_id, $item, $depth, $args, $id ) {
+        if ( $item->type != 'custom' ) {
+            // This only applies to custom menu items because items for posts
+            // and pages are controlled by the post meta for the particular post.
+            return;
+        }
+        $visibility = (int) get_post_meta( $item_id, 'bcc_login_visibility', true );
+        if ( empty( $visibility ) ) {
+            $visibility = self::VISIBILITY_DEFAULT;
+        }
+        ?>
+            <p class="description description-wide">
+                <strong><?php _e( 'Menu Item Audience', 'bcc-login' ) ?></strong>
+                <?php foreach ( $this->levels as $key => $level ): ?>
+                <label class="description description-wide">
+                    <input type="radio" name="creo-menu-item-visibility[<?php echo $item_id; ?>]" value="<?php echo esc_attr( $level ); ?>"<?php checked( $level == $visibility ); ?>>
+                    <?php echo $this->titles[ $level ]; ?>
+                </label>
+                <?php endforeach; ?>
+            <p>
+        <?php
+    }
+
+    /**
+     * @param int   $menu_id         ID of the updated menu.
+     * @param int   $menu_item_db_id ID of the updated menu item.
+     * @param array $args            An array of arguments used to update a menu item.
+     */
+    function on_update_menu_item( $menu_id, $menu_item_db_id, $args ) {
+        $key = 'creo-menu-item-visibility';
+
+        if ( isset( $_POST[ $key ][ $menu_item_db_id ] ) ) {
+            $value = (int) $_POST[ $key ][ $menu_item_db_id ];
+            if ( $value == self::VISIBILITY_DEFAULT ) {
+                delete_post_meta( $menu_item_db_id, 'bcc_login_visibility' );
+            } else {
+                update_post_meta( $menu_item_db_id, 'bcc_login_visibility', $value );
+            }
+        }
+    }
+
     // Quick Edit
     function add_post_audience_column( $columns ) {
         $heading = __( 'Post Audience', 'bcc-login' );
@@ -387,7 +440,7 @@ class BCC_Login_Visibility {
             return;
         }
 
-        if ( !wp_verify_nonce( $_POST['bcc_nonce'], 'bcc_q_edit_nonce' ) ) {
+        if ( !isset( $_POST['bcc_nonce'] ) || !wp_verify_nonce( $_POST['bcc_nonce'], 'bcc_q_edit_nonce' ) ) {
             return;
         }
 
