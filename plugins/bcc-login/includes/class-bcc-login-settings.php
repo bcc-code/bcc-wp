@@ -247,27 +247,24 @@ class BCC_Login_Settings_Provider {
      */
     function delete_subscribers_handler() {
         if ( strpos(wp_get_referer(), 'delete_subscribers=true') !== false) {
-	    global $wpdb;
-	    $sql = "DELETE 
-		wp_users, 
-		wp_usermeta 
-	    FROM 
-		wp_users 
-		INNER JOIN wp_usermeta ON wp_users.ID = wp_usermeta.user_id 
-	    WHERE 
-		meta_key = 'wp_capabilities' AND 
-		meta_value LIKE 'a:1:{s:10:\"subscriber\";b:1;}'";
+            global $wpdb;
 
-	    $result = $wpdb->get_results($sql);
+            $sql = "DELETE {$wpdb->prefix}users, {$wpdb->prefix}usermeta
+                    FROM {$wpdb->prefix}users
+                    INNER JOIN {$wpdb->prefix}usermeta ON {$wpdb->prefix}users.ID = {$wpdb->prefix}usermeta.user_id
+                    WHERE
+                        meta_key = 'wp_capabilities' AND
+                        meta_value LIKE 'a:1:{s:10:\"subscriber\";b:1;}'";
 
+            $result = $wpdb->get_results($sql);
 
             add_settings_error(
                 'subscribers_deleted',
                 'subscribers_deleted',
-                __( 'All subscribers were successfully deleted.' )  . ' – ' . implode(', ', $result),
+                __( 'All subscribers were successfully deleted.' )  . ' – ' . implode(', ', $result),
                 'success'
-            );	
-        }        
+            );
+        }
     }
 
     /**

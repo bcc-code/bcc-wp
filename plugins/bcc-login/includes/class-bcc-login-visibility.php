@@ -31,6 +31,7 @@ class BCC_Login_Visibility {
         $this->_client = $client;
 
         add_action( 'init', array( $this, 'on_init' ) );
+        add_action( 'wp_loaded', array( $this, 'register_block_visibility_attribute' ) );
         add_action( 'template_redirect', array( $this, 'on_template_redirect' ), 0 );
         add_action( 'added_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
         add_action( 'updated_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
@@ -42,11 +43,12 @@ class BCC_Login_Visibility {
         add_action( 'wp_nav_menu_item_custom_fields', array( $this, 'on_render_menu_item' ), 0, 5 );
         add_action( 'wp_update_nav_menu_item', array( $this, 'on_update_menu_item' ), 10, 3 );
 
-        add_filter( 'manage_post_posts_columns', array( $this, 'bcc_add_post_audience_column' ) );
-        add_filter( 'manage_page_posts_columns', array( $this, 'bcc_add_post_audience_column' ) );
-        add_action( 'manage_posts_custom_column', array( $this, 'bcc_populate_post_audience'), 10, 2 );
-        add_action( 'manage_pages_custom_column', array( $this, 'bcc_populate_post_audience'), 10, 2 );
-        add_action( 'quick_edit_custom_box', array( $this, 'bcc_quick_edit_fields'), 10, 2 );
+        foreach ( $this->post_types as $post_type ) {
+            add_filter( "manage_{$post_type}_posts_columns", array( $this, 'add_post_audience_column' ) );
+            add_action( "manage_{$post_type}_posts_custom_column", array( $this, 'populate_post_audience_column'), 10, 2 );
+        }
+
+        add_action( 'quick_edit_custom_box', array( $this, 'quick_edit_fields'), 10, 2 );
         add_action( 'save_post', array( $this, 'bcc_quick_edit_save' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'bcc_enqueue_quick_edit_scripts' ) );
     }
@@ -66,11 +68,29 @@ class BCC_Login_Visibility {
     }
 
     /**
+     * Registers the `bccLoginVisibility` attribute server-side to make
+     * the `<ServerSideRender />` component render correctly in the Block Editor.
+     */
+    function register_block_visibility_attribute() {
+        $registered_blocks = WP_Block_Type_Registry::get_instance()->get_all_registered();
+
+        foreach( $registered_blocks as $name => $block ) {
+            $block->attributes['bccLoginVisibility'] = array(
+                'type'    => 'number',
+                'default' => self::VISIBILITY_DEFAULT,
+            );
+        }
+    }
+
+    /**
      * Redirects current user to login if the post requires a higher level.
      *
      * @return void
      */
     function on_template_redirect() {
+        if ($this->should_skip_auth()) {
+            return;
+        }
 
         $session_is_valid = $this->_client->is_session_valid();
 
@@ -115,6 +135,23 @@ class BCC_Login_Visibility {
                $this->_client->start_login();
             }
         }
+    }
+
+    /**
+     * Determines whether authentication should be skipped for this action
+     */
+    function should_skip_auth() {
+        global $pagenow;
+
+        $login_action = get_query_var( 'bcc-login' );
+
+        if (
+            $login_action == 'logout'
+        ) {
+            return true;
+        }
+
+        return false;
     }
 
 
@@ -346,20 +383,33 @@ class BCC_Login_Visibility {
     }
 
     // Quick Edit
-    function bcc_add_post_audience_column( $column_array ) {
-        $column_array['post_audience'] = 'Post Audience';
-        return $column_array;
+    function add_post_audience_column( $columns ) {
+        $heading = __( 'Post Audience', 'bcc-login' );
+
+        $columns['post_audience'] = $heading;
+        $columns['post_audience_name'] = $heading;
+
+        return $columns;
     }
 
-    function bcc_populate_post_audience( $column_name, $id ) {
+    function populate_post_audience_column( $column_name, $id ) {
         switch( $column_name ) :
             case 'post_audience': {
                 echo get_post_meta( $id, 'bcc_login_visibility', true );
+                break;
+            }
+            case 'post_audience_name': {
+                $visibility = $this->_settings->default_visibility;
+                if ( $bcc_login_visibility = (int) get_post_meta( $id, 'bcc_login_visibility', true ) ) {
+                    $visibility = $bcc_login_visibility;
+                }
+                echo $this->titles[ $visibility ];
+                break;
             }
         endswitch;
     }
 
-    function bcc_quick_edit_fields( $column_name, $post_type ) {
+    function quick_edit_fields( $column_name, $post_type ) {
         switch( $column_name ) :
             case 'post_audience': {
                 wp_nonce_field( 'bcc_q_edit_nonce', 'bcc_nonce' );
