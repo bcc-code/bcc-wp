@@ -22,7 +22,7 @@ class BCC_Login_Widgets {
 
     function render_topbar() {
         if ( $this->should_show_topbar() ) {
-            echo '<script id="script-bcc-topbar" data-authentication-type="inline-access-token" data-access-token="' . $this->get_access_token() . '" src="https://widgets.bcc.no/widgets/TopbarJs" defer></script>' . PHP_EOL;
+            echo '<script id="script-bcc-topbar" data-authentication-type="WebApp" data-authentication-location="' . site_url( 'bcc-login/access-token/' ) . '" src="https://widgets.bcc.no/widgets/TopbarJs" defer></script>' . PHP_EOL;
         }
     }
 
@@ -47,7 +47,7 @@ class BCC_Login_Widgets {
             $attributes = array_change_key_case((array)$attributes, CASE_LOWER);
 
             $html =  '<div id="bcc-calendar-week"></div>';
-            $html .= '<script id="script-bcc-calendar-week" data-authentication-type="inline-access-token" data-access-token="' . $this->get_access_token() . '" ';
+            $html .= '<script id="script-bcc-calendar-week" data-authentication-type="WebApp" data-authentication-location="' . site_url( 'bcc-login/access-token/' ) . '" ';
             $html .= 'data-language="' . $attributes['language'] . '" data-maxdays="' .  $attributes['maxdays'] . '" data-maxappointments="' . $attributes['maxappointments'] . '" ';
             $html .= 'data-calendars="' . $attributes['calendars'] .'" data-fullcalendarurl="' .  $attributes['fullcalendarurl'] . '" ';
             $html .= 'src="https://widgets.bcc.no/widgets/CalendarWeekJs" defer></script>';
@@ -59,7 +59,7 @@ class BCC_Login_Widgets {
             $attributes = array_change_key_case((array)$attributes, CASE_LOWER);
 
             $html =  '<div id="bcc-calendar-month"></div>';
-            $html .= '<script id="script-bcc-calendar-month" data-authentication-type="inline-access-token" data-access-token="' . $this->get_access_token() . '" ';
+            $html .= '<script id="script-bcc-calendar-month" data-authentication-type="WebApp" data-authentication-location="' . site_url( 'bcc-login/access-token/' ) . '" ';
             $html .= 'data-language="' . $attributes['language'] . '" data-calendars="' . $attributes['calendars'] . '" ';
             $html .= 'src="https://widgets.bcc.no/widgets/CalendarMonthJs" defer></script>';
             
@@ -70,23 +70,11 @@ class BCC_Login_Widgets {
             $attributes = array_change_key_case((array)$attributes, CASE_LOWER);
 
             $html = '<div id="bcc-birthday"></div>';
-            $html .= '<script id="script-bcc-birthday" data-authentication-type="inline-access-token" data-access-token="' . $this->get_access_token() . '" ';
+            $html .= '<script id="script-bcc-birthday" data-authentication-type="WebApp" data-authentication-location="' . site_url( 'bcc-login/access-token/' ) . '" ';
             $html .= 'data-language="' . $attributes['language'] . '" data-churchname="' . $attributes['churchname'] . '" data-maxdays="' . $attributes['maxdays'] . '" ';
             $html .= 'src="https://widgets.bcc.no/widgets/BirthdayJs" defer></script>';
 
             return $html . PHP_EOL;
         } );
-    }
-
-    function get_access_token() {
-        $token = $_SESSION['oidc_access_token'];
-
-        if ( empty( $token ) ) {
-            $token_id = $_COOKIE['oidc_token_id'];
-            $token = get_transient( 'oidc_access_token_' . $token_id );
-            $_SESSION['oidc_access_token'] = $token;
-        }
-        
-        return $token;
     }
 }
