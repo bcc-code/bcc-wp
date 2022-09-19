@@ -12,7 +12,7 @@ class BCC_Login_Widgets {
         add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
         add_action( 'wp_head', array( $this, 'render_topbar' ) );
         add_filter( 'body_class', array( $this, 'body_class' ) );
-        add_action( 'init', array( $this, 'bcc_widgets' ) );
+        add_action( 'init', array( $this, 'bcc_widgets_shortcodes' ) );
     }
 
     function enqueue_styles() {
@@ -42,7 +42,7 @@ class BCC_Login_Widgets {
         );
     }
 
-    function bcc_widgets() {
+    function bcc_widgets_shortcodes() {
         add_shortcode( 'bcc-widgets-week-calendar', function ($attributes) {
             $attributes = array_change_key_case((array)$attributes, CASE_LOWER);
 
