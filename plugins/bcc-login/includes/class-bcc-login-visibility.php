@@ -143,6 +143,10 @@ class BCC_Login_Visibility {
     function should_skip_auth() {
         global $pagenow;
 
+        if (! empty($this->_settings->feed_key) && $this->_settings->feed_key == $_GET['id'] ) {
+            return true;
+        }
+
         $login_action = get_query_var( 'bcc-login' );
 
         if (
