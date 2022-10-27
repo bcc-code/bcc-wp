@@ -17,7 +17,10 @@ class BCC_Login_Widgets {
 
     function enqueue_styles() {
         wp_enqueue_style( 'bcc-login-widgets', 'https://widgets.bcc.no/styles/widgets.css' );
-        wp_add_inline_style( 'bcc-login-widgets', '@media screen and (max-width: 600px){.admin-bar .portal-top-bar{position:absolute;}}@media screen and (min-width: 850px){body{margin-top:48px!important;}.portal-top-bar-spacer{display:none;}.admin-bar .portal-top-bar{top:46px;}}' );
+
+        if ( $this->should_show_topbar() ) {
+            wp_add_inline_style( 'bcc-login-widgets', '@media screen and (max-width: 600px){.admin-bar .portal-top-bar{position:absolute;}}@media screen and (min-width: 850px){body{margin-top:48px!important;}.portal-top-bar-spacer{display:none;}.admin-bar .portal-top-bar{top:46px;}}' );
+        }
     }
 
     function render_topbar() {
