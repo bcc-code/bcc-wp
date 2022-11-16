@@ -6,7 +6,7 @@ require_once( 'includes/class-bcc-login-token-utility.php');
 $logout_token = $_POST['logout_token'];
 $token_id = '';
 
-if ( $logout_token && ! empty ( $logout_token ))
+if ( $logout_token )
 {
     // OIDC backchannel logout. Retrieve session ID from logout_token.
     $logout_token_claims = BCC_Login_Token_Utility::get_token_claims( $logout_token );
@@ -21,7 +21,7 @@ if ( $logout_token && ! empty ( $logout_token ))
 } else {
     // "Old" backchannel logout, based on state parameter
     $state = $_GET['state'];
-    if ( ! $state || empty ( $state ) ) {
+    if ( ! $state ) {
         $state = $_POST['state'];
     }
 
