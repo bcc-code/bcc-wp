@@ -11,6 +11,7 @@
 define( 'BCC_LOGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'BCC_LOGIN_URL', plugin_dir_url( __FILE__ ) );
 
+require_once( 'includes/class-bcc-login-token-utility.php');
 require_once( 'includes/class-bcc-login-settings.php' );
 require_once( 'includes/class-bcc-login-client.php' );
 require_once( 'includes/class-bcc-login-endpoints.php' );

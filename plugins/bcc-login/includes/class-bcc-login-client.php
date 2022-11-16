@@ -77,8 +77,8 @@ class BCC_Login_Client {
             $id_token = $tokens['id_token'];
             $access_token = $tokens['access_token'];
 
-            $user_claims = $this->get_user_claims( $id_token );
-            $this->login_user( $user_claims, $access_token, $id_token, $state );
+            $id_token_claims = BCC_Login_Token_Utility::get_token_claims( $id_token );
+            $this->login_user( $id_token_claims, $access_token, $id_token, $state );
 
             wp_redirect( $obj_state->return_url );
         } else {
@@ -86,21 +86,22 @@ class BCC_Login_Client {
         }
     }
 
-    private function login_user( $user_claims, $access_token, $id_token, $state  ) {
-        $person_id = $user_claims['https://login.bcc.no/claims/personId'];
-        $email = $user_claims['email'];
+    private function login_user( $id_token_claims, $access_token, $id_token, $state  ) {
+        $person_id = $id_token_claims['https://login.bcc.no/claims/personId'];
+        $email = $id_token_claims['email'];
+        $sid = $id_token_claims['sid'];
 
         $user = $this->get_user_by_identity( $person_id, $email );
 
         if ( ! $user ) {
-            if ( $user_claims['https://login.bcc.no/claims/hasMembership'] == false ) {
+            if ( $id_token_claims['https://login.bcc.no/claims/hasMembership'] == false ) {
                 echo 'Invalid user.';
                 exit;
             }
             if ( $this->_settings->create_missing_users ) {
-                $user = $this->create_new_user( $person_id, $email, $user_claims );
+                $user = $this->create_new_user( $person_id, $email, $id_token_claims );
             } else {
-                $user = $this->get_common_login( $user_claims );
+                $user = $this->get_common_login( $id_token_claims );
             }
         } else {
             // Allow plugins / themes to take action using current claims on existing user (e.g. update role).
@@ -112,24 +113,30 @@ class BCC_Login_Client {
         }
 
         // Login the found / created user.
-        $expiration = (int) $user_claims['exp'];
+        $expiration = (int) $id_token_claims['exp'];
         $manager = WP_Session_Tokens::get_instance( $user->ID );
         $token = $manager->create( $expiration );
 
         // Save access token to session
-        $this->save_tokens( $expiration, $access_token, $id_token, $state );
+        $this->save_oidc_session_state( $expiration, $access_token, $id_token, $sid, $state );
 
         // You did great, have a cookie!
         wp_set_auth_cookie( $user->ID, false, '', $token );
         do_action( 'wp_login', $user->user_login, $user );
     }
 
-    function save_tokens( $expiration, $access_token, $id_token, $state ) {
+    function save_oidc_session_state( $expiration, $access_token, $id_token, $sid, $state ) {
         if ( ! empty( $access_token ) ) {
             $length = 16;
             $strong_result = false;
-            $token_id = base64_encode( openssl_random_pseudo_bytes($length, $strong_result) );
-            if(!$strong_result) error_log('Token_id not random enough! openssl_random_pseudo_bytes($length, $strong_result) was used to generate a cryptographically secure token_id, but the function concluded that it\'s not secure enough. Please read https://www.php.net/manual/en/function.openssl-random-pseudo-bytes.php');
+            $token_id = '';
+            if ( ! empty ($sid) ) {
+                $token_id = md5( $sid );
+            } else {
+                $token_id = base64_encode( openssl_random_pseudo_bytes($length, $strong_result) );
+                if(!$strong_result) error_log('Token_id not random enough! openssl_random_pseudo_bytes($length, $strong_result) was used to generate a cryptographically secure token_id, but the function concluded that it\'s not secure enough. Please read https://www.php.net/manual/en/function.openssl-random-pseudo-bytes.php');
+            }
+            
             $timeout = ( (int) $expiration ) - time();
 
             setcookie( 'oidc_token_id', $token_id, $expiration, '/' , '', true, true );
@@ -146,12 +153,12 @@ class BCC_Login_Client {
         }
     }
 
-    function create_new_user( $person_id, $email, $user_claims ) {
+    function create_new_user( $person_id, $email, $id_token_claims ) {
         // Default username & email to the subject identity.
         $username = $person_id;
         $email = $email;
-        $nickname = $user_claims['given_name'];
-        $displayname = $user_claims['name'];
+        $nickname = $id_token_claims['given_name'];
+        $displayname = $id_token_claims['name'];
         $values_missing = false;
 
         $user_data = array(
@@ -298,31 +305,7 @@ class BCC_Login_Client {
         return $result;
     }
 
-    function get_user_claims( $id_token ) {
-        // Check if id token exists
-        if ( ! isset( $id_token ) ) {
-            return array();
-        }
-
-        // Break apart the id_token in the response for decoding.
-        $tmp = explode( '.', $id_token );
-
-        if ( ! isset( $tmp[ 1 ] ) ) {
-            return array();
-        }
-
-        // Extract the id_token's claims from the token.
-        return json_decode(
-            base64_decode(
-                str_replace( // Because token is encoded in base64 URL (and not just base64).
-                    array( '-', '_' ),
-                    array( '+', '/' ),
-                    $tmp[ 1 ]
-                )
-            ),
-            true
-        );
-    }
+    
 
 }
 
