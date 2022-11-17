@@ -1,6 +1,6 @@
 <?php
 
-require_once( 'includes/class-bcc-login-token-utility.php');
+require_once( '../includes/class-bcc-login-token-utility.php');
 
 /** backchannel logout */
 $logout_token = $_POST['logout_token'];
