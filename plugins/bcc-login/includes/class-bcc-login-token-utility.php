@@ -1,4 +1,3 @@
-
 <?php
 
 class BCC_Login_Token_Utility {
