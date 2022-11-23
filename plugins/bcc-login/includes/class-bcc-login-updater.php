@@ -126,11 +126,18 @@ class BCC_Login_Updater {
 	public function update( $transient ) {
 
 
-		if ( empty($transient->checked ) ) {
+		if ( empty( $transient->checked ) ) {
 			return $transient;
 		}
 
 		$remote = $this->request();
+
+		$res = new stdClass();
+		$res->slug = $this->plugin_slug;
+		$res->plugin = $this->plugin; 
+		$res->new_version = $this->version;
+		$res->tested = null;
+		$res->package = "https://github.com/bcc-code/bcc-wp/releases/download/" . $this->plugin_slug . "-v" . $this->version . "/" . $this->plugin_slug . ".zip"; //$remote->download_url;
 
 		if(
 			$remote
@@ -138,16 +145,14 @@ class BCC_Login_Updater {
 			&& version_compare( $remote->requires, get_bloginfo( 'version' ), '<' )
 			&& version_compare( $remote->requires_php, PHP_VERSION, '<' )
 		) {
-
-			$res = new stdClass();
-			$res->slug = $this->plugin_slug;
-			$res->plugin = $this->plugin; 
 			$res->new_version = $remote->version;
 			$res->tested = $remote->tested;
 			$res->package = "https://github.com/bcc-code/bcc-wp/releases/download/" . $this->plugin_slug . "-v" . $remote->version . "/" . $this->plugin_slug . ".zip"; //$remote->download_url;
-
+	
 			$transient->response[ $res->plugin ] = $res;
-	}
+		} else {
+			$transient->no_update[ $res->plugin ] = $res;
+		}
 		return $transient;
 
 	}
