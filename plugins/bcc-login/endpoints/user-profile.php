@@ -9,21 +9,20 @@ if ( empty( $token ) ) {
 }
 
 if ( $token ) {
-    $parts = explode( '.', $id_token );
+    $parts = explode( '.', $token );
 
     if ( count( $parts ) > 1 ) {
         $json_str = base64_decode(
             str_replace( // Because token is encoded in base64 URL (and not just base64).
                 array( '-', '_' ),
                 array( '+', '/' ),
-                $tmp[ 1 ]
+                $parts[ 1 ]
             )
         );
         echo $json_str;
     }
 
+} else {
+    echo '{}';
 }
-
-echo '{}';
-
 ?>
