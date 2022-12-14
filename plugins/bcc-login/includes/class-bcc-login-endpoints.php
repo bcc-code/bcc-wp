@@ -47,6 +47,7 @@ class BCC_Login_Endpoints {
             case 'id-token': return BCC_LOGIN_PATH . 'endpoints/id-token.php';
             case 'refresh-login': return BCC_LOGIN_PATH . 'endpoints/refresh-login.php';
             case 'logout': return BCC_LOGIN_PATH . 'endpoints/logout.php';
+            case 'user-profile': return BCC_LOGIN_PATH . 'endpoints/user-profile.php';
         }
         return $template;
     }
