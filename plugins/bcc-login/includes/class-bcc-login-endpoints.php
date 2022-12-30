@@ -9,7 +9,7 @@ class BCC_Login_Endpoints {
 
         add_action( 'init', array( $this, 'add_rewrite_rules' ) );
         add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
-        add_action( 'template_include', array( $this, 'include_endpoint' ) );
+        add_action( 'template_include', array( $this, 'include_endpoint' ), 99 );
     }
 
     /**
