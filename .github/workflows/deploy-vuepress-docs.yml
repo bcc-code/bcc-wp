@@ -53,7 +53,7 @@ jobs:
         with:
           files: "docs/.vuepress/userConfig.json"
         env:
-          title: ${{ github.event.repository.name }}
+          title: BCC Wordpress Plugins
           description: ${{ github.event.repository.description }}
           base: /${{ github.event.repository.name }}/
           repo: ${{ github.repository }}
