@@ -23,6 +23,10 @@ const visibilityOptions = [
     value: levels['bcc-login-member'],
     label: sprintf(__('%s Members'), localName),
   },
+  {
+    value: levels['bcc-login-youth-member'],
+    label: sprintf(__('%s Youth Members'), localName),
+  },
 ]
 
 function VisibilityOptions({

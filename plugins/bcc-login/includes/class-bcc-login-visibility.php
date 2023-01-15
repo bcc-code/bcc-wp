@@ -9,10 +9,12 @@ class BCC_Login_Visibility {
     public const VISIBILITY_PUBLIC = 1;
     public const VISIBILITY_SUBSCRIBER = 2;
     public const VISIBILITY_MEMBER = 3;
+    public const VISIBILITY_YOUTH_MEMBER = 4;
 
     // A mapping of role -> level.
     private $levels = array(
         'bcc-login-member' => self::VISIBILITY_MEMBER,
+        'bcc-login-youth-member' => self::VISIBILITY_YOUTH_MEMBER,
         'subscriber'       => self::VISIBILITY_SUBSCRIBER,
         'public'           => self::VISIBILITY_PUBLIC
     );
@@ -21,7 +23,8 @@ class BCC_Login_Visibility {
     private $titles = array(
         self::VISIBILITY_PUBLIC => 'Public',
         self::VISIBILITY_SUBSCRIBER => 'Authenticated Users',
-        self::VISIBILITY_MEMBER => 'Members'
+        self::VISIBILITY_MEMBER => 'Members',
+        self::VISIBILITY_YOUTH_MEMBER => 'Youth Members'
     );
 
     private $post_types = array( 'post', 'page' );
