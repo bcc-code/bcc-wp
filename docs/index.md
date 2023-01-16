@@ -1,12 +1,5 @@
----
-title: BCC WordPress Documentation
-description: Documentation about creating WordPress sites with BCC widgets and plugins
----
+# Introduction
 
-### BCC Login Plugin
+Documentation for custom WordPress themes and plugins which can be used in any BCC application.
 
-* [Getting Started](signon)
-* [Advanced Configuration](signon/configuration)
-* [Getting user information](signon/getting-user-information)
-* [Protect uploads files](signon/protect-uploads-files)
-* [Troubleshooting](signon/troubleshooting)
+Read the documentation on [Signon for WordPress](signon), or view this repository on [GitHub](https://github.com/bcc-code/bcc-wp).

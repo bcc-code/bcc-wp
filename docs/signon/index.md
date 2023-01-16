@@ -1,7 +1,4 @@
----
-title: Signon Wordpress
-description: Technical documentation
----
+# Implement Signon in WordPress
 
 ## Getting started
 
@@ -17,7 +14,7 @@ This tutorial will explain you how to implement BCC Signon on a WordPress websit
 This a shortened version of the detailed documentation. If you encounter problems, check out the detailed documentation
 and [the troubleshooting page](troubleshooting)
 
-1. Download the latest version of the [BCC Login Plugin](https://github.com/bcc-code/bcc-wp/releases/download/bcc-login-v1.1.117/bcc-login.zip).
+1. Download the latest version of `bcc-login.zip` on [GitHub](https://github.com/bcc-code/bcc-wp/releases/latest).
 2. Add `OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET` as environment variables or constants in `wp-config.php`, using the values supplied by IT support.  
   
    **UPGRADING**: This step can be omitted if you have the old version of the plugin (called *BCC Signon*) already installed.
@@ -41,7 +38,3 @@ and [the troubleshooting page](troubleshooting)
 12. If you followed all the steps above, login should now be set up correctly for your WordPress website. The following
     pages contain a more detailed version of the above steps, so you don’t need to read them if everything is working
     for you already.  
-
----
-
-Next: [Advanced configuration options →](configuration)
