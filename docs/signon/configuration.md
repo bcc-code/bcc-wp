@@ -1,6 +1,4 @@
----
-title: Advanced Configuration
----
+# Advanced configuration
 
 ## OpenId Connect Configuration
 
@@ -46,7 +44,7 @@ If you enable this, you can delete the old top bar script tag (See the documenta
 If you want to identify the users which log in to your website by church, e.g. for displaying specific
 content or give access to some pages just to members from your local church, find the church name in the list below and
 type it in the text field on the BCC Login Settings page. If the church you’re coming from is not in the list you can
-contact [support](it@bcc.no?subject=Support%Developer%BCC).
+contact [support](mailto:it@bcc.no?subject=Support%Developer%BCC).
 
 * Argentina 
   * Paso Flores
@@ -206,7 +204,3 @@ contact [support](it@bcc.no?subject=Support%Developer%BCC).
   * Urbana 
 * (no country) 
   * A-lag MOBILT
-
----
-
-Next: [Getting User Information →](getting-user-information)

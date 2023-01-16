@@ -1,18 +1,16 @@
----
-title: Protect Uploads files
----
+# Protect uploaded files
 
-# Protect Uploads files
-
-We have been notified that uploaded files on WordPress were not protected with BCC Signon, allowing a direct access
+By default, uploaded files on WordPress are not protected with BCC Signon, allowing a direct access
 using the file’s URL. This is true for all WordPress websites, also those protected by WordPress’s login system.
 
-However, we are aware that this can be an issue for you local church website. Here will be described a way to prevent
+This can be an issue for you local church website. Here will be described a way to prevent
 unprotected access to your uploads; this may be integrated to BCC’s Signon plugin in the future, but we want to get your
 feedback first to ensure it fits all of your configurations.
 
-**This has been tested on a Linux server running Apache 2.4.18 and WordPress 5.2.3: please contact us if this isn’t
-working seamlessly for you.**
+::: warning HEADS UP
+This has been tested on a Linux server running Apache 2.4.18 and WordPress 5.2.3: please contact us if this isn’t
+working seamlessly for you.
+:::
 
 1. Add the following file as ``dl-file.php`` to your WordPress root folder.
 ````html
@@ -101,7 +99,3 @@ readfile( $file );
 RewriteCond %{REQUEST_FILENAME} -s
 RewriteRule ^wp-content/uploads/(.*)$ dl-file.php?file=$1 [QSA,L]
 ````
-
----
-
-Next: [Troubleshooting](troubleshooting)
