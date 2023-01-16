@@ -25,8 +25,6 @@ class BCC_Login {
 
     /**
      * The plugin instance.
-     *
-     åuiyow8w0uidxjxj8ew9oidnjj  immsilas silas er sønen
      */
     private static $instance = null;
     private $plugin_version = "1.1.119";
