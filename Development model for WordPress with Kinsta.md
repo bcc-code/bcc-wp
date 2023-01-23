@@ -21,7 +21,9 @@ _Note: that is to exclude everything else from WordPress which won't be edited d
 `git add .`<br>
 `git remote add production https://github.com/bcc-code/[project-name].git`
 
-4. Create a workflow in GitHub (which will deploy the code to the Kinsta server on every push) starting from [this template](https://github.com/bcc-code/bcc-wp/blob/master/kinsta-workflow-template.yml).
+4. Go to the [Kinsta SSH key settings](https://github.com/organizations/bcc-code/settings/secrets/actions/KINSTA_SSH_KEY_PRIVATE) and add the new repository to the list.
+
+5. Create a workflow in GitHub (which will deploy the code to the Kinsta server on every push) starting from [this template](https://github.com/bcc-code/bcc-wp/blob/master/kinsta-workflow-template.yml).
 <br><br>
 **Replace:**
 - _REPLACE_THIS_WITH_KINSTA_PRODUCTION_PORT_
@@ -69,12 +71,14 @@ do
         fi
 done</pre>
 
-7. Assign execute permissions to post-receive file.<br>
-`chmod +x post-receive`
-
 <br>_Replacements you have to make:_
 - **{sitename}** is the project name in Kinsta (**Username** value in **MyKinsta**)
 - **{sitefolder_xxxxxxx}** is the project name concatenated with the project id in Kinsta (found under the **Path** field in **MyKinsta**)
+
+7. Assign execute permissions to post-receive file.<br>
+`chmod +x post-receive`
+
+8. Do the same thing for the staging environment, or push Live into Staging in Kinsta.
 
 
 ## Push to GitHub (will deploy to Kinsta)
