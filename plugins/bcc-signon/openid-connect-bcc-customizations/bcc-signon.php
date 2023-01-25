@@ -49,13 +49,6 @@ class BCC_Signon {
         return '/' . $relative_plugin_dir . '/bcc-signon/openid-connect-bcc-customizations/clear-cookies.php';
     }
 
-	//function ensure_access_token(){
-	//	// Log out user if token (used by widgets etc.) has been lost.
-	//	if ( is_user_logged_in() && !($_SESSION["oidc_access_token"]) ) {
-	//		wp_logout();
-	//	}
-	//}
-
 	
 	/**
 	 * Start PHP Session if not already started

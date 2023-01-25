@@ -144,11 +144,8 @@ class BCC_Login_Client {
             set_transient( 'oidc_state_' . $token_id, $state, $timeout );
             set_transient( 'oidc_token_id_' . $state, $token_id, $timeout );
 
-            $_SESSION['oidc_access_token'] = $access_token;
-
             if ( ! empty( $id_token ) ) {
                 set_transient( 'oidc_id_token_' . $token_id, $id_token, $timeout );
-                $_SESSION['oidc_id_token'] = $id_token;
             }
         }
     }
