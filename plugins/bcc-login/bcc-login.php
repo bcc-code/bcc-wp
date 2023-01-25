@@ -61,7 +61,6 @@ class BCC_Login {
         $this->_updater = new BCC_Login_Updater( $this->plugin, $this->plugin_slug, $this->plugin_version, $this->plugin_name );
 
         add_action( 'init', array( $this, 'redirect_login' ) );
-        add_action( 'init', array( $this, 'start_session' ), 1 );
         add_action( 'wp_authenticate', array( $this, 'end_session' ) );
         add_action( 'wp_logout', array( $this, 'end_session' ) );
 
@@ -98,21 +97,15 @@ class BCC_Login {
         $this->_client->start_login();
     }
 
-    /**
-     * Start PHP Session if not already started
-     */
-    function start_session() {
-        if ( ! session_id() ) {
-            session_start();
-        }
-    }
 
     /**
      * End PHP session (e.g. after logout)
      */
     function end_session() {
         $this->_client->end_login();
-        session_destroy();
+        if ( session_id() ) {
+            session_destroy();
+        }
     }
 
     /**
