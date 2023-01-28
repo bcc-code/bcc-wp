@@ -143,7 +143,7 @@ class BCC_Login_Visibility {
     function should_skip_auth() {
         global $pagenow;
 
-        if (! empty($this->_settings->feed_key) && $this->_settings->feed_key == $_GET['id'] ) {
+        if (! empty($this->_settings->feed_key) && array_key_exists('id',$_GET) && $this->_settings->feed_key == $_GET['id'] ) {
             return true;
         }
 
@@ -220,7 +220,7 @@ class BCC_Login_Visibility {
         }
 
         // Allow feeds to be accessed using key
-        if ( $query->is_feed && ! empty($this->_settings->feed_key) && $this->_settings->feed_key == $_GET['id'] ) {
+        if ( $query->is_feed && ! empty($this->_settings->feed_key) && array_key_exists('id',$_GET) && $this->_settings->feed_key == $_GET['id'] ) {
             return $query;
         }
 
