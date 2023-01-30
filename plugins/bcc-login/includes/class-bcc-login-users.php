@@ -40,9 +40,11 @@ class BCC_Login_Users {
      * Disallows admin access for common users.
      */
     function on_admin_init() {
-        if ( $this->is_common_user( wp_get_current_user() ) ) {
-            wp_die( __( 'Unauthorized' ) );
-        }
+        // This code is also run when admin-ajax.php is requested. 
+        // Currently not deemed necessary to include the code below
+        // if ( $this->is_common_user( wp_get_current_user() ) ) {
+        //     wp_die( __( 'Unauthorized' ) );
+        // }
     }
 
     /**
