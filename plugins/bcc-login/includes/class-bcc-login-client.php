@@ -102,9 +102,6 @@ class BCC_Login_Client {
                 $user = $this->create_new_user( $person_id, $email, $id_token_claims );
             } else {
                 $user = $this->get_common_login( $id_token_claims );
-                if ( ! is_a( $user, 'WP_User' ) || ! $user->exists() ) {
-
-                }
             }
         } else {
             // Allow plugins / themes to take action using current claims on existing user (e.g. update role).
