@@ -111,12 +111,22 @@ class BCC_Login_Users {
 
     static function get_member() {
         $logins = self::get_logins();
-        return get_user_by( 'login', $logins[0]['login'] );
+        $user = get_user_by( 'login', $logins[0]['login'] );
+        if ( ! is_a( $user, 'WP_User' ) || ! $user->exists() ) {
+            self::create_users();
+            $user = get_user_by( 'login', $logins[0]['login'] );
+        }
+        return $user;
     }
 
     static function get_subscriber() {
         $logins = self::get_logins();
-        return get_user_by( 'login', $logins[1]['login'] );
+        $user = get_user_by( 'login', $logins[1]['login'] );
+        if ( ! is_a( $user, 'WP_User' ) || ! $user->exists() ) {
+            self::create_users();
+            $user = get_user_by( 'login', $logins[1]['login'] );
+        }
+        return $user;
     }
 
     static function create_users() {
