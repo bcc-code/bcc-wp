@@ -40,7 +40,7 @@ This enables BCC’s new top bar widget, that you already see on this website.
 If you enable this, you can delete the old top bar script tag (See the documentation of the old top bar)
 
 ## Member Organization
-
+ 
 If you want to identify the users which log in to your website by church, e.g. for displaying specific
 content or give access to some pages just to members from your local church, find the church name in the list below and
 type it in the text field on the BCC Login Settings page. If the church you’re coming from is not in the list you can
