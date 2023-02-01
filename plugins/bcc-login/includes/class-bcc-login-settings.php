@@ -253,7 +253,7 @@ class BCC_Login_Settings_Provider {
                     FROM {$wpdb->prefix}users
                     INNER JOIN {$wpdb->prefix}usermeta ON {$wpdb->prefix}users.ID = {$wpdb->prefix}usermeta.user_id
                     WHERE
-                        meta_key = 'wp_capabilities' AND
+                        meta_key = '{$wpdb->prefix}capabilities' AND
                         meta_value LIKE 'a:1:{s:10:\"subscriber\";b:1;}'";
 
             $result = $wpdb->get_results($sql);
