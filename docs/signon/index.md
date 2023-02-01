@@ -9,6 +9,10 @@ This tutorial will explain you how to implement BCC Signon on a WordPress websit
 * You have received your Client ID and Client Secret. (If you haven’t,
   contact [support](mailto:it@bcc.no?subject=Support%Developer%BCC).)
 
+* **Important**: Under Settings->Permalinks in WordPress ensure something other than "Standard" is selected.
+
+* Ensure SSL (https) is enabled for your website, and that users who type in `http://` are automatically redirecte to `https://`
+
 ### Quickstart Guide
 
 This a shortened version of the detailed documentation. If you encounter problems, check out the detailed documentation
