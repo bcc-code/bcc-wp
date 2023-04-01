@@ -105,7 +105,7 @@ class BCC_Login {
     
 
     function add_auto_login_script() {
-        if ( !is_user_logged_in() ) {
+        if ( is_front_page() && !is_user_logged_in() ) {
 
             echo '<script id="auto-login-redirect">
                 const auto_login_referrers=["'.implode('","',$this->auto_login_referrers).'"];
@@ -135,7 +135,7 @@ class BCC_Login {
             return false;
         }
 
-        if ($this->_client->is_redirect_url()) {
+        if (!is_front_page() || $this->_client->is_redirect_url()) {
             return false;
         }
 
