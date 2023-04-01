@@ -113,26 +113,18 @@ class BCC_Login {
         // Auto-login if user is coming from portal.bcc.no or *.brunstad.org
         if (isset($_SERVER['HTTP_REFERER'])) {
             $referrer = $_SERVER['HTTP_REFERER'];
-            $referrerHost = parse_url($referrer, PHP_URL_HOST);
-            $searchStrings = ['brunstad.org', 'portal.bcc.no'];
+            $referrer_host = parse_url($referrer, PHP_URL_HOST);
+            $search_strings = ['brunstad.org', 'portal.bcc.no'];
             $found = false;
         
             // Check if the referrer URL contains any of the search strings
-            foreach ($searchStrings as $searchString) {
-                if (strpos($referrerHost, $searchString) !== false) {
-                    $found = true;
-                    break;
+            foreach ($search_strings as $search_string) {
+                if (strpos($referrer_host, $search_string) !== false) {
+                    return true;
                 }
-            }
-        
-            if ($found) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return false;
+            }            
         }
+        return false;
     }
 
 
