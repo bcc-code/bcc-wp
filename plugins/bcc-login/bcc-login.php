@@ -85,13 +85,14 @@ class BCC_Login {
 
         $action = isset( $_GET['action'] ) ? $_GET['action'] : '';
 
-        if ($this->should_auto_login()) || (
+        if ($this->should_auto_login() || 
+            (
                 $pagenow == 'wp-login.php' &&
                 !isset( $_GET['loggedout'] ) &&
                 !isset( $_POST['wp-submit'] ) &&
                 !isset( $_GET['login-error'] ) &&
                 !in_array( $action, array( 'logout', 'lostpassword', 'rp', 'resetpass', 'register' ) )
-            )
+            ))
         ) {
             $this->_client->start_login();
         }        
