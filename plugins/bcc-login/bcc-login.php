@@ -87,7 +87,7 @@ class BCC_Login {
 
         if (
             (
-                ($pagenow == 'wp-login.php' || $this->should_auto_login()) &&
+                ($pagenow == 'wp-login.php') &&
                 !isset( $_GET['loggedout'] ) &&
                 !isset( $_GET['code'] ) &&
                 !isset( $_POST['wp-submit'] ) &&
