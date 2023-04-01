@@ -73,6 +73,7 @@ jobs:
 
 
           git config user.name "bcc-bot"
+          git config user.email "<>"
           git tag "version-bump-v${build_version}"
           git commit -am "Released bcc-login plugin v${build_version}"
           git push
