@@ -56,10 +56,16 @@ class BCC_Login_Client {
     }
 
     function on_parse_request( $query ){
-        $current_url = $this->get_current_url();
-        if ( strpos( $current_url, $this->_settings->redirect_uri ) ) {
+        if ( $this->is_redirect_url() ) {
            $this->complete_login();
            exit;
+        }
+    }
+
+    function is_redirect_url( ){
+        $current_url = $this->get_current_url();
+        if ( strpos( $current_url, $this->_settings->redirect_uri ) ) {
+           return true;
         }
     }
 

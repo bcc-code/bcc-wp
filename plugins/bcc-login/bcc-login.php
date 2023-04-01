@@ -3,7 +3,7 @@
 /**
  * Plugin Name: BCC Login
  * Description: Integration to BCC's Login System.
- * Version: 1.1.142
+ * Version: 1.1.140
  * Author: BCC IT
  * License: GPL2
  */
@@ -27,7 +27,7 @@ class BCC_Login {
      * The plugin instance.
      */
     private static $instance = null;
-    private $plugin_version = "1.1.142";
+    private $plugin_version = "1.1.140";
     private $plugin;
     private $plugin_slug;
     private $plugin_name = "BCC Login";
@@ -87,7 +87,7 @@ class BCC_Login {
 
         if (
             (
-                ($pagenow == 'wp-login.php') &&
+                ($pagenow == 'wp-login.php' || $this->should_auto_login()) &&
                 !isset( $_GET['loggedout'] ) &&
                 !isset( $_GET['code'] ) &&
                 !isset( $_POST['wp-submit'] ) &&
@@ -104,6 +104,10 @@ class BCC_Login {
 
         // Don't log in user if they are already logged in
         if (is_user_logged_in() && $this->_client->is_session_valid()) {
+            return false;
+        }
+
+        if ($this->_client->is_redirect_url()) {
             return false;
         }
 
