@@ -3,7 +3,7 @@
 /**
  * Plugin Name: BCC Login
  * Description: Integration to BCC's Login System.
- * Version: 1.1.133
+ * Version: 1.1.139
  * Author: BCC IT
  * License: GPL2
  */
@@ -27,7 +27,7 @@ class BCC_Login {
      * The plugin instance.
      */
     private static $instance = null;
-    private $plugin_version = "1.1.133";
+    private $plugin_version = "1.1.139";
     private $plugin;
     private $plugin_slug;
     private $plugin_name = "BCC Login";
@@ -77,7 +77,8 @@ class BCC_Login {
             '">' . __('Settings') . '</a>';
         return $links;
     }
-    
+
+      
 
     function redirect_login() {
         global $pagenow;
@@ -105,7 +106,26 @@ class BCC_Login {
             return false;
         }
 
-        $this->_client->start_login();
+        // Auto-login user if they have logged in previously on this device
+        if ($this->_client->has_user_logged_in_previously()){
+            return true;
+        }
+
+        // Auto-login if user is coming from portal.bcc.no or *.brunstad.org
+        if (isset($_SERVER['HTTP_REFERER'])) {
+            $referrer = $_SERVER['HTTP_REFERER'];
+            $referrer_host = parse_url($referrer, PHP_URL_HOST);
+            $search_strings = ['brunstad.org', 'portal.bcc.no'];
+            $found = false;
+        
+            // Check if the referrer URL contains any of the search strings
+            foreach ($search_strings as $search_string) {
+                if (strpos($referrer_host, $search_string) !== false) {
+                    return true;
+                }
+            }            
+        }
+        return false;
     }
 
 
