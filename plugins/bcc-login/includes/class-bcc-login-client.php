@@ -31,6 +31,7 @@ class BCC_Login_Client {
             delete_transient( 'oidc_access_token_' . $token_id );
             delete_transient( 'oidc_id_token_' . $token_id );            
         }
+        $this->clear_has_user_logged_in_previously();
     }
 
     /** Determines if the session is still valid (i.e. hasn't been ended via a global backchannel sign-out) */
@@ -42,6 +43,7 @@ class BCC_Login_Client {
         }
         return false;
     }
+
 
     private function create_authentication_state() : Auth_State{
         // New state w/ timestamp.
@@ -79,6 +81,7 @@ class BCC_Login_Client {
 
             $id_token_claims = BCC_Login_Token_Utility::get_token_claims( $id_token );
             $this->login_user( $id_token_claims, $access_token, $id_token, $state );
+            $this->set_has_user_logged_in_previously();
 
             wp_redirect( $obj_state->return_url );
         } else {
@@ -148,6 +151,36 @@ class BCC_Login_Client {
                 set_transient( 'oidc_id_token_' . $token_id, $id_token, $timeout );
             }
         }
+    }
+
+    
+    /** Set a long-lived cookie indicating that the user has logged in previously */
+    function set_has_user_logged_in_previously() {
+        $cookieName = 'wp_has_logged_in';
+        $cookieValue =  time();
+        $expirationTime = time() + (10 * 365 * 24 * 60 * 60); // 10 years from now
+        $path = '/'; // The cookie will be available across the entire domain
+
+        setcookie($cookieName, $cookieValue, $expirationTime, $path);
+    }
+
+    /** Read cookie to determine whether user has logged in previously */
+    function has_user_logged_in_previously() {
+        $cookieName = 'wp_has_logged_in';
+        if (isset($_COOKIE[$cookieName])) {
+            $cookieValue = $_COOKIE[$cookieName];
+            if (!empty($cookieValue)) {
+                return true;
+            }
+        } 
+        return false;
+    }
+
+    function clear_has_user_logged_in_previously() {
+        $cookieName = 'wp_has_logged_in';
+        $expirationTime = time() + 3600; // An hour in the past
+        $path = '/'; // The cookie will be available across the entire domain
+        setcookie($cookieName, '', $expirationTime, $path);
     }
 
     function create_new_user( $person_id, $email, $id_token_claims ) {

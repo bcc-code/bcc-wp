@@ -77,24 +77,55 @@ class BCC_Login {
             '">' . __('Settings') . '</a>';
         return $links;
     }
-    
+
+      
 
     function redirect_login() {
         global $pagenow;
 
         $action = isset( $_GET['action'] ) ? $_GET['action'] : '';
 
-        if (
-            $pagenow != 'wp-login.php' ||
-            isset( $_GET['loggedout'] ) ||
-            isset( $_POST['wp-submit'] ) ||
-            isset( $_GET['login-error'] ) ||
-            in_array( $action, array( 'logout', 'lostpassword', 'rp', 'resetpass', 'register' ) )
+        if ($this->should_auto_login() || 
+            (
+                $pagenow == 'wp-login.php' &&
+                !isset( $_GET['loggedout'] ) &&
+                !isset( $_POST['wp-submit'] ) &&
+                !isset( $_GET['login-error'] ) &&
+                !in_array( $action, array( 'logout', 'lostpassword', 'rp', 'resetpass', 'register' ) )
+            ))
         ) {
-            return;
+            $this->_client->start_login();
+        }        
+    }
+
+
+    function should_auto_login() {
+
+        // Don't log in user if they are already logged in
+        if (is_user_logged_in() && $this->_client->is_session_valid()) {
+            return false;
         }
 
-        $this->_client->start_login();
+        // Auto-login user if they have logged in previously on this device
+        if ($this->_client->has_user_logged_in_previously()){
+            return true;
+        }
+
+        // Auto-login if user is coming from portal.bcc.no or *.brunstad.org
+        if (isset($_SERVER['HTTP_REFERER'])) {
+            $referrer = $_SERVER['HTTP_REFERER'];
+            $referrer_host = parse_url($referrer, PHP_URL_HOST);
+            $search_strings = ['brunstad.org', 'portal.bcc.no'];
+            $found = false;
+        
+            // Check if the referrer URL contains any of the search strings
+            foreach ($search_strings as $search_string) {
+                if (strpos($referrer_host, $search_string) !== false) {
+                    return true;
+                }
+            }            
+        }
+        return false;
     }
 
 
