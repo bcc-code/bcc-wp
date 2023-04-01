@@ -31,6 +31,7 @@ class BCC_Login {
     private $plugin;
     private $plugin_slug;
     private $plugin_name = "BCC Login";
+    private $auto_login_referrers = ["brunstad.org", "portal.bcc.no"];
 
     private BCC_Login_Settings $_settings;
     private BCC_Login_Endpoints $_endpoints;
@@ -40,6 +41,7 @@ class BCC_Login {
     private BCC_Login_Widgets $_widgets;
     private BCC_Login_Feed $_feed;
     private BCC_Login_Updater $_updater;
+    
 
 
     /**
@@ -63,6 +65,7 @@ class BCC_Login {
         add_action( 'init', array( $this, 'redirect_login' ) );
         add_action( 'wp_authenticate', array( $this, 'end_session' ) );
         add_action( 'wp_logout', array( $this, 'end_session' ) );
+        add_action( 'wp_head', array( $this, 'add_auto_login_script' ) );
 
         add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'plugin_settings_link'));
 
@@ -99,6 +102,31 @@ class BCC_Login {
         }        
     }
 
+    
+
+    function add_auto_login_script() {
+        if ( !is_user_logged_in() ) {
+
+            echo '<script id="auto-login-redirect">
+                const auto_login_referrers=["'.implode('","',$this->auto_login_referrers).'"];
+                let should_login = false;
+                if (document.cookie.indexOf("wp_has_logged_in") >= 0) {
+                    should_login = true;
+                } else {
+                    for (let i=0; i<auto_login_referrers.length;i++) {
+                        let referrer = auto_login_referrers[i];
+                        if (document.referrer.indexOf(referrer) != -1) {
+                            should_login = true;
+                        }
+                    }
+                }
+                if (should_login) {
+                    document.location.href = "/login";
+                }
+            </script>' . PHP_EOL;
+        }
+    }
+
 
     function should_auto_login() {
 
@@ -120,11 +148,10 @@ class BCC_Login {
         if (isset($_SERVER['HTTP_REFERER'])) {
             $referrer = $_SERVER['HTTP_REFERER'];
             $referrer_host = parse_url($referrer, PHP_URL_HOST);
-            $search_strings = ['brunstad.org', 'portal.bcc.no'];
             $found = false;
-        
+
             // Check if the referrer URL contains any of the search strings
-            foreach ($search_strings as $search_string) {
+            foreach ($this->auto_login_referrers as $search_string) {
                 if (strpos($referrer_host, $search_string) !== false) {
                     return true;
                 }
