@@ -170,7 +170,7 @@ class BCC_Login_Visibility {
     }
 
     /**
-     * Registers the `bccLoginVisibility` and `bccLoginRoleVisibility` attributes server-side to make
+     * Registers the `bccLoginVisibility` and `bccLoginTargetVisibility` attributes server-side to make
      * the `<ServerSideRender />` component render correctly in the Block Editor.
      */
     function register_block_visibility_attribute() {
@@ -181,7 +181,7 @@ class BCC_Login_Visibility {
                 'type'    => 'number',
                 'default' => self::VISIBILITY_DEFAULT
             );
-            $block->attributes['bccLoginRoleVisibility'] = array(
+            $block->attributes['bccLoginTargetVisibility'] = array(
                 'type'    => 'array',
                 'items'   => [
                     'type' => 'number'
@@ -494,8 +494,8 @@ class BCC_Login_Visibility {
             }
         }
 
-        if ( isset( $block['attrs']['bccLoginRoleVisibility'] ) ) {
-            $target_audience_visibility = $block['attrs']['bccLoginRoleVisibility'];
+        if ( isset( $block['attrs']['bccLoginTargetVisibility'] ) ) {
+            $target_audience_visibility = $block['attrs']['bccLoginTargetVisibility'];
 
             if ( $target_audience_visibility && empty( array_intersect( $this->user_groups, $target_audience_visibility ) ) ) {
                 return '';
