@@ -355,7 +355,10 @@ class BCC_Login_Visibility {
         }
 
         // Get original meta query
-        $meta_query = (array)$query->get('meta_query');
+        $meta_query = $query->get( 'meta_query' );
+
+        if ( ! is_array( $meta_query ) )
+            $meta_query = array();
 
         // Add visibility rules
         $visibility_rules = array(
