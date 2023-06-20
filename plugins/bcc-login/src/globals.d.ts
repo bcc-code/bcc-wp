@@ -3,5 +3,6 @@ interface Window {
     localName: string,
     defaultLevel: number,
     levels: Record<string, number>,
+    targetAudience: Array
   }
 }

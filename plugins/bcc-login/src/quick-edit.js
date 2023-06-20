@@ -12,11 +12,18 @@ jQuery(function($) {
 		if ( id > 0 ) {
 			var specific_post_row = $( '#post-' + id );
 			var post_audience = $( '.column-post_audience', specific_post_row ).text();
+			var target_audience_visibility = $( '.column-target_audience_visibility', specific_post_row ).text();
 
 			// uncheck option from previous opened post
 			$( ':input[name="bcc_login_visibility"]' ).attr('checked', false);
+			$( ':input[name="bcc_login_target_audience_visibility[]"]' ).attr('checked', false);
+
 			// populate the inputs with column data
 			$( ':input[name="bcc_login_visibility"][id="option-' + post_audience + '"]' ).attr('checked', true);
+
+			target_audience_visibility.split(',').forEach(role => {
+				$( ':input[name="bcc_login_target_audience_visibility[]"][id="option-' + role + '"]' ).attr('checked', true);
+			})
 		}
 	}
 

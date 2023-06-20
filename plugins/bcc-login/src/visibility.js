@@ -1,14 +1,14 @@
 import { __, sprintf } from '@wordpress/i18n'
 import { addFilter } from '@wordpress/hooks'
-import { PanelBody } from '@wordpress/components'
+import { PanelBody, CheckboxControl, RadioControl } from '@wordpress/components'
 import { registerPlugin } from '@wordpress/plugins'
 import { InspectorControls } from '@wordpress/block-editor'
 import { PluginPostStatusInfo } from '@wordpress/edit-post'
-import { Fragment, cloneElement } from '@wordpress/element'
+import { Fragment, cloneElement, useState } from '@wordpress/element'
 import { withSelect, withDispatch } from '@wordpress/data'
 import { createHigherOrderComponent, withInstanceId, compose } from '@wordpress/compose'
 
-const { defaultLevel, levels, localName } = window.bccLoginPostVisibility
+const { defaultLevel, levels, localName, targetAudience } = window.bccLoginPostVisibility
 
 const visibilityOptions = [
   {
@@ -22,43 +22,8 @@ const visibilityOptions = [
   {
     value: levels['bcc-login-member'],
     label: sprintf(__('%s Members'), localName),
-  },
+  }
 ]
-
-function VisibilityOptions({
-  heading,
-  visibility,
-  instanceId,
-  onUpdateVisibility
-}) {
-  return (
-    <div>
-      {heading && <h2>{heading}</h2>}
-      {visibilityOptions.map(({ value, label }) => (
-        <p key={value} className="bcc-login-visibility__choice">
-          <input
-            type="radio"
-            name={`bcc-login-visibility__setting-${instanceId}`}
-            value={value}
-            onChange={(event) => {
-              onUpdateVisibility(event.target.value)
-            }}
-            checked={visibility === value}
-            id={`bcc-login-post-${value}-${instanceId}`}
-            aria-describedby={`bcc-login-post-${value}-${instanceId}-description`}
-            className="bcc-login-visibility__dialog-radio"
-          />
-          <label
-            htmlFor={`bcc-login-post-${value}-${instanceId}`}
-            className="bcc-login-visibility__dialog-label"
-          >
-            {label}
-          </label>
-        </p>
-      ))}
-    </div>
-  )
-}
 
 registerPlugin('bcc-login-visibility', {
   render: compose([
@@ -66,6 +31,7 @@ registerPlugin('bcc-login-visibility', {
       const { getEditedPostAttribute } = select('core/editor')
       return {
         visibility: getEditedPostAttribute('meta').bcc_login_visibility || defaultLevel,
+        targetAudienceVisibility: getEditedPostAttribute('meta').bcc_login_target_audience_visibility
       }
     }),
     withDispatch(dispatch => {
@@ -74,7 +40,14 @@ registerPlugin('bcc-login-visibility', {
         onUpdateVisibility(value) {
           editPost({
             meta: {
-              bcc_login_visibility: Number(value) || defaultLevel,
+              bcc_login_visibility: Number(value) || defaultLevel
+            }
+          })
+        },
+        onUpdateTargetVisibility(values) {    
+          editPost({
+            meta: {
+              bcc_login_target_audience_visibility: values
             }
           })
         }
@@ -83,7 +56,16 @@ registerPlugin('bcc-login-visibility', {
     withInstanceId
   ])((props) => (
     <PluginPostStatusInfo>
-      <VisibilityOptions heading={__('Post Audience')} {...props} />
+      <div>
+        <div class="membership-audience">
+          <h2>{__('Post Membership Audience')}</h2>
+          <MembershipVisibility {...props} />
+        </div>
+        <div class="target-audience">
+          <h2>{__('Post Target Audience')}</h2>
+          <TargetVisibility {...props} />
+        </div>
+      </div>
     </PluginPostStatusInfo>
   ))
 })
@@ -94,19 +76,36 @@ addFilter(
   createHigherOrderComponent((BlockEdit) => {
     return withInstanceId((props) => {
       const { attributes, setAttributes } = props
-
       return (
         <Fragment>
           <InspectorControls>
             <PanelBody>
-              <VisibilityOptions
-                heading={__('Block Audience')}
-                visibility={attributes.bccLoginVisibility || defaultLevel}
-                onUpdateVisibility={(value) => {
-                  setAttributes({ bccLoginVisibility: Number(value) || undefined })
-                }}
-                {...props}
-              />
+              <div>
+                <div class="membership-audience">
+                  <h2>{__('Block Membership Audience')}</h2>
+                  <MembershipVisibility
+                    visibility={attributes.bccLoginVisibility || defaultLevel}
+                    onUpdateVisibility={(value) => {
+                      setAttributes({ bccLoginVisibility: Number(value) || undefined })
+                    }}
+                    {...props}
+                  />
+                </div>
+                <div class="target-audience">
+                  <h2>{__('Block Target Audience')}</h2>
+                  <TargetVisibility
+                    targetAudienceVisibility={attributes.bccLoginTargetVisibility || new Array()}
+                    onUpdateTargetVisibility={(values) => {
+                      let updatedVisibility = new Array()
+                      values.forEach(value => {
+                        updatedVisibility.push(value)
+                      })
+                      setAttributes({ bccLoginTargetVisibility: updatedVisibility || undefined })
+                    }}
+                    {...props}
+                  />
+                </div>
+              </div>
             </PanelBody>
           </InspectorControls>
           <BlockEdit {...props} />
@@ -115,6 +114,52 @@ addFilter(
     })
   }, 'withInspectorControl')
 )
+
+const MembershipVisibility = ({
+  visibility,
+  instanceId,
+  onUpdateVisibility
+}) => {
+  return (
+    <div class="membership-visibility">
+      <RadioControl
+        name={ `bcc-login-visibility__setting-${instanceId}` }
+        options={ visibilityOptions }
+        selected={ visibility }
+        onChange={ (value) => onUpdateVisibility(value) }
+      />
+    </div>
+  )
+}
+
+const TargetVisibility = ({
+  targetAudienceVisibility,
+  instanceId,
+  onUpdateTargetVisibility
+}) => {
+  const [checked, setChecked] = useState(false)
+  let postTargetAudience = [...targetAudienceVisibility]
+  return (
+    targetAudience.map(({ value, label }) => (
+      <CheckboxControl
+        label={ label }
+        name={ `bcc-login-role-visibility__setting-${instanceId}` }
+        value={ value }
+        checked={ postTargetAudience.includes(value) }
+        onChange={ () => {
+          const index = postTargetAudience.indexOf(value)
+          if (index === -1) {
+            postTargetAudience.push(value)
+          } else {
+            postTargetAudience.splice(index, 1)
+          }
+          onUpdateTargetVisibility(postTargetAudience)
+          setChecked(!checked)
+        }}
+      />
+    ))
+  )
+}
 
 addFilter(
   'blocks.registerBlockType',
@@ -125,8 +170,11 @@ addFilter(
       ...settings.attributes,
       bccLoginVisibility: {
         type: 'number',
-        default: defaultLevel,
+        default: defaultLevel
       },
+      bccLoginTargetVisibility: {
+        type: 'array'
+      }
     }
   })
 )
@@ -141,6 +189,7 @@ addFilter(
       element.props.children,
       {
         bccLoginVisibility: attributes.bccLoginVisibility,
+        bccLoginTargetVisibility: attributes.bccLoginTargetVisibility
       }
     )
   )

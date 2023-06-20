@@ -76,7 +76,7 @@ class BCC_Login_Settings_Provider {
         }
 
         // Set settings from options
-        $settings->default_visibility = get_option( 'bcc_default_visibility', $settings->default_visibility ?? 2 ); // default to authenticated users
+        $settings->default_visibility = (int) get_option( 'bcc_default_visibility', $settings->default_visibility ?? 2 ); // default to authenticated users
         $settings->member_organization_name = get_option( 'bcc_member_organization_name', $settings->member_organization_name );
 
         // Backwards compatibility with old plugin configuration.

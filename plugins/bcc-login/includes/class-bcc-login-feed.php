@@ -29,6 +29,4 @@ class BCC_Login_Feed {
             return '<category>internal</category>';
         }
     }
-
-
 }

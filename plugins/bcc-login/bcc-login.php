@@ -12,6 +12,8 @@ define( 'BCC_LOGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'BCC_LOGIN_URL', plugin_dir_url( __FILE__ ) );
 
 require_once( 'includes/class-bcc-login-token-utility.php');
+require_once( 'includes/class-bcc-login-comparer.php' );
+require_once( 'includes/class-bcc-login-user.php' );
 require_once( 'includes/class-bcc-login-settings.php' );
 require_once( 'includes/class-bcc-login-client.php' );
 require_once( 'includes/class-bcc-login-endpoints.php' );
@@ -42,8 +44,6 @@ class BCC_Login {
     private BCC_Login_Feed $_feed;
     private BCC_Login_Updater $_updater;
     
-
-
     /**
      * Initialize the plugin.
      */
@@ -55,8 +55,8 @@ class BCC_Login {
 
         $this->_settings = $settings_provider->get_settings();
         $this->_endpoints = new BCC_Login_Endpoints( $this->_settings );
-        $this->_client = new BCC_Login_Client($this->_settings);
-        $this->_users = new BCC_Login_Users($this->_settings);
+        $this->_client = new BCC_Login_Client( $this->_settings );
+        $this->_users = new BCC_Login_Users( $this->_settings );
         $this->_visibility = new BCC_Login_Visibility( $this->_settings, $this->_client );
         $this->_widgets = new BCC_Login_Widgets( $this->_settings, $this->_client );
         $this->_feed = new BCC_Login_Feed( $this->_settings, $this->_client );
@@ -81,8 +81,6 @@ class BCC_Login {
         return $links;
     }
 
-      
-
     function redirect_login() {
         global $pagenow;
 
@@ -101,8 +99,6 @@ class BCC_Login {
             $this->_client->start_login();
         }        
     }
-
-    
 
     function add_auto_login_script() {
         if ( is_front_page() && !is_user_logged_in() ) {
@@ -126,7 +122,6 @@ class BCC_Login {
             </script>' . PHP_EOL;
         }
     }
-
 
     function should_auto_login() {
 
@@ -159,7 +154,6 @@ class BCC_Login {
         }
         return false;
     }
-
 
     /**
      * End PHP session (e.g. after logout)
