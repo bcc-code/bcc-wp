@@ -9,7 +9,7 @@
     display: none !important;
 }
 </style>
-
+<!-- 
 <script src="https://cdn.auth0.com/js/auth0/9.18/auth0.min.js"></script>
 <script type="text/javascript">
 (function () {
@@ -32,4 +32,4 @@
         });
     }, 500)
 })()
-</script>
+</script> -->
