@@ -121,7 +121,7 @@ class BCC_Login {
                         for (let i=0; i<auto_login_referrers.length;i++) {
                             let referrer = auto_login_referrers[i];
                             if (document.referrer && document.referer.indexOf("http") === 0) {
-                                let host = document.referrer.split('/')[2];
+                                let host = document.referrer.split("/")[2];
                                 if (host && (host.indexOf(referrer) == 0 || (referrer.indexOf(".") != -1 && host.indexOf(referrer) != -1))) {
                                     should_login = true;
                                 }
