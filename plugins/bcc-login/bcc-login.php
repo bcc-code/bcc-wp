@@ -110,15 +110,21 @@ class BCC_Login {
             echo '<script id="auto-login-redirect">
                 const auto_login_referrers=["'.implode('","',$this->auto_login_referrers).'"];
                 let should_login = false;
-                if (document.cookie.indexOf("wp_has_logged_in") >= 0) {
-                    should_login = true;
-                } else {
-                    for (let i=0; i<auto_login_referrers.length;i++) {
-                        let referrer = auto_login_referrers[i];
-                        if (document.referrer && document.referer.indexOf("http") === 0) {
-                            let host = document.referrer.split('/')[2];
-                            if (host && (host.indexOf(referrer) == 0 || (referrer.indexOf(".") != -1 && host.indexOf(referrer) != -1))) {
-                                should_login = true;
+                let already_tried = sessionStorage.getItem("wp_auto_login_attempted");
+                if (!already_tried) {
+
+                    sessionStorage.setItem("wp_auto_login_attempted", "true");
+
+                    if (document.cookie.indexOf("wp_has_logged_in") >= 0) {
+                        should_login = true;
+                    } else {
+                        for (let i=0; i<auto_login_referrers.length;i++) {
+                            let referrer = auto_login_referrers[i];
+                            if (document.referrer && document.referer.indexOf("http") === 0) {
+                                let host = document.referrer.split('/')[2];
+                                if (host && (host.indexOf(referrer) == 0 || (referrer.indexOf(".") != -1 && host.indexOf(referrer) != -1))) {
+                                    should_login = true;
+                                }
                             }
                         }
                     }
