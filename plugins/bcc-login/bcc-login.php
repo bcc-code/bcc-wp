@@ -31,7 +31,7 @@ class BCC_Login {
     private $plugin;
     private $plugin_slug;
     private $plugin_name = "BCC Login";
-    private $auto_login_referrers = ["brunstad.org", "portal.bcc.no"];
+    private $auto_login_referrers = ["brunstad.org", "portal.bcc.no", "bcc"];
 
     private BCC_Login_Settings $_settings;
     private BCC_Login_Endpoints $_endpoints;
@@ -115,8 +115,11 @@ class BCC_Login {
                 } else {
                     for (let i=0; i<auto_login_referrers.length;i++) {
                         let referrer = auto_login_referrers[i];
-                        if (document.referrer.indexOf(referrer) != -1) {
-                            should_login = true;
+                        if (document.referrer && document.referer.indexOf("http") === 0) {
+                            let host = document.referrer.split('/')[2];
+                            if (host && (host.indexOf(referrer) == 0 || (referrer.indexOf(".") != -1 && host.indexOf(referrer) != -1))) {
+                                should_login = true;
+                            }
                         }
                     }
                 }
