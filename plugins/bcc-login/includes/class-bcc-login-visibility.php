@@ -219,6 +219,11 @@ class BCC_Login_Visibility {
             return $query;
         }
 
+        // Don't filter menu items. They are handled in 'filter_menu_items()'
+        if ( $query->query['post_type'] === 'nav_menu_item' ) {
+            return $query;
+        }
+
         // Allow feeds to be accessed using key
         if ( $query->is_feed && ! empty($this->_settings->feed_key) && array_key_exists('id',$_GET) && $this->_settings->feed_key == $_GET['id'] ) {
             return $query;
