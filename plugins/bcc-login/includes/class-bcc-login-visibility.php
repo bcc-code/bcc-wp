@@ -270,7 +270,7 @@ class BCC_Login_Visibility {
 
         foreach ( $items as $key => $item ) {
             // Don't render children of removed menu items.
-            if ( in_array( $item->menu_item_parent, $removed, true ) ) {
+            if ( $item->menu_item_parent && in_array( $item->menu_item_parent, $removed, true ) ) {
                 $removed[] = $item->ID;
                 unset( $items[ $key ] );
                 continue;
