@@ -341,8 +341,44 @@ class BCC_Login_Client {
         return $result;
     }
 
-    
+    function get_coreapi_token() : string {
+        $token_response = $this->request_coreapi_token();
+        return $token_response->access_token;
+    }
 
+    private function request_coreapi_token() : Token_Response {
+        $parsed_url = parse_url( $this->_settings->token_endpoint );
+        $host = $parsed_url['host'];
+
+        $request = array(
+            'body' => array(
+                'client_id'     => $this->_settings->client_id,
+                'client_secret' => $this->_settings->client_secret,
+                'grant_type'    => 'client_credentials',
+                'audience'      => 'api.bcc.no',
+            )
+        );
+
+        $response = wp_remote_post( $this->_settings->token_endpoint, $request );
+
+        if ( is_wp_error( $response ) ) {
+            wp_die( $response->get_error_message() );
+        }
+
+        $body = json_decode($response['body']);
+
+        $token_response = new Token_Response();
+        foreach ($body as $key => $value) $token_response->{$key} = $value;
+
+        return $token_response;
+    }
+}
+
+
+
+class Token_Response {
+    public string $access_token;
+    public int $expires_in;
 }
 
 class Auth_State {
