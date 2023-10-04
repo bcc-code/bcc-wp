@@ -64,6 +64,11 @@ class BCC_Login_Visibility {
                 'type'         => 'number',
                 'default'      => self::VISIBILITY_DEFAULT,
             ) );
+            register_post_meta( $post_type, 'bcc_groups', array(
+                'show_in_rest' => current_user_can( 'edit_posts' ),
+                'single'       => false,
+                'type'         => 'string'
+            ) );
         }
     }
 
@@ -393,10 +398,14 @@ class BCC_Login_Visibility {
 
     // Quick Edit
     function add_post_audience_column( $columns ) {
-        $heading = __( 'Post Audience', 'bcc-login' );
+        $headingAudience = __( 'Post Audience', 'bcc-login' );
 
-        $columns['post_audience'] = $heading;
-        $columns['post_audience_name'] = $heading;
+        $columns['post_audience'] = $headingAudience;
+        $columns['post_audience_name'] = $headingAudience;
+
+        $headingGroups = __( 'Groups', 'bcc-login' );
+
+        $columns['post_groups'] = $headingGroups;
 
         return $columns;
     }
@@ -415,10 +424,24 @@ class BCC_Login_Visibility {
                 echo $this->titles[ $visibility ];
                 break;
             }
+            case 'post_groups': {
+                $groups = get_post_meta( $id, 'bcc_groups', false );
+                if($groups) {
+                    error_log("Print post groups");
+                    error_log(print_r($groups, true));
+    
+                    $groups_string = join(",",$groups );
+                    error_log(print_r($groups_string, true));
+                    echo $groups_string;
+
+                }
+                break;
+            }
         endswitch;
     }
 
     function quick_edit_fields( $column_name, $post_type ) {
+        error_log(print_r($column_name, true));
         switch( $column_name ) :
             case 'post_audience': {
                 wp_nonce_field( 'bcc_q_edit_nonce', 'bcc_nonce' );
@@ -432,6 +455,26 @@ class BCC_Login_Visibility {
                                     foreach ($this->titles as $level => $title) {
                                         echo '<input type="radio" name="bcc_login_visibility" id="option-'. $level .'" value="'. $level .'">
                                             <label for="option-'. $level .'">'. $title .'</label>';
+                                    }
+                                echo '</span>
+                            </label>
+                        </div>
+                    </div>
+                </fieldset>';
+
+                break;
+            }
+            case 'post_groups': {
+                wp_nonce_field( 'bcc_q_edit_nonce', 'bcc_nonce' );
+                echo '<fieldset class="inline-edit-col-right bcc-quick-edit">
+                    <div class="inline-edit-col">
+                        <div class="inline-edit-group wp-clearfix">
+                            <label class="post-audience">
+                                <span class="title">Groups</span>
+                                <span>';
+                                    foreach ($this->_settings->groups_allowed as $ind => $group) {
+                                        echo '<br><input type="checkbox" name="bcc_groups[]" id="option-'. $group .'" value="'. $group .'">
+                                            <label for="option-'. $group .'">'. $group .'</label>';
                                     }
                                 echo '</span>
                             </label>
@@ -455,6 +498,15 @@ class BCC_Login_Visibility {
 
         if ( isset( $_POST['bcc_login_visibility'] ) ) {
             update_post_meta( $post_id, 'bcc_login_visibility', $_POST['bcc_login_visibility'] );
+        }
+
+        if ( isset( $_POST['bcc_groups'] ) ) {
+            foreach ($this->_settings->groups_allowed as $group) {
+                delete_post_meta( $post_id, 'bcc_groups', $group );
+            }
+            foreach($_POST['bcc_groups'] as $group) {
+                add_post_meta( $post_id, 'bcc_groups', $group );
+            }
         }
     }
 

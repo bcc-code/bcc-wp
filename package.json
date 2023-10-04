@@ -20,7 +20,8 @@
     "@types/wordpress__i18n": "^3.11.0",
     "@types/wordpress__plugins": "^2.3.7",
     "@wordpress/scripts": "^26.1.0",
-    "rimraf": "^3.0.2"
+    "rimraf": "^3.0.2",
+    "yarn": "^1.22.19"
   },
   "engines": {
     "node": ">=12"

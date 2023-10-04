@@ -20,6 +20,7 @@ require_once( 'includes/class-bcc-login-users.php' );
 require_once( 'includes/class-bcc-login-widgets.php' );
 require_once( 'includes/class-bcc-login-feed.php' );
 require_once( 'includes/class-bcc-login-updater.php');
+require_once( 'includes/class-bcc-groups-client.php');
 
 class BCC_Login {
 
@@ -41,6 +42,7 @@ class BCC_Login {
     private BCC_Login_Widgets $_widgets;
     private BCC_Login_Feed $_feed;
     private BCC_Login_Updater $_updater;
+    private BCC_Groups_Client $_groups_client;
     
 
 
@@ -61,6 +63,7 @@ class BCC_Login {
         $this->_widgets = new BCC_Login_Widgets( $this->_settings, $this->_client );
         $this->_feed = new BCC_Login_Feed( $this->_settings, $this->_client );
         $this->_updater = new BCC_Login_Updater( $this->plugin, $this->plugin_slug, $this->plugin_version, $this->plugin_name );
+        $this->_groups = new BCC_Groups_Client( $this->_client );
 
         add_action( 'init', array( $this, 'redirect_login' ) );
         add_action( 'wp_authenticate', array( $this, 'end_session' ) );

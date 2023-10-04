@@ -67,8 +67,6 @@ class BCC_Login_Settings_Provider {
         $settings->topbar = get_option( 'bcc_topbar', 1 );
         $settings->show_protected_menu_items = get_option( 'show_protected_menu_items', 0);
         $settings->feed_key = get_option('bcc_feed_key', get_option('private_newsfeed_link', '') );
-        $settings->groups_allowed = explode(",", get_option('bcc_groups_allowed'));
-        error_log(print_r($settings->groups_allowed, true));
 
         // Set settings from environment variables.
         foreach ( $this->environment_variables as $key => $constant ) {
@@ -85,6 +83,7 @@ class BCC_Login_Settings_Provider {
         // Set settings from options
         $settings->default_visibility = get_option( 'bcc_default_visibility', $settings->default_visibility ?? 2 ); // default to authenticated users
         $settings->member_organization_name = get_option( 'bcc_member_organization_name', $settings->member_organization_name );
+        $settings->groups_allowed = explode(",", get_option('bcc_groups_allowed'));
 
         // Backwards compatibility with old plugin configuration.
         if ( ! isset( $settings->client_id ) ) {

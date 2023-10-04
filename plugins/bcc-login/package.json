@@ -14,12 +14,15 @@
 		"installation" : "Add OIDC_CLIENT_ID and OIDC_CLIENT_SECRET as environment variables or constants in wp-config.php, and active plugin",
 		"changelog" : ""
 	},
-	"banners" : {
-		"low" : "",
-		"high" : ""
+	"banners": {
+		"low": "",
+		"high": ""
 	},
 	"scripts": {
-	"start": "rimraf build && wp-scripts start",
-	"build": "rimraf build && wp-scripts build"
+		"start": "rimraf build && wp-scripts start",
+		"build": "rimraf build && wp-scripts build"
+	},
+	"dependencies": {
+		"rimraf": "^5.0.5"
 	}
 }
