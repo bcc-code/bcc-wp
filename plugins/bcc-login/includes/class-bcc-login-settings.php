@@ -18,6 +18,8 @@ class BCC_Login_Settings {
     public $default_visibility;
     public $feed_key;
     public $show_protected_menu_items;
+    // public $groups_enabled;
+    public array $groups_allowed;
 }
 
 /**
@@ -65,6 +67,8 @@ class BCC_Login_Settings_Provider {
         $settings->topbar = get_option( 'bcc_topbar', 1 );
         $settings->show_protected_menu_items = get_option( 'show_protected_menu_items', 0);
         $settings->feed_key = get_option('bcc_feed_key', get_option('private_newsfeed_link', '') );
+        $settings->groups_allowed = explode(",", get_option('bcc_groups_allowed'));
+        error_log(print_r($settings->groups_allowed, true));
 
         // Set settings from environment variables.
         foreach ( $this->environment_variables as $key => $constant ) {
@@ -133,6 +137,7 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_member_organization_name' );
         register_setting( $this->option_name, 'bcc_feed_key' );
         register_setting( $this->option_name, 'show_protected_menu_items' );
+        register_setting( $this->option_name, 'bcc_groups_allowed' );
 
         add_settings_section( 'general', '', null, $this->options_page );
 
@@ -220,6 +225,20 @@ class BCC_Login_Settings_Provider {
                 'label' => __( 'Show protected menu items to all/public users.', 'bcc-login' )
             )
         );
+
+        add_settings_field(
+            'bcc_groups_allowed',
+            'Allowed Groups',
+            array( $this, 'render_text_field' ),
+            $this->options_page,
+            'general',
+            array(
+                'name' => 'bcc_groups_allowed',
+                'value' => join(",", $this->_settings->groups_allowed),
+                'description' => 'Provide group uids for groups you\'re going to use (comma delimtied)'
+            )
+        );
+
     }
 
     /**
