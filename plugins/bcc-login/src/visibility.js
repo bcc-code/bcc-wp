@@ -69,7 +69,7 @@ function GroupsOptions({
   availableGroups,
   selectedGroups,
   instanceId,
-  onUpdateVisibility,
+  onUpdateGroup,
 }) {
   return (
     <div>
@@ -81,7 +81,14 @@ function GroupsOptions({
             name={`bcc-groups__setting-${instanceId}`}
             value={group}
             onChange={(event) => {
-              onUpdateGroup(event.target.value);
+              const index = selectedGroups.indexOf(group);
+              const newGroups = JSON.parse(JSON.stringify(selectedGroups));
+              if (index === -1) {
+                newGroups.push(group);
+              } else {
+                newGroups.splice(index, 1);
+              }
+              onUpdateGroup(newGroups);
             }}
             checked={selectedGroups.includes(group)}
             id={`bcc-login-post-${group}-${instanceId}`}
@@ -136,7 +143,7 @@ registerPlugin("bcc-groups", {
       const meta = getEditedPostAttribute("meta");
       return {
         selectedGroups: meta.bcc_groups,
-        availableGroups: ["397a3140-2fda-4d57-ba21-41682760f8b7", "abc-test"],
+        availableGroups: window.allowedGroups,
       };
     }),
     withDispatch((dispatch) => {
@@ -145,7 +152,7 @@ registerPlugin("bcc-groups", {
         onUpdateGroup(value) {
           editPost({
             meta: {
-              bcc_login_visibility: Number(value) || defaultLevel,
+              bcc_groups: value,
             },
           });
         },

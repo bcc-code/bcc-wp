@@ -210,6 +210,12 @@ class BCC_Login_Visibility {
             ) ),
             'before'
         );
+
+        wp_add_inline_script(
+            $scrcipt_handle,
+            'var allowedGroups = ' . json_encode($this->_settings->groups_allowed),
+            'before'
+        );
     }
 
     /**
