@@ -3,7 +3,7 @@
 /**
  * Plugin Name: BCC Login
  * Description: Integration to BCC's Login System.
- * Version: 1.1.154
+ * Version: 1.1.157
  * Author: BCC IT
  * License: GPL2
  */
@@ -28,7 +28,7 @@ class BCC_Login {
      * The plugin instance.
      */
     private static $instance = null;
-    private $plugin_version = "1.1.154";
+    private $plugin_version = "1.1.157";
     private $plugin;
     private $plugin_slug;
     private $plugin_name = "BCC Login";
@@ -69,6 +69,7 @@ class BCC_Login {
         add_action( 'wp_authenticate', array( $this, 'end_session' ) );
         add_action( 'wp_logout', array( $this, 'end_session' ) );
         add_action( 'wp_head', array( $this, 'add_auto_login_script' ) );
+        add_action( 'wp_head', array( $this, 'hide_admin_bar' ) );
 
         add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'plugin_settings_link'));
 
@@ -105,6 +106,12 @@ class BCC_Login {
         }        
     }
 
+
+    function hide_admin_bar() {
+        if (!is_user_logged_in()) {
+            echo '<style>#wpadminbar { display: none !important; }</style>';
+        }
+    }
     
 
     function add_auto_login_script() {

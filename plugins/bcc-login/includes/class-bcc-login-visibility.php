@@ -277,7 +277,7 @@ class BCC_Login_Visibility {
      * @return WP_Post[]
      */
     function filter_menu_items( $items ) {
-        if ( current_user_can( 'edit_posts' ) ) {
+        if ( current_user_can( 'edit_posts' ) || $this->_settings->show_protected_menu_items ) {
             return $items;
         }
 
