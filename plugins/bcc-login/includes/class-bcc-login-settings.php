@@ -216,7 +216,7 @@ class BCC_Login_Settings_Provider {
             'general',
             array(
                 'name' => 'show_protected_menu_items',
-                'value' => $this->_settings->topbar,
+                'value' => $this->_settings->show_protected_menu_items,
                 'label' => __( 'Show protected menu items to all/public users.', 'bcc-login' )
             )
         );
