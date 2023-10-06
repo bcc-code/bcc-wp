@@ -231,7 +231,7 @@ class BCC_Login_Visibility {
         }
 
         // Don't filter menu items. They are handled in 'filter_menu_items()'
-        if ( $query->query['post_type'] === 'nav_menu_item' ) {
+        if ( array_key_exists('post_type', $query->query) && $query->query['post_type'] === 'nav_menu_item' ) {
             return $query;
         }
 
