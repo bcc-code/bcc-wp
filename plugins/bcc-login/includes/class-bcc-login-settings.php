@@ -17,6 +17,7 @@ class BCC_Login_Settings {
     public $topbar;
     public $default_visibility;
     public $feed_key;
+    public $show_protected_menu_items;
 }
 
 /**
@@ -45,7 +46,8 @@ class BCC_Login_Settings_Provider {
         'create_missing_users'      => 'OIDC_CREATE_USERS',
         'default_visibility'        => 'OIDC_DEFAULT_VISIBILITY',
         'member_organization_name'  => 'BCC_WP_MEMBER_ORGANIZATION_NAME',
-        'feed_key'                  => 'BCC_WP_FEED_KEY'
+        'feed_key'                  => 'BCC_WP_FEED_KEY',
+        'show_protected_menu_items' => 'BCC_WP_SHOW_PROTECTED_MENU_ITEMS'
     );
 
     function __construct () {
@@ -61,6 +63,7 @@ class BCC_Login_Settings_Provider {
         $settings->create_missing_users = false;
         $settings->member_organization_claim_type = 'https://login.bcc.no/claims/churchName';
         $settings->topbar = get_option( 'bcc_topbar', 1 );
+        $settings->show_protected_menu_items = get_option( 'show_protected_menu_items', 0);
         $settings->feed_key = get_option('bcc_feed_key', get_option('private_newsfeed_link', '') );
 
         // Set settings from environment variables.
@@ -129,6 +132,7 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_default_visibility' );
         register_setting( $this->option_name, 'bcc_member_organization_name' );
         register_setting( $this->option_name, 'bcc_feed_key' );
+        register_setting( $this->option_name, 'show_protected_menu_items' );
 
         add_settings_section( 'general', '', null, $this->options_page );
 
@@ -201,6 +205,19 @@ class BCC_Login_Settings_Provider {
                 'name' => 'bcc_topbar',
                 'value' => $this->_settings->topbar,
                 'label' => __( 'Show the BCC topbar', 'bcc-login' )
+            )
+        );
+
+        add_settings_field(
+            'show_protected_menu_items',
+            __( 'Show Protected Menu Items', 'bcc-login' ),
+            array( $this, 'render_checkbox_field' ),
+            $this->options_page,
+            'general',
+            array(
+                'name' => 'show_protected_menu_items',
+                'value' => $this->_settings->topbar,
+                'label' => __( 'Show protected menu items to all/public users.', 'bcc-login' )
             )
         );
     }
