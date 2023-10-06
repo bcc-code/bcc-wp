@@ -66,6 +66,7 @@ class BCC_Login {
         add_action( 'wp_authenticate', array( $this, 'end_session' ) );
         add_action( 'wp_logout', array( $this, 'end_session' ) );
         add_action( 'wp_head', array( $this, 'add_auto_login_script' ) );
+        add_action( 'wp_head', array( $this, 'hide_admin_bar' ) );
 
         add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'plugin_settings_link'));
 
@@ -102,6 +103,12 @@ class BCC_Login {
         }        
     }
 
+
+    function hide_admin_bar() {
+        if (!is_user_logged_in()) {
+            echo '<style>#wpadminbar { display: none !important; }</style>';
+        }
+    }
     
 
     function add_auto_login_script() {
