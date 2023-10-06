@@ -4,6 +4,7 @@ class BCC_Login_Visibility {
 
     private BCC_Login_Settings $_settings;
     private BCC_Login_Client $_client;
+    private BCC_Groups_Client $_groups;
 
     public const VISIBILITY_DEFAULT = 0;
     public const VISIBILITY_PUBLIC = 1;
@@ -26,9 +27,10 @@ class BCC_Login_Visibility {
 
     private $post_types = array( 'post', 'page' );
 
-    function __construct( BCC_Login_Settings $settings, BCC_Login_Client $client ) {
+    function __construct( BCC_Login_Settings $settings, BCC_Login_Client $client, BCC_Groups_Client $groups ) {
         $this->_settings = $settings;
         $this->_client = $client;
+        $this->_groups = $groups;
 
         add_action( 'init', array( $this, 'on_init' ) );
         add_action( 'wp_loaded', array( $this, 'register_block_visibility_attribute' ) );
@@ -226,6 +228,10 @@ class BCC_Login_Visibility {
      * @return WP_Query
      */
     function filter_pre_get_posts( $query ) {
+        // error_log(print_r("Get user groups", true));
+        $groups = $this->get_current_user_groups();
+        // error_log(print_r($groups, true));
+
         if ( current_user_can( 'edit_posts' ) || $query->is_singular ) {
             return $query;
         }
@@ -239,6 +245,8 @@ class BCC_Login_Visibility {
         if ( $query->is_feed && ! empty($this->_settings->feed_key) && array_key_exists('id',$_GET) && $this->_settings->feed_key == $_GET['id'] ) {
             return $query;
         }
+
+
 
         // Get original meta query
         $meta_query = (array)$query->get('meta_query');
@@ -321,6 +329,18 @@ class BCC_Login_Visibility {
         }
 
         return self::VISIBILITY_PUBLIC;
+    }
+
+    /**
+     * @return array
+     */
+    private function get_current_user_groups() {
+        $user  = wp_get_current_user();
+
+        // error_log(print_r($user->person_uid, true));
+        // error_log(print_r(session_id(), true));
+
+        return array();
     }
 
     /**
@@ -433,11 +453,7 @@ class BCC_Login_Visibility {
             case 'post_groups': {
                 $groups = get_post_meta( $id, 'bcc_groups', false );
                 if($groups) {
-                    error_log("Print post groups");
-                    error_log(print_r($groups, true));
-    
                     $groups_string = join(",",$groups );
-                    error_log(print_r($groups_string, true));
                     echo $groups_string;
 
                 }
@@ -447,7 +463,6 @@ class BCC_Login_Visibility {
     }
 
     function quick_edit_fields( $column_name, $post_type ) {
-        error_log(print_r($column_name, true));
         switch( $column_name ) :
             case 'post_audience': {
                 wp_nonce_field( 'bcc_q_edit_nonce', 'bcc_nonce' );
