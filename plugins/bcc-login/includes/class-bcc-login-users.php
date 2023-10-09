@@ -102,6 +102,11 @@ class BCC_Login_Users {
                 'role'  => 'bcc-login-member',
             ),
             array(
+                'login' => 'bcc-login-youth-member',
+                'desc'  => __( 'Youth Member' ),
+                'role'  => 'bcc-login-youth-member',
+            ),
+            array(
                 'login' => 'bcc-login-subscriber',
                 'desc'  => __( 'Subscriber' ),
                 'role'  => 'subscriber',
@@ -119,7 +124,7 @@ class BCC_Login_Users {
         return $user;
     }
 
-    static function get_subscriber() {
+    static function get_youth_member() {
         $logins = self::get_logins();
         $user = get_user_by( 'login', $logins[1]['login'] );
         if ( ! is_a( $user, 'WP_User' ) || ! $user->exists() ) {
@@ -127,6 +132,11 @@ class BCC_Login_Users {
             $user = get_user_by( 'login', $logins[1]['login'] );
         }
         return $user;
+    }
+
+    static function get_subscriber() {
+        $logins = self::get_logins();
+        return get_user_by( 'login', $logins[2]['login'] );
     }
 
     static function create_users() {

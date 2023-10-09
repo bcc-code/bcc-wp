@@ -222,6 +222,13 @@ class BCC_Login_Client {
 
     function get_common_login( $user_claim ) {
         if ( $user_claim[$this->_settings->member_organization_claim_type] == $this->_settings->member_organization_name ) {
+            $birthdate = date_create($user_claim['birthdate']);
+            $current_date = date_create();
+            $diff = date_diff($birthdate, $current_date);
+            if ( $diff->y <= 36 ) {
+                return BCC_Login_Users::get_youth_member();
+            }
+
             return BCC_Login_Users::get_member();
         }
 

@@ -204,6 +204,9 @@ class BCC_Login {
         if ( ! get_role( 'bcc-login-member' ) ) {
             add_role( 'bcc-login-member', __( 'Member' ), array( 'read' => true ) );
         }
+        if ( ! get_role( 'bcc-login-youth-member' ) ) {
+            add_role( 'bcc-login-youth-member', __( 'Youth Member' ), array( 'read' => true ) );
+        }
         BCC_Login_Users::create_users();
 
         // Flush rewrite rules to make pretty URLs for endpoints work.
