@@ -2,7 +2,6 @@
 
 class BCC_Login_Settings {
     public $authority;
-    public $jwks_uri;
     public $token_endpoint;
     public $userinfo_endpoint;
     public $authorization_endpoint;
@@ -17,9 +16,10 @@ class BCC_Login_Settings {
     public $topbar;
     public $default_visibility;
     public $feed_key;
-    // public $groups_enabled;
-    public array $groups_allowed;
     public $show_protected_menu_items;
+    public array $groups_allowed;
+    public string $coreapi_audience;
+    public string $coreapi_base_url;
 }
 
 /**
@@ -43,23 +43,22 @@ class BCC_Login_Settings_Provider {
         'userinfo_endpoint'         => 'OIDC_ENDPOINT_USERINFO_URL',
         'token_endpoint'            => 'OIDC_ENDPOINT_TOKEN_URL',
         'end_session_endpoint'      => 'OIDC_ENDPOINT_LOGOUT_URL',
-        'authority'                 => 'OIDC_AUTHORITY',
         'scope'                     => 'OIDC_SCOPE',
         'create_missing_users'      => 'OIDC_CREATE_USERS',
         'default_visibility'        => 'OIDC_DEFAULT_VISIBILITY',
         'member_organization_name'  => 'BCC_WP_MEMBER_ORGANIZATION_NAME',
         'feed_key'                  => 'BCC_WP_FEED_KEY',
-        'show_protected_menu_items' => 'BCC_WP_SHOW_PROTECTED_MENU_ITEMS'
+        'show_protected_menu_items' => 'BCC_WP_SHOW_PROTECTED_MENU_ITEMS',
+        'coreapi_audience'          => 'BCC_COREAPI_AUDIENCE',
+        'coreapi_base_url'          => 'BCC_COREAPI_BASE_URL',
     );
 
     function __construct () {
         // Set default settings.
         $settings = new BCC_Login_Settings();
-        $settings->authority = 'https://login.bcc.no';
         $settings->token_endpoint = 'https://login.bcc.no/oauth/token';
         $settings->authorization_endpoint = 'https://login.bcc.no/authorize';
         $settings->userinfo_endpoint = 'https://login.bcc.no/userinfo';
-        $settings->jwks_uri = 'https://login.bcc.no/.well-known/jwks.json';
         $settings->scope = 'email openid profile church';
         $settings->redirect_uri = 'oidc-authorize';
         $settings->create_missing_users = false;
@@ -67,6 +66,8 @@ class BCC_Login_Settings_Provider {
         $settings->topbar = get_option( 'bcc_topbar', 1 );
         $settings->show_protected_menu_items = get_option( 'show_protected_menu_items', 0);
         $settings->feed_key = get_option('bcc_feed_key', get_option('private_newsfeed_link', '') );
+        $settings->coreapi_audience = 'api.bcc.no';
+        $settings->coreapi_base_url = 'https://api.bcc.no';
 
         // Set settings from environment variables.
         foreach ( $this->environment_variables as $key => $constant ) {

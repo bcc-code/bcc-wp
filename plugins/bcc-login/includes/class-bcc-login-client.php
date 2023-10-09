@@ -346,11 +346,13 @@ class BCC_Login_Client {
     }
 
     public function get_current_user_person_uid() : string|bool {
-        $token_id = $_COOKIE['oidc_token_id'];
 
-        if ( empty($token_id) ) {
+        if ( !array_key_exists('oidc_token_id', $_COOKIE) ) {
             return false;
         }
+        error_log(print_r($_COOKIE, true));
+        $token_id = $_COOKIE['oidc_token_id'];
+
 
         $id_token = get_transient( 'oidc_id_token_' . $token_id );
 
@@ -372,52 +374,8 @@ class BCC_Login_Client {
         return $token_body->{'https://login.bcc.no/claims/personUid'};
     }
 
-    public function get_coreapi_token() : string {
-        $cached_token = $this->_storage->get('coreapi_token');
-        if ($cached_token !== null) {
-            return $cached_token;
-        }
-
-        $token_response = $this->request_coreapi_token();
-
-        $this->_storage->set('coreapi_token', $token_response->access_token, $token_response->expires_in * 0.9);
-        return $token_response->access_token;
-    }
-
-    private function request_coreapi_token() : Token_Response {
-        $parsed_url = parse_url( $this->_settings->token_endpoint );
-        $host = $parsed_url['host'];
-
-        $request = array(
-            'body' => array(
-                'client_id'     => $this->_settings->client_id,
-                'client_secret' => $this->_settings->client_secret,
-                'grant_type'    => 'client_credentials',
-                'audience'      => 'api.bcc.no',
-            )
-        );
-
-        $response = wp_remote_post( $this->_settings->token_endpoint, $request );
-
-        if ( is_wp_error( $response ) ) {
-            wp_die( $response->get_error_message() );
-        }
-
-        $body = json_decode($response['body']);
-
-        $token_response = new Token_Response();
-        foreach ($body as $key => $value) $token_response->{$key} = $value;
-
-        return $token_response;
-    }
 }
 
-
-
-class Token_Response {
-    public string $access_token;
-    public int $expires_in;
-}
 
 class Auth_State {
     public string $state;
