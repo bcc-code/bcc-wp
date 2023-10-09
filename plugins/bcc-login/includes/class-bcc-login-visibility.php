@@ -368,7 +368,7 @@ class BCC_Login_Visibility {
     private function get_current_user_groups() : array {
         $person_uid  = $this->_client->get_current_user_person_uid();
         if(!$person_uid) {
-            return array("");
+            return array();
         }
         return $this->_coreapi->get_groups_for_user($person_uid);;
     }

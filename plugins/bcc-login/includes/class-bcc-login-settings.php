@@ -14,7 +14,7 @@ class BCC_Login_Settings {
     public $default_visibility;
     public $feed_key;
     public $show_protected_menu_items;
-    public array $site_groups;
+    public array $site_groups = array();
     public string $coreapi_audience;
     public string $coreapi_base_url;
 }
@@ -78,7 +78,11 @@ class BCC_Login_Settings_Provider {
         // Set settings from options
         $settings->default_visibility = get_option( 'bcc_default_visibility', $settings->default_visibility ?? 2 ); // default to authenticated users
         $settings->member_organization_name = get_option( 'bcc_member_organization_name', $settings->member_organization_name );
-        $settings->site_groups = explode(",", get_option('bcc_site_groups'));
+
+        $site_groups_option = get_option('bcc_site_groups');
+        if ($site_groups_option) {
+            $settings->site_groups = explode(",", $site_groups_option);
+        }
 
         // Backwards compatibility with old plugin configuration.
         if ( ! isset( $settings->client_id ) ) {

@@ -49,6 +49,8 @@ class BCC_Coreapi_Client
 
     function fetch_groups_for_user(string $user_uid): array
     {
+        if(empty( $this->_settings->site_groups)) return array();
+
         $token = $this->get_coreapi_token();
 
         $request_url =  $this->_settings->coreapi_base_url . "/v2/persons/". $user_uid . "/checkGroups";
@@ -67,6 +69,11 @@ class BCC_Coreapi_Client
         if ( is_wp_error( $response ) ) {
             wp_die( $response->get_error_message() );
         }
+
+        if ($response['response']['code'] != 200) {
+            wp_die("cannot fetch groups for user: " . print_r($response['body'], true));
+        }
+
 
         $body = json_decode($response['body']);
 
