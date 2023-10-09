@@ -1,11 +1,8 @@
 <?php
 
 class BCC_Login_Settings {
-    public $authority;
     public $token_endpoint;
-    public $userinfo_endpoint;
     public $authorization_endpoint;
-    public $end_session_endpoint;
     public $client_id;
     public $client_secret;
     public $scope;
@@ -17,7 +14,7 @@ class BCC_Login_Settings {
     public $default_visibility;
     public $feed_key;
     public $show_protected_menu_items;
-    public array $groups_allowed;
+    public array $site_groups;
     public string $coreapi_audience;
     public string $coreapi_base_url;
 }
@@ -40,9 +37,7 @@ class BCC_Login_Settings_Provider {
         'client_id'                 => 'OIDC_CLIENT_ID',
         'client_secret'             => 'OIDC_CLIENT_SECRET',
         'authorization_endpoint'    => 'OIDC_ENDPOINT_LOGIN_URL',
-        'userinfo_endpoint'         => 'OIDC_ENDPOINT_USERINFO_URL',
         'token_endpoint'            => 'OIDC_ENDPOINT_TOKEN_URL',
-        'end_session_endpoint'      => 'OIDC_ENDPOINT_LOGOUT_URL',
         'scope'                     => 'OIDC_SCOPE',
         'create_missing_users'      => 'OIDC_CREATE_USERS',
         'default_visibility'        => 'OIDC_DEFAULT_VISIBILITY',
@@ -58,7 +53,6 @@ class BCC_Login_Settings_Provider {
         $settings = new BCC_Login_Settings();
         $settings->token_endpoint = 'https://login.bcc.no/oauth/token';
         $settings->authorization_endpoint = 'https://login.bcc.no/authorize';
-        $settings->userinfo_endpoint = 'https://login.bcc.no/userinfo';
         $settings->scope = 'email openid profile church';
         $settings->redirect_uri = 'oidc-authorize';
         $settings->create_missing_users = false;
@@ -84,7 +78,7 @@ class BCC_Login_Settings_Provider {
         // Set settings from options
         $settings->default_visibility = get_option( 'bcc_default_visibility', $settings->default_visibility ?? 2 ); // default to authenticated users
         $settings->member_organization_name = get_option( 'bcc_member_organization_name', $settings->member_organization_name );
-        $settings->groups_allowed = explode(",", get_option('bcc_groups_allowed'));
+        $settings->site_groups = explode(",", get_option('bcc_site_groups'));
 
         // Backwards compatibility with old plugin configuration.
         if ( ! isset( $settings->client_id ) ) {
@@ -136,7 +130,7 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_default_visibility' );
         register_setting( $this->option_name, 'bcc_member_organization_name' );
         register_setting( $this->option_name, 'bcc_feed_key' );
-        register_setting( $this->option_name, 'bcc_groups_allowed' );
+        register_setting( $this->option_name, 'bcc_site_groups' );
         register_setting( $this->option_name, 'show_protected_menu_items' );
 
         add_settings_section( 'general', '', null, $this->options_page );
@@ -214,14 +208,14 @@ class BCC_Login_Settings_Provider {
         );
 
         add_settings_field(
-            'bcc_groups_allowed',
+            'bcc_site_groups',
             'Allowed Groups',
             array( $this, 'render_text_field' ),
             $this->options_page,
             'general',
             array(
-                'name' => 'bcc_groups_allowed',
-                'value' => join(",", $this->_settings->groups_allowed),
+                'name' => 'bcc_site_groups',
+                'value' => join(",", $this->_settings->site_groups),
                 'description' => 'Provide group uids for groups you\'re going to use (comma delimtied)'
             )
         );
