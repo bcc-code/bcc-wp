@@ -126,7 +126,7 @@ class BCC_Login_Visibility {
 
         if ( $visibility && $visibility > $level ) {
             if ( is_user_logged_in() ) {
-                return $this->no_access();
+                return $this->not_allowed_to_view_page();
             } else {
                $this->_client->start_login();
             }
@@ -138,15 +138,15 @@ class BCC_Login_Visibility {
         }
         $user_groups = $this->get_current_user_groups();
         if (!$user_groups) {
-            return $this->no_access();
+            return $this->not_allowed_to_view_page();
         }
         if(count(array_intersect($post_groups, $user_groups)) == 0) {
-            return $this->no_access();
+            return $this->not_allowed_to_view_page();
         }
         
     }
 
-    private function no_access(){
+    private function not_allowed_to_view_page(){
         wp_die(
             sprintf(
                 '%s<br><a href="%s">%s</a>',

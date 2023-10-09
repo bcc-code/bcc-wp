@@ -341,7 +341,7 @@ class BCC_Login_Client {
         return $result;
     }
 
-    public function get_current_user_person_uid() : string|bool {
+    public function get_current_user_person_uid() : string|false {
 
         if ( !array_key_exists('oidc_token_id', $_COOKIE) ) {
             return false;
