@@ -114,15 +114,18 @@ class BCC_Login_Visibility {
         }
 
         $post = get_post();
+        if ( !$post ) {
+            return;
+        }
 
         $level      = $this->get_current_user_level();
         $visibility = $this->_settings->default_visibility;
-        if ( $post ) {
-            $post_visibility = (int) get_post_meta( $post->ID, 'bcc_login_visibility', true );
-            if ( $post_visibility ) {
-                $visibility = $post_visibility;
-            }
+
+        $post_visibility = (int) get_post_meta( $post->ID, 'bcc_login_visibility', true );
+        if ( $post_visibility ) {
+            $visibility = $post_visibility;
         }
+
 
         if ( $visibility && $visibility > $level ) {
             if ( is_user_logged_in() ) {
