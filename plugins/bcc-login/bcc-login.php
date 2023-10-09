@@ -21,7 +21,6 @@ require_once( 'includes/class-bcc-login-widgets.php' );
 require_once( 'includes/class-bcc-login-feed.php' );
 require_once( 'includes/class-bcc-login-updater.php');
 require_once( 'includes/class-bcc-coreapi-client.php');
-require_once( 'includes/class-bcc-encryption.php');
 require_once( 'includes/class-bcc-storage.php');
 
 class BCC_Login {
@@ -45,7 +44,6 @@ class BCC_Login {
     private BCC_Login_Feed $_feed;
     private BCC_Login_Updater $_updater;
     private BCC_Coreapi_Client $_coreapi;
-    private BCC_Encryption $_encryption;
     private BCC_Storage $_storage;
     
 
@@ -60,8 +58,7 @@ class BCC_Login {
 		$this->plugin_slug = plugin_basename( __DIR__ );
 
         $this->_settings = $settings_provider->get_settings();
-        $this->_encryption = new BCC_Encryption( $this->_settings->client_secret );
-        $this->_storage = new BCC_Storage( $this->_encryption );
+        $this->_storage = new BCC_Storage($this->_settings->client_secret );
         $this->_coreapi = new BCC_Coreapi_Client($this->_settings, $this->_storage );
 
         $this->_endpoints = new BCC_Login_Endpoints( $this->_settings );
