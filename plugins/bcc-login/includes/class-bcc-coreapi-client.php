@@ -53,7 +53,7 @@ class BCC_Coreapi_Client
 
         $token = $this->get_coreapi_token();
 
-        $request_url =  $this->_settings->coreapi_base_url . "/v2/persons/". $user_uid . "/checkGroups";
+        $request_url =  $this->_settings->coreapi_base_url . "/v2/persons/". $user_uid . "/checkGroupMemberships";
         $request_body = array(
             "groupUids" => $this->_settings->site_groups
         );
