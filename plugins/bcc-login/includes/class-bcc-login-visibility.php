@@ -232,7 +232,7 @@ class BCC_Login_Visibility {
 
         wp_add_inline_script(
             $scrcipt_handle,
-            'var allowedGroups = ' . json_encode($this->_settings->groups_allowed),
+            'var allowedGroups = ' . json_encode($this->_settings->site_groups),
             'before'
         );
     }
@@ -245,10 +245,6 @@ class BCC_Login_Visibility {
      * @return WP_Query
      */
     function filter_pre_get_posts( $query ) {
-        // error_log(print_r("Get user groups", true));
-        $groups = $this->get_current_user_groups();
-        // error_log(print_r($groups, true));
-
         if ( current_user_can( 'edit_posts' ) || $query->is_singular ) {
             return $query;
         }
@@ -262,8 +258,6 @@ class BCC_Login_Visibility {
         if ( $query->is_feed && ! empty($this->_settings->feed_key) && array_key_exists('id',$_GET) && $this->_settings->feed_key == $_GET['id'] ) {
             return $query;
         }
-
-
 
         // Get original meta query
         $meta_query = (array)$query->get('meta_query');
@@ -368,10 +362,7 @@ class BCC_Login_Visibility {
         return self::VISIBILITY_PUBLIC;
     }
 
-    /**
-     * @return array
-     */
-    private function get_current_user_groups() {
+    private function get_current_user_groups() : array {
         $person_uid  = $this->_client->get_current_user_person_uid();
         if(!$person_uid) {
             return array("");
@@ -529,7 +520,7 @@ class BCC_Login_Visibility {
                             <label class="post-audience">
                                 <span class="title">Groups</span>
                                 <span>';
-                                    foreach ($this->_settings->groups_allowed as $ind => $group) {
+                                    foreach ($this->_settings->site_groups as $ind => $group) {
                                         echo '<br><input type="checkbox" name="bcc_groups[]" id="option-'. $group .'" value="'. $group .'">
                                             <label for="option-'. $group .'">'. $group .'</label>';
                                     }
@@ -558,7 +549,7 @@ class BCC_Login_Visibility {
         }
 
         if ( isset( $_POST['bcc_groups'] ) ) {
-            foreach ($this->_settings->groups_allowed as $group) {
+            foreach ($this->_settings->site_groups as $group) {
                 delete_post_meta( $post_id, 'bcc_groups', $group );
             }
             foreach($_POST['bcc_groups'] as $group) {

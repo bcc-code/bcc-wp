@@ -62,19 +62,15 @@ class BCC_Login {
         $this->_settings = $settings_provider->get_settings();
         $this->_encryption = new BCC_Encryption( $this->_settings->client_secret );
         $this->_storage = new BCC_Storage( $this->_encryption );
+        $this->_coreapi = new BCC_Coreapi_Client($this->_settings, $this->_storage );
 
         $this->_endpoints = new BCC_Login_Endpoints( $this->_settings );
-        $this->_client = new BCC_Login_Client($this->_settings, $this->_storage);
+        $this->_client = new BCC_Login_Client($this->_settings);
         $this->_users = new BCC_Login_Users($this->_settings);
-        $this->_coreapi = new BCC_Coreapi_Client($this->_settings, $this->_storage );
         $this->_visibility = new BCC_Login_Visibility( $this->_settings, $this->_client, $this->_coreapi );
         $this->_widgets = new BCC_Login_Widgets( $this->_settings, $this->_client );
         $this->_feed = new BCC_Login_Feed( $this->_settings, $this->_client );
         $this->_updater = new BCC_Login_Updater( $this->plugin, $this->plugin_slug, $this->plugin_version, $this->plugin_name );
-
-        // $user_uid = $this->_client->get_current_user_person_uid();
-        // $user_groups = $this->_coreapi->get_groups_for_user($user_uid);
-        // error_log(print_r($user_groups, true));
 
         add_action( 'init', array( $this, 'redirect_login' ) );
         add_action( 'wp_authenticate', array( $this, 'end_session' ) );

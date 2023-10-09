@@ -53,7 +53,7 @@ class BCC_Coreapi_Client
 
         $request_url =  $this->_settings->coreapi_base_url . "/v2/persons/". $user_uid . "/checkGroups";
         $request_body = array(
-            "groupUids" => $this->_settings->groups_allowed
+            "groupUids" => $this->_settings->site_groups
         );
 
         $response = wp_remote_post($request_url, array(

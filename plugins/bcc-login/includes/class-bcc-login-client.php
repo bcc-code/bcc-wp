@@ -3,12 +3,10 @@
 class BCC_Login_Client {
 
     private BCC_Login_Settings $_settings;
-    private BCC_Storage $_storage;
     private $STATE_TIME_LIMIT = 180;
 
-    function __construct( BCC_Login_Settings $settings, BCC_Storage $storage) {
+    function __construct( BCC_Login_Settings $settings) {
         $this->_settings = $settings;
-        $this->_storage = $storage;
         add_action( 'parse_request', array( $this, 'on_parse_request' ) );
     }
 
@@ -197,7 +195,6 @@ class BCC_Login_Client {
         $email = $email;
         $nickname = $id_token_claims['given_name'];
         $displayname = $id_token_claims['name'];
-        $person_uid = $id_token_claims['https://login.bcc.no/claims/personUid'];
         $values_missing = false;
 
         $user_data = array(
@@ -206,7 +203,6 @@ class BCC_Login_Client {
             'user_email' => $email,
             'display_name' => $displayname,
             'nickname' => $nickname,
-            'person_uid' => $person_uid,
             'first_name' => isset( $user_claim['given_name'] ) ? $user_claim['given_name'] : '',
             'last_name' => isset( $user_claim['family_name'] ) ? $user_claim['family_name'] : '',
         );
