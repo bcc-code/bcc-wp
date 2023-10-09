@@ -4,7 +4,7 @@ class BCC_Login_Visibility {
 
     private BCC_Login_Settings $_settings;
     private BCC_Login_Client $_client;
-    private BCC_Groups_Client $_groups;
+    private BCC_Coreapi_Client $_coreapi;
 
     public const VISIBILITY_DEFAULT = 0;
     public const VISIBILITY_PUBLIC = 1;
@@ -27,10 +27,10 @@ class BCC_Login_Visibility {
 
     private $post_types = array( 'post', 'page' );
 
-    function __construct( BCC_Login_Settings $settings, BCC_Login_Client $client, BCC_Groups_Client $groups ) {
+    function __construct( BCC_Login_Settings $settings, BCC_Login_Client $client, BCC_Coreapi_Client $groups ) {
         $this->_settings = $settings;
         $this->_client = $client;
-        $this->_groups = $groups;
+        $this->_coreapi = $groups;
 
         add_action( 'init', array( $this, 'on_init' ) );
         add_action( 'wp_loaded', array( $this, 'register_block_visibility_attribute' ) );
@@ -126,22 +126,39 @@ class BCC_Login_Visibility {
 
         if ( $visibility && $visibility > $level ) {
             if ( is_user_logged_in() ) {
-                wp_die(
-                    sprintf(
-                        '%s<br><a href="%s">%s</a>',
-                        __( 'Sorry, you are not allowed to view this page.', 'bcc-login' ),
-                        site_url(),
-                        __( 'Go to the front page', 'bcc-login' )
-                    ),
-                    __( 'Unauthorized' ),
-                    array(
-                        'response' => 401,
-                    )
-                );
+                return $this->no_access();
             } else {
                $this->_client->start_login();
             }
         }
+
+        $post_groups = get_post_meta( $post->ID, 'bcc_groups', false );
+        if (!$post_groups) {
+            return;
+        }
+        $user_groups = $this->get_current_user_groups();
+        if (!$user_groups) {
+            return $this->no_access();
+        }
+        if(count(array_intersect($post_groups, $user_groups)) == 0) {
+            return $this->no_access();
+        }
+        
+    }
+
+    private function no_access(){
+        wp_die(
+            sprintf(
+                '%s<br><a href="%s">%s</a>',
+                __( 'Sorry, you are not allowed to view this page.', 'bcc-login' ),
+                site_url(),
+                __( 'Go to the front page', 'bcc-login' )
+            ),
+            __( 'Unauthorized' ),
+            array(
+                'response' => 401,
+            )
+        );
     }
 
     /**
@@ -270,7 +287,27 @@ class BCC_Login_Visibility {
             );
         }
 
-        $meta_query[] = $visibility_rules;
+        $group_rules = array(
+            'relation' => 'OR',
+            array(
+                'key' => 'bcc_groups',
+                'compare' => 'NOT EXISTS',
+            ),
+            array(
+                'key' => 'bcc_groups',
+                'compare' => 'IN',
+                'value' => $this->get_current_user_groups()
+            ),
+        );
+
+        $all_rules = array(
+            'relation' => 'AND',
+            $visibility_rules,
+            $group_rules
+        );
+
+        $meta_query[] = $all_rules;
+
 
         // Set the meta query to the complete, altered query
         $query->set('meta_query', $meta_query);
@@ -335,12 +372,11 @@ class BCC_Login_Visibility {
      * @return array
      */
     private function get_current_user_groups() {
-        $user  = wp_get_current_user();
-
-        // error_log(print_r($user->person_uid, true));
-        // error_log(print_r(session_id(), true));
-
-        return array();
+        $person_uid  = $this->_client->get_current_user_person_uid();
+        if(!$person_uid) {
+            return array("");
+        }
+        return $this->_coreapi->get_groups_for_user($person_uid);;
     }
 
     /**
