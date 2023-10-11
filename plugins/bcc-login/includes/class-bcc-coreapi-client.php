@@ -80,6 +80,54 @@ class BCC_Coreapi_Client
         return $body->data->groupUids;
     }
 
+    public function ensure_subscription_to_person_updates() {
+        if(str_contains(site_url(), "localhost")){
+            return;
+        }
+
+        $subscribed = get_transient("subscribed_to_person_updates");
+        if ($subscribed) {
+            return;
+        }
+
+        $lock = new ExclusiveLock( "subscribe_person_updates" );
+
+        if( $lock->lock( ) == FALSE ){
+            return;
+        }
+        $this->subscribe_to_person_updates();
+
+        $expiry = 60 * 60 * 12; // 12 hours
+        set_transient("subscribed_to_person_updates", true, $expiry);
+
+        $lock->unlock();
+    }
+
+    private function subscribe_to_person_updates() {
+        $token = $this->get_coreapi_token();
+
+        $request_url =  $this->_settings->coreapi_base_url . "/pubsub/subscriptions";
+        $request_body = array(
+            "type" => "no.bcc.api.person.updated",
+            "endPoint" => site_url() . "?bcc-login=invalidate-person-cache"
+        );
+
+        $response = wp_remote_post($request_url, array(
+            "body" => wp_json_encode( $request_body ),
+            "headers" => array(
+                "Authorization" => "Bearer " . $token,
+                "Content-Type" => "application/json"
+            )
+        ));
+
+        if ( is_wp_error( $response ) ) {
+            wp_die( $response->get_error_message() );
+        }
+
+        if ($response['response']['code'] != 200) {
+            wp_die("cannot ensure subscription to person updates: " . print_r($response, true));
+        }
+    } 
 
     public function get_coreapi_token() : string {
         $cached_token = $this->_storage->get('coreapi_token');

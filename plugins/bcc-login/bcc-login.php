@@ -22,6 +22,7 @@ require_once( 'includes/class-bcc-login-feed.php' );
 require_once( 'includes/class-bcc-login-updater.php');
 require_once( 'includes/class-bcc-coreapi-client.php');
 require_once( 'includes/class-bcc-storage.php');
+require_once( 'includes/class-exclusive-lock.php');
 
 class BCC_Login {
 
@@ -68,6 +69,8 @@ class BCC_Login {
         $this->_widgets = new BCC_Login_Widgets( $this->_settings, $this->_client );
         $this->_feed = new BCC_Login_Feed( $this->_settings, $this->_client );
         $this->_updater = new BCC_Login_Updater( $this->plugin, $this->plugin_slug, $this->plugin_version, $this->plugin_name );
+
+        $this->_coreapi->ensure_subscription_to_person_updates();
 
         add_action( 'init', array( $this, 'redirect_login' ) );
         add_action( 'wp_authenticate', array( $this, 'end_session' ) );
