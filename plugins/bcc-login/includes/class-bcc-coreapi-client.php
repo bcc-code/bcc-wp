@@ -95,12 +95,16 @@ class BCC_Coreapi_Client
         if( $lock->lock( ) == FALSE ){
             return;
         }
-        $this->subscribe_to_person_updates();
 
-        $expiry = 60 * 60 * 12; // 12 hours
-        set_transient("subscribed_to_person_updates", true, $expiry);
-
-        $lock->unlock();
+        try {
+            $this->subscribe_to_person_updates();
+            $expiry = 60 * 60 * 12; // 12 hours
+            set_transient("subscribed_to_person_updates", true, $expiry);
+        } catch (Exception $e) {
+            error_log("cannot subscribe to person updates");
+        } finally {
+            $lock->unlock();
+        }
     }
 
     private function subscribe_to_person_updates() {
