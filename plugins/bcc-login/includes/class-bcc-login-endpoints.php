@@ -48,6 +48,7 @@ class BCC_Login_Endpoints {
             case 'refresh-login': return BCC_LOGIN_PATH . 'endpoints/refresh-login.php';
             case 'logout': return BCC_LOGIN_PATH . 'endpoints/logout.php';
             case 'user-profile': return BCC_LOGIN_PATH . 'endpoints/user-profile.php';
+            case 'invalidate-person-cache': return BCC_LOGIN_PATH . 'endpoints/invalidate-person-cache.php';
         }
         return $template;
     }
