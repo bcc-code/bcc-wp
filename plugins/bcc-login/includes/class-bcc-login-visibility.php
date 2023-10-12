@@ -235,7 +235,7 @@ class BCC_Login_Visibility {
 
         wp_add_inline_script(
             $scrcipt_handle,
-            'var allowedGroups = ' . json_encode($this->_settings->site_groups),
+            'var siteGroups = ' . json_encode($this->_coreapi->get_site_groups()),
             'before'
         );
     }
@@ -462,6 +462,7 @@ class BCC_Login_Visibility {
         $headingGroups = __( 'Groups', 'bcc-login' );
 
         $columns['post_groups'] = $headingGroups;
+        $columns['post_groups_name'] = $headingGroups;
 
         return $columns;
     }
@@ -485,8 +486,23 @@ class BCC_Login_Visibility {
                 if($groups) {
                     $groups_string = join(",",$groups );
                     echo $groups_string;
-
                 }
+                break;
+            }
+            case 'post_groups_name': {
+                $post_groups = get_post_meta( $id, 'bcc_groups', false );
+                if(!$post_groups) {
+                    break;
+                }
+
+                $group_names = array();
+
+                foreach ($post_groups as $post_group) {
+                    array_push($group_names, $this->get_group_name($post_group));
+                }
+                
+                $groups_string = join(", ",$group_names );
+                echo $groups_string;
                 break;
             }
         endswitch;
@@ -523,9 +539,9 @@ class BCC_Login_Visibility {
                             <label class="post-audience">
                                 <span class="title">Groups</span>
                                 <span>';
-                                    foreach ($this->_settings->site_groups as $ind => $group) {
-                                        echo '<br><input type="checkbox" name="bcc_groups[]" id="option-'. $group .'" value="'. $group .'">
-                                            <label for="option-'. $group .'">'. $group .'</label>';
+                                    foreach ($this->_coreapi->get_site_groups() as $ind => $group) {
+                                        echo '<br><input type="checkbox" name="bcc_groups[]" id="option-'. $group->uid .'" value="'. $group->uid .'">
+                                            <label for="option-'. $group->uid .'">'. $group->name .'</label>';
                                     }
                                 echo '</span>
                             </label>
@@ -571,6 +587,15 @@ class BCC_Login_Visibility {
         wp_enqueue_script( 'quick-edit-js', BCC_LOGIN_URL . 'src/quick-edit.js', array( 'jquery' ) );
     }
     // end Quick Edit
+
+    function get_group_name(string $group_uid) : string {
+        foreach ($this->_coreapi->get_site_groups() as $group) {
+            if ($group->uid === $group_uid) {
+                return $group->name;
+            }
+        }
+        return "";
+    }
 
     /**
      * Deletes all `bcc_login_visibility` values from the database.
