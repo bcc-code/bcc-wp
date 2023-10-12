@@ -24,7 +24,7 @@ if(!property_exists($event_data, "uid")) {
 }
 
 if (!empty($person_uid)) {    
-    delete_transient( 'coreapi_groups_'.$event_data->uid );
+    delete_transient( 'coreapi_user_groups_'.$event_data->uid );
 }
 
 ?>
