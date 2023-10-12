@@ -27,8 +27,6 @@ jQuery(function ($) {
       $(':input[name="bcc_groups[]"]').attr("checked", false);
       // populate the inputs with column data
       for (const post_group of post_groups) {
-        console.log(post_group);
-
         $(':input[name="bcc_groups[]"][id="option-' + post_group + '"]').attr(
           "checked",
           true

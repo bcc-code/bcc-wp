@@ -28,7 +28,7 @@ class BCC_Coreapi_Client
         $this->_site_groups = $this->fetch_groups($group_uids);
 
         $expiration_duration = 60 * 60 * 24; // 1 day
-        set_transient($cache_key, $groups, $expiration_duration);
+        set_transient($cache_key, $this->_site_groups, $expiration_duration);
 
         return $this->_site_groups;
     }
