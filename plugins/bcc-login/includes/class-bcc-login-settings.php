@@ -213,7 +213,7 @@ class BCC_Login_Settings_Provider {
 
         add_settings_field(
             'bcc_site_groups',
-            'Allowed Groups',
+            'Site Groups',
             array( $this, 'render_text_field' ),
             $this->options_page,
             'general',

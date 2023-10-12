@@ -20,15 +20,15 @@ class BCC_Coreapi_Client
 
         $cache_key = 'coreapi_groups_' . implode($group_uids);
 
-        // $cached_response = get_transient($cache_key);
-        // if($cached_response !== false) {
-        //     return $cached_response;
-        // }
+        $cached_response = get_transient($cache_key);
+        if($cached_response !== false) {
+            return $cached_response;
+        }
 
         $this->_site_groups = $this->fetch_groups($group_uids);
 
-        // $expiration_duration = 60 * 60 * 24; // 1 day
-        // set_transient($cache_key, $groups, $expiration_duration);
+        $expiration_duration = 60 * 60 * 24; // 1 day
+        set_transient($cache_key, $groups, $expiration_duration);
 
         return $this->_site_groups;
     }
