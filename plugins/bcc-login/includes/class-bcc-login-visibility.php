@@ -235,7 +235,7 @@ class BCC_Login_Visibility {
 
         wp_add_inline_script(
             $scrcipt_handle,
-            'var allowedGroups = ' . json_encode($this->_coreapi->get_site_groups()),
+            'var siteGroups = ' . json_encode($this->_coreapi->get_site_groups()),
             'before'
         );
     }

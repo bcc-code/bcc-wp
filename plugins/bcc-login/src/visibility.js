@@ -66,7 +66,7 @@ function VisibilityOptions({
 
 function GroupsOptions({
   heading,
-  availableGroups,
+  siteGroups,
   selectedGroups,
   instanceId,
   onUpdateGroup,
@@ -74,7 +74,7 @@ function GroupsOptions({
   return (
     <div>
       {heading && <h2>{heading}</h2>}
-      {availableGroups.map((group) => (
+      {siteGroups.map((group) => (
         <p key={group.uid} className="bcc-groups__choice">
           <input
             type="checkbox"
@@ -143,7 +143,7 @@ registerPlugin("bcc-groups", {
       const meta = getEditedPostAttribute("meta");
       return {
         selectedGroups: meta.bcc_groups,
-        availableGroups: window.allowedGroups,
+        siteGroups: window.siteGroups,
       };
     }),
     withDispatch((dispatch) => {
