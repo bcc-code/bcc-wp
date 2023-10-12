@@ -23,7 +23,7 @@ if(!property_exists($event_data, "uid")) {
     wp_die("Invalid payload: missing uid property");
 }
 
-if (!empty($person_uid)) {    
+if (!empty($event_data->uid)) {    
     delete_transient( 'coreapi_user_groups_'.$event_data->uid );
 }
 
