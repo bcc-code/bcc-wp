@@ -75,31 +75,31 @@ function GroupsOptions({
     <div>
       {heading && <h2>{heading}</h2>}
       {availableGroups.map((group) => (
-        <p key={group} className="bcc-groups__choice">
+        <p key={group.uid} className="bcc-groups__choice">
           <input
             type="checkbox"
             name={`bcc-groups__setting-${instanceId}`}
-            value={group}
+            value={group.uid}
             onChange={(event) => {
-              const index = selectedGroups.indexOf(group);
+              const index = selectedGroups.indexOf(group.uid);
               const newGroups = JSON.parse(JSON.stringify(selectedGroups));
               if (index === -1) {
-                newGroups.push(group);
+                newGroups.push(group.uid);
               } else {
                 newGroups.splice(index, 1);
               }
               onUpdateGroup(newGroups);
             }}
-            checked={selectedGroups.includes(group)}
-            id={`bcc-login-post-${group}-${instanceId}`}
-            aria-describedby={`bcc-login-post-${group}-${instanceId}-description`}
+            checked={selectedGroups.includes(group.uid)}
+            id={`bcc-login-post-${group.uid}-${instanceId}`}
+            aria-describedby={`bcc-login-post-${group.uid}-${instanceId}-description`}
             className="bcc-groups__dialog-radio"
           />
           <label
-            htmlFor={`bcc-login-post-${group}-${instanceId}`}
+            htmlFor={`bcc-login-post-${group.uid}-${instanceId}`}
             className="bcc-groups__dialog-label"
           >
-            {group}
+            {group.name}
           </label>
         </p>
       ))}

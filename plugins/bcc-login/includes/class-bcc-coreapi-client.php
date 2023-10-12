@@ -4,6 +4,7 @@ class BCC_Coreapi_Client
 {
     private BCC_Login_Settings $_settings;
     private BCC_Storage $_storage;
+    private array $_site_groups;
 
     function __construct(BCC_Login_Settings $login_settings, BCC_Storage $storage)
     {
@@ -11,11 +12,40 @@ class BCC_Coreapi_Client
         $this->_storage = $storage;
     }
 
-    function get_groups(): array
+    function get_site_groups(): array {
+        if(isset($this->_site_groups)) {
+            return $this->_site_groups;
+        }
+        $group_uids = $this->_settings->site_groups;
+
+        $cache_key = 'coreapi_groups_' . implode($group_uids);
+
+        // $cached_response = get_transient($cache_key);
+        // if($cached_response !== false) {
+        //     return $cached_response;
+        // }
+
+        $this->_site_groups = $this->fetch_groups($group_uids);
+
+        // $expiration_duration = 60 * 60 * 24; // 1 day
+        // set_transient($cache_key, $groups, $expiration_duration);
+
+        return $this->_site_groups;
+    }
+
+    function fetch_groups(array $group_uids): array
     {
         $token = $this->get_coreapi_token();
 
-        $response = wp_remote_get( $this->_settings->coreapi_base_url. "/groups", array(
+        $qry = array(
+            "uid" => array(
+                "_in" => $group_uids,
+            )
+        );
+
+        $qry = json_encode($qry);
+
+        $response = wp_remote_get( $this->_settings->coreapi_base_url. "/groups?fields=uid,name&filter=$qry", array(
             "headers" => array(
                 "Authorization" => "Bearer ".$token
             )
@@ -32,7 +62,7 @@ class BCC_Coreapi_Client
     }
 
     function get_groups_for_user(string $user_uid): array {
-        $cache_key = 'coreapi_groups_'.$user_uid;
+        $cache_key = 'coreapi_user_groups_'.$user_uid;
 
         $cached_response = get_transient($cache_key);
         if($cached_response !== false) {

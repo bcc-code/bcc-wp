@@ -26,7 +26,6 @@ jQuery(function ($) {
       // uncheck option from previous opened post
       $(':input[name="bcc_groups[]"]').attr("checked", false);
       // populate the inputs with column data
-      console.log(post_groups);
       for (const post_group of post_groups) {
         console.log(post_group);
 
