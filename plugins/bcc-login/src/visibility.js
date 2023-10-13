@@ -187,6 +187,17 @@ addFilter(
                 }}
                 {...props}
               />
+              <GroupsOptions
+                heading={__("Block Groups")}
+                siteGroups={window.siteGroups}
+                selectedGroups={attributes.bccGroups}
+                onUpdateGroup={(value) => {
+                  setAttributes({
+                    bccGroups: value,
+                  });
+                }}
+                {...props}
+              />
             </PanelBody>
           </InspectorControls>
           <BlockEdit {...props} />

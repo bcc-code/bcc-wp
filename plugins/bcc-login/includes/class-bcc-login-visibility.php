@@ -33,7 +33,7 @@ class BCC_Login_Visibility {
         $this->_coreapi = $groups;
 
         add_action( 'init', array( $this, 'on_init' ) );
-        add_action( 'wp_loaded', array( $this, 'register_block_visibility_attribute' ) );
+        add_action( 'wp_loaded', array( $this, 'register_block_attributes' ) );
         add_action( 'template_redirect', array( $this, 'on_template_redirect' ), 0 );
         add_action( 'added_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
         add_action( 'updated_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
@@ -78,13 +78,17 @@ class BCC_Login_Visibility {
      * Registers the `bccLoginVisibility` attribute server-side to make
      * the `<ServerSideRender />` component render correctly in the Block Editor.
      */
-    function register_block_visibility_attribute() {
+    function register_block_attributes() {
         $registered_blocks = WP_Block_Type_Registry::get_instance()->get_all_registered();
 
         foreach( $registered_blocks as $name => $block ) {
             $block->attributes['bccLoginVisibility'] = array(
                 'type'    => 'number',
                 'default' => self::VISIBILITY_DEFAULT,
+            );
+            $block->attributes['bccGroups'] = array(
+                'type'    => 'array',
+                'default' => array(),
             );
         }
     }
@@ -395,6 +399,22 @@ class BCC_Login_Visibility {
             $level      = $this->get_current_user_level();
 
             if ( $visibility && $visibility > $level ) {
+                return '';
+            }
+        }
+
+        if ( isset( $block['attrs']['bccGroups'] ) ) {
+            $block_groups = $block['attrs']['bccGroups'];
+            if (empty($block_groups)) {
+                return $block_content;
+            }
+
+            $user_groups = $this->get_current_user_groups();
+
+            if (!$user_groups) {
+                return '';
+            }
+            if(count(array_intersect($block_groups, $user_groups)) == 0) {
                 return '';
             }
         }
