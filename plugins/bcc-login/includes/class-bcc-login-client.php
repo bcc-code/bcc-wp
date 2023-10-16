@@ -341,33 +341,25 @@ class BCC_Login_Client {
         return $result;
     }
 
-    public function get_current_user_person_uid() : string|false {
+    public function get_current_user_person_uid() {
 
-        if ( !array_key_exists('oidc_token_id', $_COOKIE) ) {
-            return false;
+        $token = ''; 
+        if (isset($_COOKIE['oidc_token_id'])) {
+            $token_id = $_COOKIE['oidc_token_id'];
+
+            if ( ! empty( $token_id ) ) {
+                $token = get_transient( 'oidc_access_token_' . $token_id );
+            }
+
+            if ( empty( $token ) ) {
+                return false;
+            }
+
+            $claims = BCC_Login_Token_Utility::get_token_claims( $token );
+
+            return $claims['https://login.bcc.no/claims/personUid'];
         }
-        error_log(print_r($_COOKIE, true));
-        $token_id = $_COOKIE['oidc_token_id'];
-
-
-        $id_token = get_transient( 'oidc_id_token_' . $token_id );
-
-        $parts = explode( '.', $id_token );
-
-        if ( count( $parts ) < 2 ) {
-            return false;
-        }
-
-        $token_body_str = base64_decode(
-            str_replace( // Because token is encoded in base64 URL (and not just base64).
-                array( '-', '_' ),
-                array( '+', '/' ),
-                $parts[ 1 ]
-            )
-        );
-        
-        $token_body = json_decode($token_body_str);
-        return $token_body->{'https://login.bcc.no/claims/personUid'};
+        return false;
     }
 
 }
