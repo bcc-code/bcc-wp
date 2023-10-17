@@ -65,7 +65,7 @@ class BCC_Coreapi_Client
         $cache_key = 'coreapi_user_groups_'.$user_uid;
 
         $cached_response = get_transient($cache_key);
-        if($cached_response !== false) {
+        if($cached_response) {
             return $cached_response;
         }
 
