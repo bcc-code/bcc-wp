@@ -65,7 +65,7 @@ class BCC_Coreapi_Client
         $cache_key = 'coreapi_user_groups_'.$user_uid;
 
         $cached_response = get_transient($cache_key);
-        if($cached_response) {
+        if($cached_response !== false) {
             return $cached_response;
         }
 
@@ -143,7 +143,8 @@ class BCC_Coreapi_Client
         $request_url =  $this->_settings->coreapi_base_url . "/pubsub/subscriptions";
         $request_body = array(
             "type" => "no.bcc.api.person.updated",
-            "endPoint" => site_url() . "?bcc-login=invalidate-person-cache"
+            "endPoint" => site_url() . "?bcc-login=invalidate-person-cache",
+            "subscriptionId" => parse_url(site_url())['host']
         );
 
         $response = wp_remote_post($request_url, array(
