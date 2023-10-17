@@ -237,11 +237,14 @@ class BCC_Login_Visibility {
             'before'
         );
 
-        wp_add_inline_script(
-            $scrcipt_handle,
-            'var siteGroups = ' . json_encode($this->_coreapi->get_site_groups()),
-            'before'
-        );
+        if (!empty($this->_settings->site_groups) ) {
+            wp_add_inline_script(
+                $scrcipt_handle,
+                'var siteGroups = ' . json_encode($this->_coreapi->get_site_groups()),
+                'before'
+            );
+        }
+
     }
 
     /**
@@ -370,6 +373,10 @@ class BCC_Login_Visibility {
     }
 
     private function get_current_user_groups() : array {
+        if (empty($this->_settings->site_groups)) {
+            return array();
+        }
+
         $person_uid  = $this->_client->get_current_user_person_uid();
         if(!$person_uid) {
             return array();
@@ -511,6 +518,10 @@ class BCC_Login_Visibility {
                 break;
             }
             case 'post_groups_name': {
+                if (empty($this->_settings->site_groups)) {
+                    break;
+                }
+
                 $post_groups = get_post_meta( $id, 'bcc_groups', false );
                 if(!$post_groups) {
                     break;
@@ -553,6 +564,9 @@ class BCC_Login_Visibility {
                 break;
             }
             case 'post_groups': {
+                if(empty($this->_settings->site_groups) ) {
+                    break;
+                }
                 wp_nonce_field( 'bcc_q_edit_nonce', 'bcc_nonce' );
                 echo '<fieldset class="inline-edit-col-right bcc-quick-edit">
                     <div class="inline-edit-col">
