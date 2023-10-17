@@ -374,7 +374,7 @@ class BCC_Login_Visibility {
         if(!$person_uid) {
             return array();
         }
-        return $this->_coreapi->get_groups_for_user($person_uid);;
+        return $this->_coreapi->get_groups_for_user($person_uid);
     }
 
     /**
@@ -390,13 +390,15 @@ class BCC_Login_Visibility {
             return $block_content;
         }
 
+        
+
         if ( isset( $block['attrs']['bccLoginVisibility'] ) ) {
             $visibility = (int) $block['attrs']['bccLoginVisibility'];
             if (!$visibility) {
                 $visibility = $this->_settings->default_visibility;
             }
 
-            $level      = $this->get_current_user_level();
+            $level = $this->get_current_user_level();
 
             if ( $visibility && $visibility > $level ) {
                 return '';
@@ -410,6 +412,7 @@ class BCC_Login_Visibility {
             }
 
             $user_groups = $this->get_current_user_groups();
+
 
             if (!$user_groups) {
                 return '';
