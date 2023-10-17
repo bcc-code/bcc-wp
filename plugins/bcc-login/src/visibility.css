@@ -1,0 +1,7 @@
+.target-audience {
+    margin-top: 20px;
+}
+
+.block-editor-block-inspector .target-audience .components-base-control {
+    margin-bottom: 0;
+}
