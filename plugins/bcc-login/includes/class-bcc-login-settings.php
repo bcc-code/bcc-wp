@@ -45,6 +45,7 @@ class BCC_Login_Settings_Provider {
         'scope'                     => 'OIDC_SCOPE',
         'create_missing_users'      => 'OIDC_CREATE_USERS',
         'default_visibility'        => 'OIDC_DEFAULT_VISIBILITY',
+        'redirect_uri'              => 'OIDC_REDIRECT_URL',
         'member_organization_name'  => 'BCC_WP_MEMBER_ORGANIZATION_NAME',
         'feed_key'                  => 'BCC_WP_FEED_KEY',
         'show_protected_menu_items' => 'BCC_WP_SHOW_PROTECTED_MENU_ITEMS'

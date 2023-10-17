@@ -13,6 +13,7 @@
 | OIDC_ENDPOINT_TOKEN_URL    | (Optional) Default: `https://login.bcc.no/oauth/token`  |
 | OIDC_ENDPOINT_USERINFO_URL | (Optional) Default: `https://login.bcc.no/userinfo`  |
 | OIDC_ENDPOINT_LOGOUT_URL | (Optional)  |
+| OIDC_REDIRECT_URL | (Optional) Default: `oidc-authorize` - can be overridden if site is not running on domain root e.g. `my-site/oidc-authorize` |
 | OIDC_SCOPE                 | (Optional) Default: `email openid profile church`  |
 | OIDC_DEFAULT_VISIBILITY            | (Optional) Alternative to configuring via UI - see below  |
 | BCC_WP_FEED_KEY            | (Optional) Alternative to configuring via UI - see below  |

@@ -265,7 +265,7 @@ class BCC_Login_Client {
     }
 
     private function get_full_redirect_url() {
-         $home_url = $_SERVER['REQUEST_SCHEME'] . '//' . DOMAIN_CURRENT_SITE . PATH_CURRENT_SITE;
+         $home_url = $_SERVER['REQUEST_SCHEME'] . '//' . $_SERVER['HTTP_HOST'];
         return trim( $home_url, '/' ) . '/' . ltrim( $this->_settings->redirect_uri, '/' );
     }
 
