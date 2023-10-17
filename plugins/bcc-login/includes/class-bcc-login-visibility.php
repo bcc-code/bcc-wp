@@ -386,11 +386,9 @@ class BCC_Login_Visibility {
      * @return string
      */
     function on_render_block( $block_content, $block ) {
-        if ( is_admin() || is_super_admin() ) {
+        if ( current_user_can( 'edit_posts' ) ) {
             return $block_content;
         }
-
-        
 
         if ( isset( $block['attrs']['bccLoginVisibility'] ) ) {
             $visibility = (int) $block['attrs']['bccLoginVisibility'];
