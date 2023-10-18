@@ -136,7 +136,6 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_feed_key' );
         register_setting( $this->option_name, 'bcc_site_groups' );
         register_setting( $this->option_name, 'show_protected_menu_items' );
-        register_setting( $this->option_name, 'bcc_groups_allowed' );
 
         add_settings_section( 'general', '', null, $this->options_page );
 
@@ -238,19 +237,7 @@ class BCC_Login_Settings_Provider {
             )
         );
 
-        add_settings_field(
-            'bcc_groups_allowed',
-            'bcc_site_groups',
-            'Site Groups',
-            array( $this, 'render_text_field' ),
-            $this->options_page,
-            'general',
-            array(
-                'name' => 'bcc_site_groups',
-                'value' => join(",", $this->_settings->site_groups),
-                'description' => 'Provide group uids for groups you\'re going to use (comma delimtied)'
-            )
-        );
+
 
     }
 
