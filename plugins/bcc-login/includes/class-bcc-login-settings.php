@@ -213,6 +213,19 @@ class BCC_Login_Settings_Provider {
         );
 
         add_settings_field(
+            'bcc_site_groups',
+            'Site Groups',
+            array( $this, 'render_text_field' ),
+            $this->options_page,
+            'general',
+            array(
+                'name' => 'bcc_site_groups',
+                'value' => join(",", $this->_settings->site_groups),
+                'description' => 'Provide group uids for groups you\'re going to use (comma delimtied)'
+            )
+        );
+
+        add_settings_field(
             'show_protected_menu_items',
             __( 'Show Protected Menu Items', 'bcc-login' ),
             array( $this, 'render_checkbox_field' ),
