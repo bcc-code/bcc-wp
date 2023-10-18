@@ -33,7 +33,7 @@ class BCC_Storage {
         return base64_encode($iv . $hash . $ciphertext);
     }
     
-    private function decrypt(string $encrypted) : string|null {
+    private function decrypt(string $encrypted) {
         $decoded = base64_decode($encrypted);
         $iv = substr($decoded, 0, 16);
         $hash = substr($decoded, 16, 32);
