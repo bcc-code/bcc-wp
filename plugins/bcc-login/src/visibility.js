@@ -71,6 +71,9 @@ function GroupsOptions({
   instanceId,
   onUpdateGroup,
 }) {
+  if (!siteGroups) {
+    return;
+  }
   return (
     <div>
       {heading && <h2>{heading}</h2>}

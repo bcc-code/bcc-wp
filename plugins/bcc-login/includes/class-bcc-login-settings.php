@@ -212,18 +212,27 @@ class BCC_Login_Settings_Provider {
             )
         );
 
-        add_settings_field(
-            'bcc_site_groups',
-            'Site Groups',
-            array( $this, 'render_text_field' ),
-            $this->options_page,
-            'general',
-            array(
-                'name' => 'bcc_site_groups',
-                'value' => join(",", $this->_settings->site_groups),
-                'description' => 'Provide group uids for groups you\'re going to use (comma delimtied)'
-            )
-        );
+        if(!empty($this->_settings->site_groups)|| BCC_Coreapi_Client::check_groups_access(
+            $this->_settings->token_endpoint,
+            $this->_settings->client_id,
+            $this->_settings->client_secret,
+            $this->_settings->coreapi_audience
+        )) {
+            add_settings_field(
+                'bcc_site_groups',
+                'Site Groups',
+                array( $this, 'render_text_field' ),
+                $this->options_page,
+                'general',
+                array(
+                    'name' => 'bcc_site_groups',
+                    'value' => join(",", $this->_settings->site_groups),
+                    'description' => 'Provide group uids for groups you\'re going to use (comma delimtied)'
+                )
+            );
+    
+        }
+
 
         add_settings_field(
             'show_protected_menu_items',
@@ -237,9 +246,6 @@ class BCC_Login_Settings_Provider {
                 'label' => __( 'Show protected menu items to all/public users.', 'bcc-login' )
             )
         );
-
-
-
     }
 
     /**

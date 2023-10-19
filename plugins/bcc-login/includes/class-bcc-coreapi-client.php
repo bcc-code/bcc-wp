@@ -170,29 +170,39 @@ class BCC_Coreapi_Client
             return $cached_token;
         }
 
-        $token_response = $this->request_coreapi_token();
+        $token_response = $this->fetch_coreapi_token(
+            $this->_settings->token_endpoint,
+            $this->_settings->client_id,
+            $this->_settings->client_secret,
+            $this->_settings->coreapi_audience
+        );
+
+        if($token_response == false) {
+            return '';
+        }
 
         $this->_storage->set('coreapi_token', $token_response->access_token, $token_response->expires_in * 0.9);
         return $token_response->access_token;
     }
 
-    private function request_coreapi_token() : Token_Response {
-        $parsed_url = parse_url( $this->_settings->token_endpoint );
-        $host = $parsed_url['host'];
-
+    private static function fetch_coreapi_token($token_endpoint, $client_id, $client_secret, $audience): Token_Response|false {
         $request = array(
             'body' => array(
-                'client_id'     => $this->_settings->client_id,
-                'client_secret' => $this->_settings->client_secret,
+                'client_id'     => $client_id,
+                'client_secret' => $client_secret,
                 'grant_type'    => 'client_credentials',
-                'audience'      => $this->_settings->coreapi_audience,
+                'audience'      => $audience,
             )
         );
 
-        $response = wp_remote_post( $this->_settings->token_endpoint, $request );
+        $response = wp_remote_post( $token_endpoint, $request );
 
         if ( is_wp_error( $response ) ) {
             wp_die( $response->get_error_message() );
+        }
+
+        if ($response['response']['code'] != 200) {
+            return false;
         }
 
         $body = json_decode($response['body']);
@@ -202,10 +212,20 @@ class BCC_Coreapi_Client
 
         return $token_response;
     }
+
+    public static function check_groups_access($token_endpoint, $client_id, $client_secret, $audience): bool {
+        $token_response = BCC_Coreapi_Client::fetch_coreapi_token($token_endpoint, $client_id, $client_secret, $audience);
+
+        if($token_response == false) return false;
+        if(!isset($token_response->scope)) return false;
+
+        return str_contains($token_response->scope, "groups#read");
+    }
 }
 
 class Token_Response {
     public string $access_token;
+    public string $scope;
     public int $expires_in;
 }
 
