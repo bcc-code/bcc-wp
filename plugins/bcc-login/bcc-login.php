@@ -20,6 +20,9 @@ require_once( 'includes/class-bcc-login-users.php' );
 require_once( 'includes/class-bcc-login-widgets.php' );
 require_once( 'includes/class-bcc-login-feed.php' );
 require_once( 'includes/class-bcc-login-updater.php');
+require_once( 'includes/class-bcc-coreapi-client.php');
+require_once( 'includes/class-bcc-storage.php');
+require_once( 'includes/class-exclusive-lock.php');
 
 class BCC_Login {
 
@@ -41,6 +44,8 @@ class BCC_Login {
     private BCC_Login_Widgets $_widgets;
     private BCC_Login_Feed $_feed;
     private BCC_Login_Updater $_updater;
+    private BCC_Coreapi_Client $_coreapi;
+    private BCC_Storage $_storage;
     
 
 
@@ -54,13 +59,20 @@ class BCC_Login {
 		$this->plugin_slug = plugin_basename( __DIR__ );
 
         $this->_settings = $settings_provider->get_settings();
+        $this->_storage = new BCC_Storage($this->_settings->client_secret );
+        $this->_coreapi = new BCC_Coreapi_Client($this->_settings, $this->_storage );
+
         $this->_endpoints = new BCC_Login_Endpoints( $this->_settings );
         $this->_client = new BCC_Login_Client($this->_settings);
         $this->_users = new BCC_Login_Users($this->_settings);
-        $this->_visibility = new BCC_Login_Visibility( $this->_settings, $this->_client );
+        $this->_visibility = new BCC_Login_Visibility( $this->_settings, $this->_client, $this->_coreapi );
         $this->_widgets = new BCC_Login_Widgets( $this->_settings, $this->_client );
         $this->_feed = new BCC_Login_Feed( $this->_settings, $this->_client );
         $this->_updater = new BCC_Login_Updater( $this->plugin, $this->plugin_slug, $this->plugin_version, $this->plugin_name );
+
+        if (!empty($this->_settings->site_groups)) {
+            $this->_coreapi->ensure_subscription_to_person_updates();
+        }
 
         add_action( 'init', array( $this, 'redirect_login' ) );
         add_action( 'wp_authenticate', array( $this, 'end_session' ) );

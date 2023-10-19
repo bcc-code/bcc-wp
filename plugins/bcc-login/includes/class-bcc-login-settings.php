@@ -1,12 +1,8 @@
 <?php
 
 class BCC_Login_Settings {
-    public $authority;
-    public $jwks_uri;
     public $token_endpoint;
-    public $userinfo_endpoint;
     public $authorization_endpoint;
-    public $end_session_endpoint;
     public $client_id;
     public $client_secret;
     public $scope;
@@ -18,6 +14,9 @@ class BCC_Login_Settings {
     public $default_visibility;
     public $feed_key;
     public $show_protected_menu_items;
+    public $site_groups = array();
+    public $coreapi_audience;
+    public $coreapi_base_url;
 }
 
 /**
@@ -38,27 +37,23 @@ class BCC_Login_Settings_Provider {
         'client_id'                 => 'OIDC_CLIENT_ID',
         'client_secret'             => 'OIDC_CLIENT_SECRET',
         'authorization_endpoint'    => 'OIDC_ENDPOINT_LOGIN_URL',
-        'userinfo_endpoint'         => 'OIDC_ENDPOINT_USERINFO_URL',
         'token_endpoint'            => 'OIDC_ENDPOINT_TOKEN_URL',
-        'end_session_endpoint'      => 'OIDC_ENDPOINT_LOGOUT_URL',
-        'authority'                 => 'OIDC_AUTHORITY',
         'scope'                     => 'OIDC_SCOPE',
         'create_missing_users'      => 'OIDC_CREATE_USERS',
         'default_visibility'        => 'OIDC_DEFAULT_VISIBILITY',
         'redirect_uri'              => 'OIDC_REDIRECT_URL',
         'member_organization_name'  => 'BCC_WP_MEMBER_ORGANIZATION_NAME',
         'feed_key'                  => 'BCC_WP_FEED_KEY',
-        'show_protected_menu_items' => 'BCC_WP_SHOW_PROTECTED_MENU_ITEMS'
+        'show_protected_menu_items' => 'BCC_WP_SHOW_PROTECTED_MENU_ITEMS',
+        'coreapi_audience'          => 'BCC_COREAPI_AUDIENCE',
+        'coreapi_base_url'          => 'BCC_COREAPI_BASE_URL',
     );
 
     function __construct () {
         // Set default settings.
         $settings = new BCC_Login_Settings();
-        $settings->authority = 'https://login.bcc.no';
         $settings->token_endpoint = 'https://login.bcc.no/oauth/token';
         $settings->authorization_endpoint = 'https://login.bcc.no/authorize';
-        $settings->userinfo_endpoint = 'https://login.bcc.no/userinfo';
-        $settings->jwks_uri = 'https://login.bcc.no/.well-known/jwks.json';
         $settings->scope = 'email openid profile church';
         $settings->redirect_uri = 'oidc-authorize';
         $settings->create_missing_users = false;
@@ -66,6 +61,8 @@ class BCC_Login_Settings_Provider {
         $settings->topbar = get_option( 'bcc_topbar', 1 );
         $settings->show_protected_menu_items = get_option( 'show_protected_menu_items', 0);
         $settings->feed_key = get_option('bcc_feed_key', get_option('private_newsfeed_link', '') );
+        $settings->coreapi_audience = 'api.bcc.no';
+        $settings->coreapi_base_url = 'https://api.bcc.no';
 
         // Set settings from environment variables.
         foreach ( $this->environment_variables as $key => $constant ) {
@@ -82,6 +79,11 @@ class BCC_Login_Settings_Provider {
         // Set settings from options
         $settings->default_visibility = get_option( 'bcc_default_visibility', $settings->default_visibility ?? 2 ); // default to authenticated users
         $settings->member_organization_name = get_option( 'bcc_member_organization_name', $settings->member_organization_name );
+
+        $site_groups_option = get_option('bcc_site_groups');
+        if ($site_groups_option) {
+            $settings->site_groups = explode(",", $site_groups_option);
+        }
 
         // Backwards compatibility with old plugin configuration.
         if ( ! isset( $settings->client_id ) ) {
@@ -133,6 +135,7 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_default_visibility' );
         register_setting( $this->option_name, 'bcc_member_organization_name' );
         register_setting( $this->option_name, 'bcc_feed_key' );
+        register_setting( $this->option_name, 'bcc_site_groups' );
         register_setting( $this->option_name, 'show_protected_menu_items' );
 
         add_settings_section( 'general', '', null, $this->options_page );
@@ -208,6 +211,28 @@ class BCC_Login_Settings_Provider {
                 'label' => __( 'Show the BCC topbar', 'bcc-login' )
             )
         );
+
+        if(!empty($this->_settings->site_groups)|| BCC_Coreapi_Client::check_groups_access(
+            $this->_settings->token_endpoint,
+            $this->_settings->client_id,
+            $this->_settings->client_secret,
+            $this->_settings->coreapi_audience
+        )) {
+            add_settings_field(
+                'bcc_site_groups',
+                'Site Groups',
+                array( $this, 'render_text_field' ),
+                $this->options_page,
+                'general',
+                array(
+                    'name' => 'bcc_site_groups',
+                    'value' => join(",", $this->_settings->site_groups),
+                    'description' => 'Provide group uids for groups you\'re going to use (comma delimtied)'
+                )
+            );
+    
+        }
+
 
         add_settings_field(
             'show_protected_menu_items',

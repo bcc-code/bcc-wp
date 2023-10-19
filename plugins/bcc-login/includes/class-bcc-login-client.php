@@ -341,11 +341,30 @@ class BCC_Login_Client {
         return $result;
     }
 
-    
+    public function get_current_user_person_uid() {
 
+        $token = ''; 
+        if (isset($_COOKIE['oidc_token_id'])) {
+            $token_id = $_COOKIE['oidc_token_id'];
+
+            if ( ! empty( $token_id ) ) {
+                $token = get_transient( 'oidc_access_token_' . $token_id );
+            }
+
+            if ( empty( $token ) ) {
+                return false;
+            }
+
+            $claims = BCC_Login_Token_Utility::get_token_claims( $token );
+
+            return $claims['https://login.bcc.no/claims/personUid'];
+        }
+        return false;
+    }
 }
 
+
 class Auth_State {
-    public string $state;
-    public string $return_url = '';
+    public $state;
+    public $return_url = '';
 }
