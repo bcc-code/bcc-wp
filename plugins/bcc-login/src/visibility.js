@@ -145,7 +145,7 @@ registerPlugin("bcc-groups", {
       const { getEditedPostAttribute } = select("core/editor");
       const meta = getEditedPostAttribute("meta");
       return {
-        selectedGroups: meta.bcc_groups,
+        selectedGroups: meta.bcc_groups ?? [],
         siteGroups: window.siteGroups,
       };
     }),
