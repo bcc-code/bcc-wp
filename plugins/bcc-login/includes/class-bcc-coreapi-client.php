@@ -219,7 +219,10 @@ class BCC_Coreapi_Client
         if($token_response == false) return false;
         if(!isset($token_response->scope)) return false;
 
-        return str_contains($token_response->scope, "groups#read");
+        if(!str_contains($token_response->scope, "groups#read")) return false;
+        if(!str_contains($token_response->scope, "pubsub#subscribe")) return false;
+
+        return true;
     }
 }
 
