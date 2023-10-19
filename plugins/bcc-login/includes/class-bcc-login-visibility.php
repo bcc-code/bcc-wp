@@ -529,7 +529,7 @@ class BCC_Login_Visibility {
             return;
         }
 
-        if ($column_name == 'post_groups') {
+        if ($column_name == 'post_groups_name') {
             if (empty($this->_settings->site_groups)) {
                 return;
             }
