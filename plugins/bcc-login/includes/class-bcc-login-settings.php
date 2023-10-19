@@ -14,9 +14,9 @@ class BCC_Login_Settings {
     public $default_visibility;
     public $feed_key;
     public $show_protected_menu_items;
-    public array $site_groups = array();
-    public string $coreapi_audience;
-    public string $coreapi_base_url;
+    public $site_groups = array();
+    public $coreapi_audience;
+    public $coreapi_base_url;
 }
 
 /**

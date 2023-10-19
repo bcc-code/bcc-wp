@@ -3,19 +3,19 @@
 class BCC_Storage {
     private BCC_Encryption $_encryption;
 
-    private string $_encryption_key;
-    private string $_encryption_method = "AES-256-CBC";
+    private $_encryption_key;
+    private $_encryption_method = "AES-256-CBC";
 
-    function __construct (string $password) {
+    function __construct ( $password) {
         $this->_encryption_key = hash('sha256', $password, true);
     }
 
-    public function set(string $cache_key, mixed $value, int $expiration_duration) : bool {
+    public function set($cache_key, $value, $expiration_duration) {
         $serialized_value = maybe_serialize($value);
         $encrypted_value = $this->encrypt($serialized_value);
         return set_transient($cache_key, $encrypted_value, $expiration_duration);
     }
-    public function get(string $cache_key) : mixed {
+    public function get($cache_key) {
         $encrypted_value = get_transient($cache_key);
         if($encrypted_value === false) {
             return null;
@@ -24,7 +24,7 @@ class BCC_Storage {
         return maybe_unserialize($decrypted_value);
     }
 
-    private function encrypt(string $plaintext) : string {
+    private function encrypt($plaintext) {
         $iv = openssl_random_pseudo_bytes(16);
     
         $ciphertext = openssl_encrypt($plaintext, $this->_encryption_method, $this->_encryption_key, OPENSSL_RAW_DATA, $iv);
@@ -33,7 +33,7 @@ class BCC_Storage {
         return base64_encode($iv . $hash . $ciphertext);
     }
     
-    private function decrypt(string $encrypted) {
+    private function decrypt($encrypted) {
         $decoded = base64_decode($encrypted);
         $iv = substr($decoded, 0, 16);
         $hash = substr($decoded, 16, 32);

@@ -376,7 +376,7 @@ class BCC_Login_Visibility {
         return self::VISIBILITY_PUBLIC;
     }
 
-    private function get_current_user_groups() : array {
+    private function get_current_user_groups() {
         if (empty($this->_settings->site_groups)) {
             return array();
         }
@@ -624,7 +624,7 @@ class BCC_Login_Visibility {
     }
     // end Quick Edit
 
-    function get_group_name(string $group_uid) : string {
+    function get_group_name($group_uid) {
         foreach ($this->_coreapi->get_site_groups() as $group) {
             if ($group->uid === $group_uid) {
                 return $group->name;

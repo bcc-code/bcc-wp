@@ -361,11 +361,10 @@ class BCC_Login_Client {
         }
         return false;
     }
-
 }
 
 
 class Auth_State {
-    public string $state;
-    public string $return_url = '';
+    public $state;
+    public $return_url = '';
 }

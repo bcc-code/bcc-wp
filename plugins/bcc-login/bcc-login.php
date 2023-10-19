@@ -73,7 +73,7 @@ class BCC_Login {
         if (!empty($this->_settings->site_groups)) {
             $this->_coreapi->ensure_subscription_to_person_updates();
         }
-    
+
         add_action( 'init', array( $this, 'redirect_login' ) );
         add_action( 'wp_authenticate', array( $this, 'end_session' ) );
         add_action( 'wp_logout', array( $this, 'end_session' ) );

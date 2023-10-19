@@ -4,7 +4,7 @@ class BCC_Coreapi_Client
 {
     private BCC_Login_Settings $_settings;
     private BCC_Storage $_storage;
-    private array $_site_groups;
+    private $_site_groups;
 
     function __construct(BCC_Login_Settings $login_settings, BCC_Storage $storage)
     {
@@ -12,7 +12,7 @@ class BCC_Coreapi_Client
         $this->_storage = $storage;
     }
 
-    function get_site_groups(): array {
+    function get_site_groups() {
         if(isset($this->_site_groups)) {
             return $this->_site_groups;
         }
@@ -33,7 +33,7 @@ class BCC_Coreapi_Client
         return $this->_site_groups;
     }
 
-    function fetch_groups(array $group_uids): array
+    function fetch_groups($group_uids)
     {
         $token = $this->get_coreapi_token();
 
@@ -61,7 +61,7 @@ class BCC_Coreapi_Client
         return $body->data;
     }
 
-    function get_groups_for_user(string $user_uid): array {
+    function get_groups_for_user($user_uid) {
         $cache_key = 'coreapi_user_groups_'.$user_uid;
 
         $cached_response = get_transient($cache_key);
@@ -77,7 +77,7 @@ class BCC_Coreapi_Client
         return $user_groups;
     }
 
-    function fetch_groups_for_user(string $user_uid): array
+    function fetch_groups_for_user($user_uid)
     {
         if(empty( $this->_settings->site_groups)) return array();
 
@@ -164,7 +164,7 @@ class BCC_Coreapi_Client
         }
     } 
 
-    public function get_coreapi_token() : string {
+    public function get_coreapi_token() {
         $cached_token = $this->_storage->get('coreapi_token');
         if ($cached_token !== null) {
             return $cached_token;
@@ -185,7 +185,7 @@ class BCC_Coreapi_Client
         return $token_response->access_token;
     }
 
-    private static function fetch_coreapi_token($token_endpoint, $client_id, $client_secret, $audience): Token_Response|false {
+    private static function fetch_coreapi_token($token_endpoint, $client_id, $client_secret, $audience) {
         $request = array(
             'body' => array(
                 'client_id'     => $client_id,
@@ -213,7 +213,7 @@ class BCC_Coreapi_Client
         return $token_response;
     }
 
-    public static function check_groups_access($token_endpoint, $client_id, $client_secret, $audience): bool {
+    public static function check_groups_access($token_endpoint, $client_id, $client_secret, $audience) {
         $token_response = BCC_Coreapi_Client::fetch_coreapi_token($token_endpoint, $client_id, $client_secret, $audience);
 
         if($token_response == false) return false;
@@ -224,9 +224,9 @@ class BCC_Coreapi_Client
 }
 
 class Token_Response {
-    public string $access_token;
-    public string $scope;
-    public int $expires_in;
+    public $access_token;
+    public $scope;
+    public $expires_in;
 }
 
 ?>
