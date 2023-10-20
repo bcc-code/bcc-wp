@@ -361,6 +361,35 @@ class BCC_Login_Client {
         }
         return false;
     }
+
+    public function get_current_user_level() {
+        $token = ''; 
+        if (!isset($_COOKIE['oidc_token_id'])) {
+            return BCC_Login_Visibility::VISIBILITY_PUBLIC;
+        }
+
+        $token_id = $_COOKIE['oidc_token_id'];
+
+        if ( ! empty( $token_id ) ) {
+            $token = get_transient( 'oidc_access_token_' . $token_id );
+        }
+
+        if ( empty( $token ) ) {
+            return BCC_Login_Visibility::VISIBILITY_PUBLIC;
+        }
+
+        $claims = BCC_Login_Token_Utility::get_token_claims( $token );
+
+        if (
+            isset($claims[$this->_settings->member_organization_claim_type]) &&
+            $claims[$this->_settings->member_organization_claim_type] == $this->_settings->member_organization_name 
+        ) {
+            return BCC_Login_Visibility::VISIBILITY_MEMBER;
+        }
+
+        return BCC_Login_Visibility::VISIBILITY_SUBSCRIBER;
+        
+    }
 }
 
 

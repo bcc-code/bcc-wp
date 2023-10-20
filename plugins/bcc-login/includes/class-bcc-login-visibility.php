@@ -122,7 +122,7 @@ class BCC_Login_Visibility {
             return;
         }
 
-        $level      = $this->get_current_user_level();
+        $level      = $this->_client->get_current_user_level();
         $visibility = $this->_settings->default_visibility;
 
         $post_visibility = (int) get_post_meta( $post->ID, 'bcc_login_visibility', true );
@@ -278,11 +278,11 @@ class BCC_Login_Visibility {
         $rules = array(
             'key'     => 'bcc_login_visibility',
             'compare' => '<=',
-            'value'   => $this->get_current_user_level()
+            'value'   => $this->_client->get_current_user_level()
         );
 
         // Include also posts where visibility isn't specified based on the Default Content Access
-        if ( $this->get_current_user_level() >= $this->_settings->default_visibility ) {
+        if ( $this->_client->get_current_user_level() >= $this->_settings->default_visibility ) {
             $rules = array(
                 'relation' => 'OR',
                 $rules,
@@ -334,7 +334,7 @@ class BCC_Login_Visibility {
             return $items;
         }
 
-        $level   = $this->get_current_user_level();
+        $level   = $this->_client->get_current_user_level();
         $removed = array();
 
         foreach ( $items as $key => $item ) {
@@ -359,21 +359,6 @@ class BCC_Login_Visibility {
         }
 
         return $items;
-    }
-
-    /**
-     * @return int
-     */
-    private function get_current_user_level() {
-        $user  = wp_get_current_user();
-
-        foreach ( $this->levels as $role => $level ) {
-            if ( user_can( $user, $role ) ) {
-                return $level;
-            }
-        }
-
-        return self::VISIBILITY_PUBLIC;
     }
 
     private function get_current_user_groups() {
@@ -407,7 +392,7 @@ class BCC_Login_Visibility {
                 $visibility = $this->_settings->default_visibility;
             }
 
-            $level = $this->get_current_user_level();
+            $level = $this->_client->get_current_user_level();
 
             if ( $visibility && $visibility > $level ) {
                 return '';
