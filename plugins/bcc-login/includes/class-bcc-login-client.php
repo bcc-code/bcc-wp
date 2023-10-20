@@ -375,7 +375,7 @@ class BCC_Login_Client {
         }
 
         if ( empty( $token ) ) {
-            return false;
+            return BCC_Login_Visibility::VISIBILITY_PUBLIC;
         }
 
         $claims = BCC_Login_Token_Utility::get_token_claims( $token );
