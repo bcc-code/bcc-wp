@@ -84,7 +84,7 @@ function GroupsOptions({
             name={`bcc-groups__setting-${instanceId}`}
             value={group.uid}
             onChange={(event) => {
-              const index = selectedGroups.indexOf(group.uid);
+              const index = selectedGroups ? selectedGroups.indexOf(group.uid) : -1;
               const newGroups = JSON.parse(JSON.stringify(selectedGroups));
               if (index === -1) {
                 newGroups.push(group.uid);
@@ -93,7 +93,7 @@ function GroupsOptions({
               }
               onUpdateGroup(newGroups);
             }}
-            checked={selectedGroups.includes(group.uid)}
+            checked={selectedGroups ? selectedGroups.includes(group.uid) : false}
             id={`bcc-login-post-${group.uid}-${instanceId}`}
             aria-describedby={`bcc-login-post-${group.uid}-${instanceId}-description`}
             className="bcc-groups__dialog-radio"
