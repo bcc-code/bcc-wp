@@ -274,7 +274,15 @@ class BCC_Login_Visibility {
         // Get original meta query
         $meta_query = (array)$query->get('meta_query');
 
-        // Add visibility rules
+        // Check if $meta_query already has visibility filters
+        foreach ($meta_query as $meta_query_item) {
+            if (is_array($meta_query_item) && array_key_exists('bcc-login-visibility', $meta_query_item)) {
+                // Visibility filter has already been added - return
+                return $query;
+            }
+        }
+
+        // Add visibility rules 
         $rules = array(
             'key'     => 'bcc_login_visibility',
             'compare' => '<=',
@@ -294,19 +302,30 @@ class BCC_Login_Visibility {
         }
 
         if(!empty($this->_settings->site_groups)) {
-            $group_rules = array(
-                'relation' => 'OR',
-                array(
+            $user_groups = $this->get_current_user_groups();
+            $group_rules = array();
+
+            if (empty($user_groups)) {
+                // If user has no groups - just check that no group filters have been set
+                $group_rules = array(
                     'key' => 'bcc_groups',
                     'compare' => 'NOT EXISTS',
-                ),
-                array(
-                    'key' => 'bcc_groups',
-                    'compare' => 'IN',
-                    'value' => $this->get_current_user_groups()
-                ),
-            );
-    
+                );
+            } else {
+                // If user has groups - check if no group filters have been set ORE
+                $group_rules = array(
+                    'relation' => 'OR',
+                    array(
+                        'key' => 'bcc_groups',
+                        'compare' => 'NOT EXISTS',
+                    ),
+                    array(
+                        'key' => 'bcc_groups',
+                        'compare' => 'IN',
+                        'value' => $user_groups
+                    ),
+                );
+            }    
             $rules = array(
                 'relation' => 'AND',
                 $rules,
@@ -314,6 +333,8 @@ class BCC_Login_Visibility {
             );
         }
 
+        // Indicate that this set of rules is for the visibility filter
+        $rules['bcc-login-visibility'] = true;
         $meta_query[] = $rules;
 
 
