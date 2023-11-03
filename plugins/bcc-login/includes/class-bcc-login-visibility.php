@@ -274,17 +274,17 @@ class BCC_Login_Visibility {
         // Get original meta query
         $meta_query = (array)$query->get('meta_query');
 
-        // Check if $meta_query already has visiblity filters
+        // Check if $meta_query already has visibility filters
         foreach ($meta_query as $meta_query_item) {
             if (is_array($meta_query_item) && array_key_exists('bcc-login-visibility', $meta_query_item)) {
-                // Visiblity filter has already been added - return
+                // Visibility filter has already been added - return
                 return $query;
             }
         }
 
         // Add visibility rules 
         $rules = array(
-            'key'     => 'bcc_login_visibility', // Level 1
+            'key'     => 'bcc_login_visibility',
             'compare' => '<=',
             'value'   => $this->_client->get_current_user_level()
         );
@@ -295,7 +295,7 @@ class BCC_Login_Visibility {
                 'relation' => 'OR',
                 $rules,
                 array(
-                    'key'     => 'bcc_login_visibility',  // Level 2
+                    'key'     => 'bcc_login_visibility',
                     'compare' => 'NOT EXISTS'
                 )
             );
@@ -308,7 +308,7 @@ class BCC_Login_Visibility {
             if (empty($user_groups)) {
                 // If user has no groups - just check that no group filters have been set
                 $group_rules = array(
-                    'key' => 'bcc_groups', // Level 2
+                    'key' => 'bcc_groups',
                     'compare' => 'NOT EXISTS',
                 );
             } else {
@@ -316,7 +316,7 @@ class BCC_Login_Visibility {
                 $group_rules = array(
                     'relation' => 'OR',
                     array(
-                        'key' => 'bcc_groups', // Level 3
+                        'key' => 'bcc_groups',
                         'compare' => 'NOT EXISTS',
                     ),
                     array(
