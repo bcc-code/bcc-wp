@@ -371,7 +371,7 @@ class BCC_Login_Client {
         $token_id = $_COOKIE['oidc_token_id'];
 
         if ( ! empty( $token_id ) ) {
-            $token = get_transient( 'oidc_access_token_' . $token_id );
+            $token = get_transient( 'oidc_id_token_' . $token_id );
         }
 
         if ( empty( $token ) ) {
