@@ -270,12 +270,6 @@ class BCC_Login_Client {
 
     private function get_current_url() {
         global $wp;
-
-        // If the Permalink Structure is set to Plain we use the old solution with $_SERVER
-        // We replace 'wp-login.php' to 'wp-admin' to avoid the redirect loop when logging through SSO directly to the admin dashboard
-        if( get_option('permalink_structure') != "")
-            return add_query_arg( $_SERVER['QUERY_STRING'], '', home_url( $wp->request ) );
-        
         if(isset($_GET['redirect_to'])) {
             if( $this->parse_url_origin($_GET['redirect_to']) !==  $this->parse_url_origin(site_url()) ) {
                 return "/";
@@ -284,8 +278,14 @@ class BCC_Login_Client {
             return $_GET['redirect_to'];
         }
 
-        return $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . str_replace('wp-login.php', 'wp-admin', $_SERVER['REQUEST_URI']);
-            
+        // If the Permalink Structure is set to Plain we use the old solution with $_SERVER
+        if( get_option('permalink_structure') != "") {
+            return add_query_arg( $_SERVER['QUERY_STRING'], '', home_url( $wp->request ) );
+        }
+        else {
+            // We replace 'wp-login.php' to 'wp-admin' to avoid the redirect loop when logging through SSO directly to the admin dashboard
+            return $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . str_replace('wp-login.php', 'wp-admin', $_SERVER['REQUEST_URI']);
+        }
     }
 
     private function parse_url_origin($url) {
