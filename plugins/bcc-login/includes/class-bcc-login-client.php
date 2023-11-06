@@ -277,8 +277,6 @@ class BCC_Login_Client {
             return add_query_arg( $_SERVER['QUERY_STRING'], '', home_url( $wp->request ) );
         
         if(isset($_GET['redirect_to'])) {
-            $redirect_url_origin = $this->parse_url_origin($_GET['redirect_to']);
-
             if( $this->parse_url_origin($_GET['redirect_to']) !==  $this->parse_url_origin(site_url()) ) {
                 return "/";
             }
