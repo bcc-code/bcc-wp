@@ -99,11 +99,13 @@ class BCC_Login_Visibility {
      * @return void
      */
     function on_template_redirect() {
+        global $wp;
+
         if ($this->should_skip_auth()) {
             return;
         }
 
-        $visited_url = "$_SERVER[REQUEST_SCHEME]://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+        $visited_url = add_query_arg( $wp->query_vars, home_url( $wp->request ) );
 
         $session_is_valid = $this->_client->is_session_valid();
 
