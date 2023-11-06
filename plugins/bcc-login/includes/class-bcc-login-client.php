@@ -277,7 +277,7 @@ class BCC_Login_Client {
             return add_query_arg( $_SERVER['QUERY_STRING'], '', home_url( $wp->request ) );
         
         if(isset($_GET['redirect_to'])) {
-            if( $this->parse_url_origin($_GET['redirect_to']) !==  $this->parse_url_origin(site_url()) ) {
+            if( $this->get_url_host($_GET['redirect_to']) !==  $this->get_url_host(site_url()) ) {
                 return "/";
             }
             
@@ -288,24 +288,15 @@ class BCC_Login_Client {
             
     }
 
-    private function parse_url_origin($url) {
-        $origin = "";
+    private function get_url_host($url) {
 
         $parsed = parse_url($url);
 
-        if ($parsed === false) {
-            return $origin;
+        if ($parsed === false || !isset($parsed['host'])) {
+            return "";
         }
-        if(isset($parsed['scheme']))
-            $origin .= $parsed['scheme'] . "://";
 
-        if(isset($parsed['host']))
-            $origin .= $parsed['host'];
-
-        if(isset($parsed['port']))
-            $origin .= ":" . $parsed['port'];
-
-        return $origin;
+        return $parsed['host'];;
     }
 
     private function get_authorization_url( Auth_State $state ) {
