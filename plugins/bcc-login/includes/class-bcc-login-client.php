@@ -276,7 +276,7 @@ class BCC_Login_Client {
         if( get_option('permalink_structure') != "")
             return add_query_arg( $_SERVER['QUERY_STRING'], '', home_url( $wp->request ) );
         
-            if(isset($_GET['redirect_to'])) 
+        if(isset($_GET['redirect_to'])) 
             return $_GET['redirect_to'];
 
         return $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . str_replace('wp-login.php', 'wp-admin', $_SERVER['REQUEST_URI']);
