@@ -49,7 +49,7 @@ class BCC_Login_Client {
         // New state w/ timestamp.
         $obj_state = new Auth_State();
         $obj_state->state = md5( openssl_random_pseudo_bytes(16) . microtime( true ) );
-        $obj_state->return_url = $this->get_current_url();
+        $obj_state->return_url = $this->get_redirect_url();
         set_transient( 'oidc_auth_state_' . $obj_state->state, $obj_state, $this->STATE_TIME_LIMIT );
 
         return $obj_state;
@@ -270,24 +270,37 @@ class BCC_Login_Client {
 
     private function get_current_url() {
         global $wp;
+        return add_query_arg( $_SERVER['QUERY_STRING'], '', home_url(  $_SERVER['REQUEST_URI']) );
+    }
+
+    private function get_redirect_url() {
         if(isset($_GET['redirect_to'])) {
-            if( $this->parse_url_host($_GET['redirect_to']) !==  $this->parse_url_host(site_url()) ) {
+            if( $this->parse_url_origin($_GET['redirect_to']) !==  $this->parse_url_origin(site_url()) ) {
                 return "/";
             }
             return $_GET['redirect_to'];
         }
-
-        return '//' . $_SERVER['HTTP_HOST'] . str_replace('wp-login.php', '', $_SERVER['REQUEST_URI']);
+        return str_replace('wp-login.php', '', $this->get_current_url());
     }
 
-    private function parse_url_host($url) {
+    private function parse_url_origin($url) {
+        $origin = "";
+
         $parsed = parse_url($url);
 
-        if ($parsed === false || !isset($parsed['host'])) {
-            return "";
+        if ($parsed === false) {
+            return $origin;
         }
+        if(isset($parsed['scheme']))
+            $origin .= $parsed['scheme'] . "://";
 
-        return $parsed['host'];
+        if(isset($parsed['host']))
+            $origin .= $parsed['host'];
+
+        if(isset($parsed['port']))
+            $origin .= ":" . $parsed['port'];
+
+        return $origin;
     }
 
     private function get_authorization_url( Auth_State $state ) {
