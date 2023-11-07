@@ -105,7 +105,7 @@ class BCC_Login_Visibility {
             return;
         }
 
-        $visited_url = add_query_arg( $wp->query_vars, home_url( $wp->request ) );
+        $visited_url = "//".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
 
         $session_is_valid = $this->_client->is_session_valid();
 

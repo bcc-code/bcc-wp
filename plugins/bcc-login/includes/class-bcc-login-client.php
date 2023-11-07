@@ -271,41 +271,23 @@ class BCC_Login_Client {
     private function get_current_url() {
         global $wp;
         if(isset($_GET['redirect_to'])) {
-            if( $this->parse_url_origin($_GET['redirect_to']) !==  $this->parse_url_origin(site_url()) ) {
+            if( $this->parse_url_host($_GET['redirect_to']) !==  $this->parse_url_host(site_url()) ) {
                 return "/";
             }
-            
             return $_GET['redirect_to'];
         }
 
-        // If the Permalink Structure is set to Plain we use the old solution with $_SERVER
-        if( get_option('permalink_structure') != "") {
-            return add_query_arg( $_SERVER['QUERY_STRING'], '', home_url( $wp->request ) );
-        }
-        else {
-            // We replace 'wp-login.php' to 'wp-admin' to avoid the redirect loop when logging through SSO directly to the admin dashboard
-            return $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . str_replace('wp-login.php', 'wp-admin', $_SERVER['REQUEST_URI']);
-        }
+        return '//' . $_SERVER['HTTP_HOST'] . str_replace('wp-login.php', '', $_SERVER['REQUEST_URI']);
     }
 
-    private function parse_url_origin($url) {
-        $origin = "";
-
+    private function parse_url_host($url) {
         $parsed = parse_url($url);
 
-        if ($parsed === false) {
-            return $origin;
+        if ($parsed === false || !isset($parsed['host'])) {
+            return "";
         }
-        if(isset($parsed['scheme']))
-            $origin .= $parsed['scheme'] . "://";
 
-        if(isset($parsed['host']))
-            $origin .= $parsed['host'];
-
-        if(isset($parsed['port']))
-            $origin .= ":" . $parsed['port'];
-
-        return $origin;
+        return $parsed['host'];
     }
 
     private function get_authorization_url( Auth_State $state ) {
