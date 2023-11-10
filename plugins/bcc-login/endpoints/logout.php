@@ -1,5 +1,7 @@
 <?php
 
+setcookie('wordpress_nocache', 'true');
+
 /** backchannel logout */
 $logout_token = $_POST['logout_token'];
 $token_id = '';

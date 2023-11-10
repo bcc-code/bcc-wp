@@ -1,5 +1,6 @@
 <?php
 
+setcookie('wordpress_nocache', 'true');
 if ( isset( $_SERVER['HTTP_COOKIE'] ) ) {
     $cookies = explode( ';', $_SERVER['HTTP_COOKIE'] );
     foreach( $cookies as $cookie ) {

@@ -1,5 +1,7 @@
 <?php
 
+setcookie('wordpress_nocache', 'true');
+
 wp_clear_auth_cookie();
 wp_logout();
 

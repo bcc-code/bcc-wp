@@ -1,5 +1,7 @@
 <?php
 
+setcookie('wordpress_nocache', 'true');
+
 $pubsub_event = file_get_contents('php://input');
 if(empty($pubsub_event)) {
     wp_die("Missing request body");
