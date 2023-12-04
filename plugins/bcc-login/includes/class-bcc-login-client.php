@@ -395,33 +395,39 @@ class BCC_Login_Client {
     public function get_current_user_level() {
         $token = ''; 
 
+        // Check if user is logged in to Wordpress
         if (!is_user_logged_in()) {
             return BCC_Login_Visibility::VISIBILITY_PUBLIC;
         }
 
+        // Check if oidc token is available
         if (!isset($_COOKIE['oidc_token_id'])) {
             return BCC_Login_Visibility::VISIBILITY_PUBLIC;
         }
 
+        // Check if oidc token is valid (still stored in transient)
         $token_id = $_COOKIE['oidc_token_id'];
-
         if ( ! empty( $token_id ) ) {
             $token = get_transient( 'oidc_id_token_' . $token_id );
         }
-
         if ( empty( $token ) ) {
             return BCC_Login_Visibility::VISIBILITY_PUBLIC;
         }
 
+        // Get token claims
         $claims = BCC_Login_Token_Utility::get_token_claims( $token );
 
-        if (
-            isset($claims[$this->_settings->member_organization_claim_type]) &&
-            $claims[$this->_settings->member_organization_claim_type] == $this->_settings->member_organization_name 
-        ) {
-            return BCC_Login_Visibility::VISIBILITY_MEMBER;
+        // Check if users member organization matches site member organization
+        if (isset($claims[$this->_settings->member_organization_claim_type]))
+        {
+            $user_member_org = trim($claims[$this->_settings->member_organization_claim_type]);
+            $site_member_orgs = array_map('trim', explode(",",$this->_settings->member_organization_name));
+            if ($user_member_org !== '' && ($user_member_org == $this->_settings->member_organization_name || in_array($user_member_org, $site_member_orgs))) {
+                return BCC_Login_Visibility::VISIBILITY_MEMBER;
+            }
         }
 
+        // Check if user has membership (subscriber)
         if (
             isset($claims[$this->_settings->has_membership_claim_type]) &&
             $claims[$this->_settings->has_membership_claim_type] == true 

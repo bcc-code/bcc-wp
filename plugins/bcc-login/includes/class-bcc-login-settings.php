@@ -182,7 +182,8 @@ class BCC_Login_Settings_Provider {
             'general',
             array(
                 'name' => 'bcc_member_organization_name',
-                'value' => $this->_settings->member_organization_name
+                'value' => $this->_settings->member_organization_name,
+                'description' => 'Comma delimeted list of locations'
             )
         );
 
