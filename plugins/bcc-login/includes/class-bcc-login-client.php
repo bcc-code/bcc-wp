@@ -394,6 +394,11 @@ class BCC_Login_Client {
 
     public function get_current_user_level() {
         $token = ''; 
+
+        if (!is_user_logged_in()) {
+            return BCC_Login_Visibility::VISIBILITY_PUBLIC;
+        }
+
         if (!isset($_COOKIE['oidc_token_id'])) {
             return BCC_Login_Visibility::VISIBILITY_PUBLIC;
         }
@@ -417,7 +422,15 @@ class BCC_Login_Client {
             return BCC_Login_Visibility::VISIBILITY_MEMBER;
         }
 
-        return BCC_Login_Visibility::VISIBILITY_SUBSCRIBER;
+        if (
+            isset($claims[$this->_settings->has_membership_claim_type]) &&
+            $claims[$this->_settings->has_membership_claim_type] == true 
+        ) {
+            return BCC_Login_Visibility::VISIBILITY_SUBSCRIBER;
+        } else {
+            return BCC_Login_Visibility::VISIBILITY_PUBLIC;
+        }
+
         
     }
 }

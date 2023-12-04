@@ -10,6 +10,7 @@ class BCC_Login_Settings {
     public $create_missing_users;
     public $member_organization_name;
     public $member_organization_claim_type;
+    public $has_membership_claim_type;
     public $topbar;
     public $default_visibility;
     public $feed_key;
@@ -58,6 +59,7 @@ class BCC_Login_Settings_Provider {
         $settings->redirect_uri = 'oidc-authorize';
         $settings->create_missing_users = false;
         $settings->member_organization_claim_type = 'https://login.bcc.no/claims/churchName';
+        $settings->has_membership_claim_type = 'https://login.bcc.no/claims/hasMembership';
         $settings->topbar = get_option( 'bcc_topbar', 1 );
         $settings->show_protected_menu_items = get_option( 'show_protected_menu_items', 0);
         $settings->feed_key = get_option('bcc_feed_key', get_option('private_newsfeed_link', '') );
