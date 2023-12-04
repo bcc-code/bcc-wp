@@ -105,14 +105,12 @@ class BCC_Login_Visibility {
             return;
         }
 
-        $visited_url = add_query_arg( $wp->query_vars, home_url( $wp->request ) );
-
         $session_is_valid = $this->_client->is_session_valid();
 
         // Initiate new login if session has expired
         if ( is_user_logged_in() && !$session_is_valid ) {
             $this->_client->end_login();
-            wp_redirect( wp_login_url($visited_url) );
+            wp_redirect( wp_login_url(get_page_link()) );
             return;
         }
 
@@ -139,7 +137,7 @@ class BCC_Login_Visibility {
             if ( is_user_logged_in() ) {
                 return $this->not_allowed_to_view_page();
             } else {
-                wp_redirect( wp_login_url($visited_url) );
+                wp_redirect( wp_login_url(get_page_link()) );
             }
         }
 

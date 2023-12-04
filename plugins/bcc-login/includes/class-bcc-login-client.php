@@ -49,7 +49,7 @@ class BCC_Login_Client {
         // New state w/ timestamp.
         $obj_state = new Auth_State();
         $obj_state->state = md5( openssl_random_pseudo_bytes(16) . microtime( true ) );
-        $obj_state->return_url = $this->get_current_url();
+        $obj_state->return_url = $this->get_redirect_url();
         set_transient( 'oidc_auth_state_' . $obj_state->state, $obj_state, $this->STATE_TIME_LIMIT );
 
         return $obj_state;
@@ -270,22 +270,17 @@ class BCC_Login_Client {
 
     private function get_current_url() {
         global $wp;
+        return add_query_arg( $_SERVER['QUERY_STRING'], '', home_url(  $_SERVER['REQUEST_URI']) );
+    }
+
+    private function get_redirect_url() {
         if(isset($_GET['redirect_to'])) {
             if( $this->parse_url_origin($_GET['redirect_to']) !==  $this->parse_url_origin(site_url()) ) {
                 return "/";
             }
-            
             return $_GET['redirect_to'];
         }
-
-        // If the Permalink Structure is set to Plain we use the old solution with $_SERVER
-        if( get_option('permalink_structure') != "") {
-            return add_query_arg( $_SERVER['QUERY_STRING'], '', home_url( $wp->request ) );
-        }
-        else {
-            // We replace 'wp-login.php' to 'wp-admin' to avoid the redirect loop when logging through SSO directly to the admin dashboard
-            return $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . str_replace('wp-login.php', 'wp-admin', $_SERVER['REQUEST_URI']);
-        }
+        return str_replace('wp-login.php', '', $this->get_current_url());
     }
 
     private function parse_url_origin($url) {
