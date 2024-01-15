@@ -122,12 +122,20 @@ class BCC_Login_Visibility {
         }
 
         $post = get_post();
-        if ( !$post ) {
-            return;
-        }
-
         $level      = $this->_client->get_current_user_level();
         $visibility = $this->_settings->default_visibility;
+
+        // Post may not be defined when the user is visiting the homepage
+        if ( !$post ) {
+            if ($visibility > $level) {
+                if ( is_user_logged_in() ) {
+                    return $this->not_allowed_to_view_page();
+                } else {
+                    wp_redirect( wp_login_url("/") );
+                }
+            }
+            return;
+        }
 
         $post_visibility = (int) get_post_meta( $post->ID, 'bcc_login_visibility', true );
         if ( $post_visibility ) {
