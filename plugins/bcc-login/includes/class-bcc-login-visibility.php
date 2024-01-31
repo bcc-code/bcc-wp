@@ -45,11 +45,6 @@ class BCC_Login_Visibility {
         add_action( 'wp_nav_menu_item_custom_fields', array( $this, 'on_render_menu_item' ), 0, 5 );
         add_action( 'wp_update_nav_menu_item', array( $this, 'on_update_menu_item' ), 10, 3 );
 
-        foreach ( $this->post_types as $post_type ) {
-            add_filter( "manage_{$post_type}_posts_columns", array( $this, 'add_post_audience_column' ) );
-            add_action( "manage_{$post_type}_posts_custom_column", array( $this, 'populate_post_audience_column'), 10, 2 );
-        }
-
         add_action( 'quick_edit_custom_box', array( $this, 'quick_edit_fields'), 10, 2 );
         add_action( 'save_post', array( $this, 'bcc_quick_edit_save' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'bcc_enqueue_quick_edit_scripts' ) );
@@ -59,7 +54,12 @@ class BCC_Login_Visibility {
      * Registers the `bcc_login_visibility` meta for posts and pages.
      */
     function on_init() {
+        $this->post_types = apply_filters( 'visibility_post_types_filter', $this->post_types );
+
         foreach ( $this->post_types as $post_type ) {
+            add_filter( "manage_{$post_type}_posts_columns", array( $this, 'add_post_audience_column' ) );
+            add_action( "manage_{$post_type}_posts_custom_column", array( $this, 'populate_post_audience_column'), 10, 2 );
+
             register_post_meta( $post_type, 'bcc_login_visibility', array(
                 'show_in_rest' => current_user_can( 'edit_posts' ),
                 'single'       => true,
