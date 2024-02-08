@@ -10,6 +10,28 @@ class BCC_Coreapi_Client
     {
         $this->_settings = $login_settings;
         $this->_storage = $storage;
+
+        add_shortcode('get_bcc_group_name', array($this, 'get_bcc_group_name_by_id'));
+    }
+
+    function get_bcc_group_name_by_id($atts) {
+        $attributes = shortcode_atts(array('uid' => ''), $atts);
+        $uid = $attributes['uid'];
+        if (!$uid)
+            return;
+
+        $site_groups = $this->get_site_groups();
+        if (!$site_groups)
+            return;
+
+        $bcc_site_group = array_values(array_filter($site_groups, function($bcc_group) use ($uid) {
+            return $bcc_group->uid == $uid;
+        }));
+
+        if (!count($bcc_site_group))
+            return;
+
+        return $bcc_site_group[0]->name;
     }
 
     function get_site_groups() {

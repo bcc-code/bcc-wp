@@ -225,7 +225,7 @@ class BCC_Login_Visibility {
     function on_block_editor_assets() {
         $script_path    = BCC_LOGIN_PATH . 'build/visibility.asset.php';
         $script_url     = BCC_LOGIN_URL . 'build/visibility.js';
-        $scrcipt_handle = 'bcc-login-visibility';
+        $script_handle = 'bcc-login-visibility';
 
         if ( ! file_exists( $script_path ) ) {
             return;
@@ -234,7 +234,7 @@ class BCC_Login_Visibility {
         $script_asset = require $script_path;
 
         wp_enqueue_script(
-            $scrcipt_handle,
+            $script_handle,
             $script_url,
             $script_asset['dependencies'],
             $script_asset['version'],
@@ -242,7 +242,7 @@ class BCC_Login_Visibility {
         );
 
         wp_add_inline_script(
-            $scrcipt_handle,
+            $script_handle,
             'var bccLoginPostVisibility = ' . json_encode( array(
                 'localName'    => $this->_settings->member_organization_name,
                 'defaultLevel' => self::VISIBILITY_DEFAULT,
@@ -253,7 +253,7 @@ class BCC_Login_Visibility {
 
         if (!empty($this->_settings->site_groups) ) {
             wp_add_inline_script(
-                $scrcipt_handle,
+                $script_handle,
                 'var siteGroups = ' . json_encode($this->_coreapi->get_site_groups()),
                 'before'
             );
@@ -279,7 +279,7 @@ class BCC_Login_Visibility {
         }
 
         // Allow feeds to be accessed using key
-        if ( $query->is_feed && ! empty($this->_settings->feed_key) && array_key_exists('id',$_GET) && $this->_settings->feed_key == $_GET['id'] ) {
+        if ( $query->is_feed && ! empty($this->_settings->feed_key) && array_key_exists('id', $_GET) && $this->_settings->feed_key == $_GET['id'] ) {
             return $query;
         }
 
