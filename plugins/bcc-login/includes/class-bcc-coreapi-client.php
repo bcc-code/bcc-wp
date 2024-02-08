@@ -111,7 +111,7 @@ class BCC_Coreapi_Client
     }
 
     public function ensure_subscription_to_person_updates() {
-        if(str_contains(site_url(), "localhost")){
+        if (str_contains(site_url(), "localhost") || str_contains(site_url(), ".local") ) {
             return;
         }
 
