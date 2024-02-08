@@ -39,6 +39,7 @@ class BCC_Login_Visibility {
         add_action( 'updated_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
         add_action( 'enqueue_block_editor_assets', array( $this, 'on_block_editor_assets' ) );
         add_filter( 'pre_get_posts', array( $this, 'filter_pre_get_posts' ) );
+        add_filter( 'pre_get_posts', array( $this, 'filter_by_selected_target_groups' ) );
         add_filter( 'wp_get_nav_menu_items', array( $this, 'filter_menu_items' ), 20 );
         add_filter( 'render_block', array( $this, 'on_render_block' ), 10, 2 );
 
@@ -354,6 +355,32 @@ class BCC_Login_Visibility {
         $query->set('meta_query', $meta_query);
 
         return $query;
+    }
+
+    /**
+     * Filters out posts that do not belong to the selected target groups.
+     * This filter applies to category lists and REST API results.
+     *
+     * @param WP_Query $query
+     * @return WP_Query
+     */
+    function filter_by_selected_target_groups($query) {
+        if (!isset($_GET['target-groups']))
+            return;
+
+        if (is_admin() || array_key_exists('post_type', $query->query) && $query->query['post_type'] === 'nav_menu_item')
+            return;
+
+        // Get original meta query
+        $meta_query = (array) $query->get('meta_query');
+        $meta_query[] = array(
+            'key'     => 'bcc_groups',
+            'value'   => $_GET['target-groups'],
+            'compare' => 'IN'
+        );
+
+        // Filter by selected target groups
+        $query->set('meta_query', $meta_query);
     }
 
     /**
