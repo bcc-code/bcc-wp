@@ -1,0 +1,44 @@
+.bcc-groups-filters-btn {
+    margin-bottom: 1rem;
+}
+
+.bcc-groups-filtering {
+    display: none;
+    position: absolute;
+    z-index: 10;
+    background: #fff;
+    border-radius: 6px;
+    left: 70px;
+    top: 0;
+    box-shadow: 0px 0px 10px gray;
+    padding: 1rem 1.5rem;
+}
+
+.filter_bcc-groups__header {
+    position: relative;
+}
+a[aria-label="clear-bcc-groups"] {
+    text-decoration: underline;
+}
+a[aria-label="close-bcc-filtering"] {
+    position: absolute;
+    top: -1rem;
+    right: -1rem;
+    padding: 1rem;
+}
+
+.bcc-groups-filtering ul {
+    margin-block: 1rem !important;
+    padding-left: 0 !important;
+}
+.bcc-groups-filtering ul li {
+    margin-bottom: 0 !important;
+    padding-block: 0.25rem;
+}
+.bcc-groups-filtering ul li:before {
+    display: none !important;
+}
+.bcc-groups-filtering label,
+.bcc-groups-filtering input {
+    cursor: pointer;
+}

@@ -12,6 +12,7 @@ class BCC_Coreapi_Client
         $this->_storage = $storage;
 
         add_shortcode('get_bcc_group_name', array($this, 'get_bcc_group_name_by_id'));
+        add_shortcode('bcc_groups_filtering', array($this, 'bcc_groups_filtering'));
     }
 
     function get_bcc_group_name_by_id($atts) {
@@ -32,6 +33,39 @@ class BCC_Coreapi_Client
             return;
 
         return $bcc_site_group[0]->name;
+    }
+
+    function bcc_groups_filtering() {
+        $site_groups = $this->get_site_groups();
+        if (!$site_groups)
+            return;
+
+        $bcc_groups_selected = isset($_GET['target-groups']) ? $_GET['target-groups'] : array();
+
+        $html = '<div class="bcc-groups-filters-btn">' .
+            '<a href="javascript:void(0)" aria-label="open-bcc-filtering">' . __('Filters', 'bcc-login') . '</a>' .
+        '</div>';
+
+        $html .= '<form class="bcc-groups-filtering">';
+        $html .= '<div class="filter_bcc-groups__header">' .
+            '<a href="javascript:void(0)" aria-label="clear-bcc-groups">' . __('Clear all', 'bcc-login') . '</a>' .
+            '<a href="javascript:void(0)" aria-label="close-bcc-filtering">X</a>' .
+        '</div>';
+
+        $html .= '<ul>';
+
+        foreach ($site_groups as $group) :
+            $html .= '<li class="filter_bcc-groups__checkbox">' .
+                '<input type="checkbox" id="'. $group->uid .'" value="'. $group->uid .'" name="target-groups[]"' . (in_array($group->uid, $bcc_groups_selected) ? 'checked' : '') . '/>' .
+                '<label for="' . $group->uid . '">' . $group->name . '</label>' .
+            '</li>';
+        endforeach;
+
+        $html .= '</ul>';
+        $html .= '<button type="submit">' . __('Apply', 'bcc-login') . '</button>';
+        $html .= '</form>';
+
+        return $html;
     }
 
     function get_site_groups() {
