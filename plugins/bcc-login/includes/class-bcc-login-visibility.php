@@ -49,6 +49,7 @@ class BCC_Login_Visibility {
         add_action( 'quick_edit_custom_box', array( $this, 'quick_edit_fields'), 10, 2 );
         add_action( 'save_post', array( $this, 'bcc_quick_edit_save' ) );
         add_action( 'wp_enqueue_scripts', array( $this, 'bcc_enqueue_filtering_scripts' ) );
+        add_action( 'admin_enqueue_scripts', array( $this, 'bcc_enqueue_visibility_scripts' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'bcc_enqueue_quick_edit_scripts' ) );
     }
 
@@ -667,6 +668,10 @@ class BCC_Login_Visibility {
     function bcc_enqueue_filtering_scripts() {
         wp_enqueue_style( 'filtering-css', BCC_LOGIN_URL . 'src/filtering.css' );
         wp_enqueue_script( 'filtering-js', BCC_LOGIN_URL . 'src/filtering.js', array( 'jquery' ) );
+    }
+
+    function bcc_enqueue_visibility_scripts() {
+        wp_enqueue_style( 'visibility-css', BCC_LOGIN_URL . 'src/visibility.css' );
     }
 
     function bcc_enqueue_quick_edit_scripts( $pagehook ) {

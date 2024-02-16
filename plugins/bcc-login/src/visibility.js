@@ -1,6 +1,12 @@
+import { useState } from "react";
 import { __, sprintf } from "@wordpress/i18n";
 import { addFilter } from "@wordpress/hooks";
-import { PanelBody } from "@wordpress/components";
+import {
+  PanelBody,
+  PanelRow,
+  CheckboxControl,
+  SearchControl,
+} from "@wordpress/components";
 import { registerPlugin } from "@wordpress/plugins";
 import { InspectorControls } from "@wordpress/block-editor";
 import { PluginPostStatusInfo } from "@wordpress/edit-post";
@@ -13,6 +19,7 @@ import {
 } from "@wordpress/compose";
 
 const { defaultLevel, levels, localName } = window.bccLoginPostVisibility;
+let filteredSiteGroups = siteGroups;
 
 const visibilityOptions = [
   {
@@ -71,40 +78,48 @@ function GroupsOptions({
   instanceId,
   onUpdateGroup,
 }) {
+  const [searchInput, setSearchInput] = useState("");
+
   if (!siteGroups) {
     return;
   }
+
   return (
     <div>
       {heading && <h2>{heading}</h2>}
-      {siteGroups.map((group) => (
-        <p key={group.uid} className="bcc-groups__choice">
-          <input
-            type="checkbox"
-            name={`bcc-groups__setting-${instanceId}`}
-            value={group.uid}
-            onChange={(event) => {
-              const index = selectedGroups ? selectedGroups.indexOf(group.uid) : -1;
-              const newGroups = JSON.parse(JSON.stringify(selectedGroups));
-              if (index === -1) {
-                newGroups.push(group.uid);
-              } else {
-                newGroups.splice(index, 1);
-              }
-              onUpdateGroup(newGroups);
-            }}
-            checked={selectedGroups ? selectedGroups.includes(group.uid) : false}
-            id={`bcc-login-post-${group.uid}-${instanceId}`}
-            aria-describedby={`bcc-login-post-${group.uid}-${instanceId}-description`}
-            className="bcc-groups__dialog-radio"
-          />
-          <label
-            htmlFor={`bcc-login-post-${group.uid}-${instanceId}`}
-            className="bcc-groups__dialog-label"
-          >
-            {group.name}
-          </label>
-        </p>
+      <SearchControl
+        className="bcc-groups__search"
+        value={searchInput}
+        onChange={(e) => {
+          setSearchInput(e);
+
+          if (e == "") {
+            filteredSiteGroups = siteGroups;
+          } else {
+            filteredSiteGroups = siteGroups.filter((group) =>
+              group.name.toLowerCase().includes(e.toLowerCase())
+            );
+          }
+        }}
+      />
+      {filteredSiteGroups.map((group) => (
+        <CheckboxControl
+          className="bcc-groups__checkbox"
+          label={group.name}
+          onChange={(event) => {
+            const index = selectedGroups
+              ? selectedGroups.indexOf(group.uid)
+              : -1;
+            const newGroups = JSON.parse(JSON.stringify(selectedGroups));
+            if (index === -1) {
+              newGroups.push(group.uid);
+            } else {
+              newGroups.splice(index, 1);
+            }
+            onUpdateGroup(newGroups);
+          }}
+          checked={selectedGroups ? selectedGroups.includes(group.uid) : false}
+        />
       ))}
     </div>
   );
@@ -190,17 +205,19 @@ addFilter(
                 }}
                 {...props}
               />
-              <GroupsOptions
-                heading={__("Block Groups")}
-                siteGroups={window.siteGroups}
-                selectedGroups={attributes.bccGroups}
-                onUpdateGroup={(value) => {
-                  setAttributes({
-                    bccGroups: value,
-                  });
-                }}
-                {...props}
-              />
+              <PanelRow>
+                <GroupsOptions
+                  heading={__("Block Groups")}
+                  siteGroups={window.siteGroups}
+                  selectedGroups={attributes.bccGroups}
+                  onUpdateGroup={(value) => {
+                    setAttributes({
+                      bccGroups: value,
+                    });
+                  }}
+                  {...props}
+                />
+              </PanelRow>
             </PanelBody>
           </InspectorControls>
           <BlockEdit {...props} />
