@@ -40,6 +40,9 @@ class BCC_Coreapi_Client
         if (!$site_groups)
             return;
 
+        // Sort by name
+        usort($site_groups, fn($a, $b) => $a->name <=> $b->name);
+
         $bcc_groups_selected = isset($_GET['target-groups']) ? $_GET['target-groups'] : array();
 
         $html = '<div class="bcc-filter">' .
@@ -55,7 +58,10 @@ class BCC_Coreapi_Client
                 '<label for="' . $group->uid . '"><div class="bcc-checkbox"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"><path fill="#fff" d="M6.3 11.767a.498.498 0 0 1-.208-.042.862.862 0 0 1-.192-.125L2.883 8.583a.565.565 0 0 1-.166-.416c0-.167.055-.306.166-.417a.546.546 0 0 1 .4-.167c.156 0 .29.056.4.167L6.3 10.367l6-6a.546.546 0 0 1 .4-.167c.156 0 .295.056.417.167a.555.555 0 0 1 .166.408.555.555 0 0 1-.166.408L6.7 11.6a.862.862 0 0 1-.192.125.498.498 0 0 1-.208.042Z"/></svg></div>' . $group->name . '</label>' .
             '</li>';
         endforeach;
-        $html .= '<li class="expandable"><a href="javascript:void(0)" id="expand-btn">+ see all groups</a></li>';
+        $html .= '<li class="expandable">' .
+            '<a href="javascript:void(0)" id="expand-btn">+ ' . __('see all groups', 'bcc-login') . '</a>' .
+            '<a href="javascript:void(0)" id="minimize-btn" style="display: none;">- ' . __('see fewer groups', 'bcc-login') . '</a>' .
+        '</li>';
         $html .= '</ul>';
         $html .= '<a href="javascript:void(0)" id="bcc-filter-submit">' . __('Apply', 'bcc-login') . '</a>';
         $html .= '</div></div>';
