@@ -153,23 +153,26 @@ class BCC_Login_Visibility {
             }
         }
 
-        if(!empty($this->_settings->site_groups)){
-            $post_groups = get_post_meta( $post->ID, 'bcc_groups', false );
+        if ( !empty($this->_settings->site_groups) ) {
+            $post_groups = get_post_meta($post->ID, 'bcc_groups', false);
             if (!$post_groups) {
                 return;
             }
+
             $user_groups = $this->get_current_user_groups();
             if (!$user_groups) {
                 return $this->not_allowed_to_view_page();
             }
-            if(count(array_intersect($post_groups, $user_groups)) == 0) {
+
+            if (count(array_intersect($post_groups, $user_groups)) == 0 &&
+                count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0)
+            {
                 return $this->not_allowed_to_view_page();
             }
         }
-
     }
 
-    private function not_allowed_to_view_page(){
+    private function not_allowed_to_view_page() {
         wp_die(
             sprintf(
                 '%s<br><a href="%s">%s</a>',
@@ -315,8 +318,12 @@ class BCC_Login_Visibility {
             );
         }
 
-        if(!empty($this->_settings->site_groups)) {
-            $user_groups = $this->get_current_user_groups();
+        $user_groups = $this->get_current_user_groups();
+
+        // Filter posts which user should have access to - except when user has full content access
+        if (!empty($this->_settings->site_groups) &&
+            count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0
+        ) {
             $group_rules = array();
 
             if (empty($user_groups)) {
@@ -337,9 +344,10 @@ class BCC_Login_Visibility {
                         'key' => 'bcc_groups',
                         'compare' => 'IN',
                         'value' => $user_groups
-                    ),
+                    )
                 );
             }    
+
             $rules = array(
                 'relation' => 'AND',
                 $rules,
@@ -426,8 +434,8 @@ class BCC_Login_Visibility {
             return array();
         }
 
-        $person_uid  = $this->_client->get_current_user_person_uid();
-        if(!$person_uid) {
+        $person_uid = $this->_client->get_current_user_person_uid();
+        if (!$person_uid) {
             return array();
         }
         return $this->_coreapi->get_groups_for_user($person_uid);
@@ -467,11 +475,10 @@ class BCC_Login_Visibility {
 
             $user_groups = $this->get_current_user_groups();
 
-
             if (!$user_groups) {
                 return '';
             }
-            if(count(array_intersect($block_groups, $user_groups)) == 0) {
+            if (count(array_intersect($block_groups, $user_groups)) == 0) {
                 return '';
             }
         }
@@ -537,7 +544,6 @@ class BCC_Login_Visibility {
         $columns['post_audience_name'] = $headingAudience;
 
         if (!empty($this->_settings->site_groups)) {
-
             $headingGroups = __( 'Groups', 'bcc-login' );
 
             $columns['post_groups'] = $headingGroups;
@@ -561,13 +567,13 @@ class BCC_Login_Visibility {
             return;
         }
 
-        if(empty($this->_settings->site_groups)) {
+        if (empty($this->_settings->site_groups)) {
             return;
         }
 
         if ($column_name == 'post_groups') {
             $groups = get_post_meta( $id, 'bcc_groups', false );
-            if($groups) {
+            if ($groups) {
                 $groups_string = join(",",$groups );
                 echo $groups_string;
             }
@@ -580,7 +586,7 @@ class BCC_Login_Visibility {
             }
 
             $post_groups = get_post_meta( $id, 'bcc_groups', false );
-            if(!$post_groups) {
+            if (!$post_groups) {
                 return;
             }
 
@@ -596,7 +602,7 @@ class BCC_Login_Visibility {
     }
 
     function quick_edit_fields( $column_name, $post_type ) {
-        if($column_name == 'post_audience') {
+        if ($column_name == 'post_audience') {
             wp_nonce_field( 'bcc_q_edit_nonce', 'bcc_nonce' );
 
             echo '<fieldset class="inline-edit-col-right bcc-quick-edit">

@@ -16,6 +16,7 @@ class BCC_Login_Settings {
     public $feed_key;
     public $show_protected_menu_items;
     public $site_groups = array();
+    public $full_content_access_groups = array();
     public $coreapi_audience;
     public $coreapi_base_url;
 }
@@ -87,6 +88,11 @@ class BCC_Login_Settings_Provider {
             $settings->site_groups = explode(",", $site_groups_option);
         }
 
+        $full_content_access_groups_option = get_option('bcc_full_content_access_groups');
+        if ($full_content_access_groups_option) {
+            $settings->full_content_access_groups = explode(",", $full_content_access_groups_option);
+        }
+
         // Backwards compatibility with old plugin configuration.
         if ( ! isset( $settings->client_id ) ) {
             $old_oidc_settings = (array) get_option( 'openid_connect_generic_settings', array () );
@@ -138,6 +144,7 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_member_organization_name' );
         register_setting( $this->option_name, 'bcc_feed_key' );
         register_setting( $this->option_name, 'bcc_site_groups' );
+        register_setting( $this->option_name, 'bcc_full_content_access_groups' );
         register_setting( $this->option_name, 'show_protected_menu_items' );
 
         add_settings_section( 'general', '', null, $this->options_page );
@@ -215,7 +222,7 @@ class BCC_Login_Settings_Provider {
             )
         );
 
-        if(!empty($this->_settings->site_groups)|| BCC_Coreapi_Client::check_groups_access(
+        if (!empty($this->_settings->site_groups) || BCC_Coreapi_Client::check_groups_access(
             $this->_settings->token_endpoint,
             $this->_settings->client_id,
             $this->_settings->client_secret,
@@ -230,12 +237,30 @@ class BCC_Login_Settings_Provider {
                 array(
                     'name' => 'bcc_site_groups',
                     'value' => join(",", $this->_settings->site_groups),
-                    'description' => 'Provide group uids for groups you\'re going to use (comma delimtied)'
+                    'description' => 'Provide group uids for groups you\'re going to use (comma delimited).'
                 )
             );
-    
         }
 
+        if (!empty($this->_settings->full_content_access_groups) || BCC_Coreapi_Client::check_groups_access(
+            $this->_settings->token_endpoint,
+            $this->_settings->client_id,
+            $this->_settings->client_secret,
+            $this->_settings->coreapi_audience
+        )) {
+            add_settings_field(
+                'bcc_full_content_access_groups',
+                'Full Content Access Groups',
+                array( $this, 'render_text_field' ),
+                $this->options_page,
+                'general',
+                array(
+                    'name' => 'bcc_full_content_access_groups',
+                    'value' => join(",", $this->_settings->full_content_access_groups),
+                    'description' => 'Groups that always can see published content regardless of group settings on content.'
+                )
+            );
+        }
 
         add_settings_field(
             'show_protected_menu_items',

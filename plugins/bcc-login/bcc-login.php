@@ -70,7 +70,7 @@ class BCC_Login {
         $this->_feed = new BCC_Login_Feed( $this->_settings, $this->_client );
         $this->_updater = new BCC_Login_Updater( $this->plugin, $this->plugin_slug, $this->plugin_version, $this->plugin_name );
 
-        if (!empty($this->_settings->site_groups)) {
+        if (!empty($this->_settings->site_groups) || !empty($this->_settings->full_content_access_groups)) {
             $this->_coreapi->ensure_subscription_to_person_updates();
         }
 
