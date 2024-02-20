@@ -20,4 +20,20 @@ jQuery(function ($) {
     $("#bcc-filter-groups").removeClass("active");
     $("body").removeClass("no-scroll");
   });
+
+  $(document).on("click", "#bcc-filter-submit", function () {
+    const param = "target-groups[]=";
+    var filteredGroups = [];
+
+    $('#bcc-filter-groups input[type="checkbox"]').each(function () {
+      if (this.checked) filteredGroups.push(this.value);
+    });
+
+    const queryParams = param + filteredGroups.join("&" + param);
+
+    if (history.pushState) {
+      history.pushState(null, null, window.location.href + "?" + queryParams);
+      location.reload();
+    }
+  });
 });
