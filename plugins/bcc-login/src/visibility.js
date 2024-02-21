@@ -84,6 +84,11 @@ function GroupsOptions({
     return;
   }
 
+  // Sort by name
+  siteGroups.sort((a, b) => {
+    return a.name.localeCompare(b.name);
+  });
+
   return (
     <div>
       {heading && <h2>{heading}</h2>}
