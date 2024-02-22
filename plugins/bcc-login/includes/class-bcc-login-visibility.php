@@ -51,6 +51,9 @@ class BCC_Login_Visibility {
         add_action( 'wp_enqueue_scripts', array( $this, 'bcc_enqueue_filtering_scripts' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'bcc_enqueue_visibility_scripts' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'bcc_enqueue_quick_edit_scripts' ) );
+
+        add_shortcode('bcc_groups_filtering', array($this, 'bcc_groups_filtering'));
+        add_shortcode('get_bcc_group_name', array($this, 'get_bcc_group_name_by_id'));
     }
 
     /**
@@ -439,7 +442,35 @@ class BCC_Login_Visibility {
         if (!$person_uid) {
             return array();
         }
+        
         return $this->_coreapi->get_groups_for_user($person_uid);
+    }
+
+    private function get_user_bcc_groups_list() {
+        $site_groups = $this->_coreapi->get_site_groups();
+        $user_site_groups = array();
+
+        if ( current_user_can( 'edit_posts' ) ) {
+            // Show all site groups for admins
+            $user_site_groups = $site_groups;
+        }
+        else {
+            $user_groups = $this->get_current_user_groups();
+            if (!$user_groups) {
+                return;
+            }
+            
+            foreach ($site_groups as $site_group) {
+                if (in_array($site_group->uid, $user_groups)) {
+                    $user_site_groups[] = $site_group;
+                }
+            }
+        }
+
+        // Sort by name
+        usort($user_site_groups, fn($a, $b) => $a->name <=> $b->name);
+
+        return $user_site_groups;
     }
 
     /**
@@ -509,7 +540,7 @@ class BCC_Login_Visibility {
         ?>
             <p class="description description-wide">
                 <strong><?php _e( 'Menu Item Audience', 'bcc-login' ) ?></strong>
-                <?php foreach ( $this->levels as $key => $level ): ?>
+                <?php foreach ( $this->levels as $key => $level ) : ?>
                 <label class="description description-wide">
                     <input type="radio" name="creo-menu-item-visibility[<?php echo $item_id; ?>]" value="<?php echo esc_attr( $level ); ?>"<?php checked( $level == $visibility ); ?>>
                     <?php echo $this->titles[ $level ]; ?>
@@ -597,7 +628,7 @@ class BCC_Login_Visibility {
                 array_push($group_names, $this->get_group_name($post_group));
             }
             
-            $groups_string = join(", ",$group_names );
+            $groups_string = join(", ", $group_names);
             echo $groups_string;
         }
     }
@@ -692,6 +723,40 @@ class BCC_Login_Visibility {
             }
         }
         return "";
+    }
+
+    function bcc_groups_filtering() {
+        $user_site_groups = $this->get_user_bcc_groups_list();
+        $bcc_groups_selected = isset($_GET['target-groups']) ? $_GET['target-groups'] : array();
+
+        $html = '<div class="bcc-filter">' .
+            '<a href="javascript:void(0)" id="toggle-bcc-filter"> <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM64 256c0-17.7 14.3-32 32-32H352c17.7 0 32 14.3 32 32s-14.3 32-32 32H96c-17.7 0-32-14.3-32-32zM288 416c0 17.7-14.3 32-32 32H192c-17.7 0-32-14.3-32-32s14.3-32 32-32h64c17.7 0 32 14.3 32 32z" fill="currentColor"/></svg> <span>Filter</span></a>' .
+            '<div id="bcc-filter-groups">' .
+                '<a href="javascript:void(0)" id="clear-bcc-groups">' . __('Clear all', 'bcc-login') . '</a>'  .
+                '<a href="javascript:void(0)" id="close-bcc-groups">Close</a>';
+        
+        $html .= '<ul>';
+        foreach ($user_site_groups as $group) :
+            $html .= '<li>' .
+                '<input type="checkbox" id="'. $group->uid .'" value="'. $group->uid .'" name="target-groups[]"' . (in_array($group->uid, $bcc_groups_selected) ? 'checked' : '') . '/>' .
+                '<label for="' . $group->uid . '"><div class="bcc-checkbox"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"><path fill="#fff" d="M6.3 11.767a.498.498 0 0 1-.208-.042.862.862 0 0 1-.192-.125L2.883 8.583a.565.565 0 0 1-.166-.416c0-.167.055-.306.166-.417a.546.546 0 0 1 .4-.167c.156 0 .29.056.4.167L6.3 10.367l6-6a.546.546 0 0 1 .4-.167c.156 0 .295.056.417.167a.555.555 0 0 1 .166.408.555.555 0 0 1-.166.408L6.7 11.6a.862.862 0 0 1-.192.125.498.498 0 0 1-.208.042Z"/></svg></div>' . $group->name . '</label>' .
+            '</li>';
+        endforeach;
+        $html .= '</ul>';
+        
+        $html .= '</div>' .
+        '</div>';
+
+        return $html;
+    }
+
+    function get_bcc_group_name_by_id($atts) {
+        $attributes = shortcode_atts(array('uid' => ''), $atts);
+        $uid = $attributes['uid'];
+        if (!$uid)
+            return;
+
+        return $this->get_group_name($uid);
     }
 
     /**

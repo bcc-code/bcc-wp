@@ -10,64 +10,6 @@ class BCC_Coreapi_Client
     {
         $this->_settings = $login_settings;
         $this->_storage = $storage;
-
-        add_shortcode('get_bcc_group_name', array($this, 'get_bcc_group_name_by_id'));
-        add_shortcode('bcc_groups_filtering', array($this, 'bcc_groups_filtering'));
-    }
-
-    function get_bcc_group_name_by_id($atts) {
-        $attributes = shortcode_atts(array('uid' => ''), $atts);
-        $uid = $attributes['uid'];
-        if (!$uid)
-            return;
-
-        $site_groups = $this->get_site_groups();
-        if (!$site_groups)
-            return;
-
-        $bcc_site_group = array_values(array_filter($site_groups, function($bcc_group) use ($uid) {
-            return $bcc_group->uid == $uid;
-        }));
-
-        if (!count($bcc_site_group))
-            return;
-
-        return $bcc_site_group[0]->name;
-    }
-
-    function bcc_groups_filtering() {
-        $site_groups = $this->get_site_groups();
-        if (!$site_groups)
-            return;
-
-        // Sort by name
-        usort($site_groups, fn($a, $b) => $a->name <=> $b->name);
-
-        $bcc_groups_selected = isset($_GET['target-groups']) ? $_GET['target-groups'] : array();
-
-        $html = '<div class="bcc-filter">' .
-            '<a href="javascript:void(0)" id="toggle-bcc-filter"> <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM64 256c0-17.7 14.3-32 32-32H352c17.7 0 32 14.3 32 32s-14.3 32-32 32H96c-17.7 0-32-14.3-32-32zM288 416c0 17.7-14.3 32-32 32H192c-17.7 0-32-14.3-32-32s14.3-32 32-32h64c17.7 0 32 14.3 32 32z" fill="currentColor"/></svg> <span>Filter</span></a>' .
-            '<div id="bcc-filter-groups">' .
-                '<a href="javascript:void(0)" id="clear-bcc-groups">' . __('Clear all', 'bcc-login') . '</a>'  .
-                '<a href="javascript:void(0)" id="close-bcc-groups">Close</a>';
-        
-        $html .= '<ul>';
-        foreach ($site_groups as $group) :
-            $html .= '<li>' .
-                '<input type="checkbox" id="'. $group->uid .'" value="'. $group->uid .'" name="target-groups[]"' . (in_array($group->uid, $bcc_groups_selected) ? 'checked' : '') . '/>' .
-                '<label for="' . $group->uid . '"><div class="bcc-checkbox"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"><path fill="#fff" d="M6.3 11.767a.498.498 0 0 1-.208-.042.862.862 0 0 1-.192-.125L2.883 8.583a.565.565 0 0 1-.166-.416c0-.167.055-.306.166-.417a.546.546 0 0 1 .4-.167c.156 0 .29.056.4.167L6.3 10.367l6-6a.546.546 0 0 1 .4-.167c.156 0 .295.056.417.167a.555.555 0 0 1 .166.408.555.555 0 0 1-.166.408L6.7 11.6a.862.862 0 0 1-.192.125.498.498 0 0 1-.208.042Z"/></svg></div>' . $group->name . '</label>' .
-            '</li>';
-        endforeach;
-        $html .= '<li class="expandable">' .
-            '<a href="javascript:void(0)" id="expand-btn">+ ' . __('see all groups', 'bcc-login') . '</a>' .
-            '<a href="javascript:void(0)" id="minimize-btn" style="display: none;">- ' . __('see fewer groups', 'bcc-login') . '</a>' .
-        '</li>';
-        $html .= '</ul>';
-        
-        $html .= '<a href="javascript:void(0)" id="bcc-filter-submit">' . __('Apply', 'bcc-login') . '</a>';
-        $html .= '</div></div>';
-
-        return $html;
     }
 
     function get_site_groups() {
@@ -79,7 +21,7 @@ class BCC_Coreapi_Client
         $cache_key = 'coreapi_groups_' . implode($group_uids);
 
         $cached_response = get_transient($cache_key);
-        if ($cached_response) {
+        if ($cached_response !== false) {
             return $cached_response;
         }
 
@@ -123,7 +65,7 @@ class BCC_Coreapi_Client
         $cache_key = 'coreapi_user_groups_'.$user_uid;
 
         $cached_response = get_transient($cache_key);
-        if($cached_response !== false) {
+        if ($cached_response !== false) {
             return $cached_response;
         }
 

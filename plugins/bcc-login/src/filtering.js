@@ -5,12 +5,6 @@ jQuery(function ($) {
     location.reload();
   });
 
-  $(document).on("click", "#expand-btn, #minimize-btn", function () {
-    $(".bcc-filter ul").toggleClass("expanded");
-    $(".bcc-filter #expand-btn").toggle();
-    $(".bcc-filter #minimize-btn").toggle();
-  });
-
   $(document).on("click", "#toggle-bcc-filter", function () {
     $("#bcc-filter-groups").addClass("active");
     $("body").addClass("no-scroll");
@@ -21,19 +15,26 @@ jQuery(function ($) {
     $("body").removeClass("no-scroll");
   });
 
-  $(document).on("click", "#bcc-filter-submit", function () {
-    const param = "target-groups[]=";
-    var filteredGroups = [];
+  $(document).on(
+    "change",
+    '#bcc-filter-groups input[type="checkbox"]',
+    function () {
+      const param = "target-groups[]=";
+      var filteredGroups = [];
 
-    $('#bcc-filter-groups input[type="checkbox"]').each(function () {
-      if (this.checked) filteredGroups.push(this.value);
-    });
+      $('#bcc-filter-groups input[type="checkbox"]').each(function () {
+        if (this.checked) filteredGroups.push(this.value);
+      });
 
-    const queryParams = param + filteredGroups.join("&" + param);
+      const url = window.location.href.split("?")[0];
+      const queryParams = filteredGroups.length
+        ? "?" + param + filteredGroups.join("&" + param)
+        : "";
 
-    if (history.pushState) {
-      history.pushState(null, null, window.location.href + "?" + queryParams);
-      location.reload();
+      if (history.pushState) {
+        history.pushState(null, null, url + queryParams);
+        location.reload();
+      }
     }
-  });
+  );
 });
