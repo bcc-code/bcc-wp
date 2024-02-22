@@ -10,6 +10,7 @@ class BCC_Coreapi_Client
     {
         $this->_settings = $login_settings;
         $this->_storage = $storage;
+
     }
 
     function get_site_groups() {
@@ -161,6 +162,50 @@ class BCC_Coreapi_Client
 
         if ($response['response']['code'] != 200) {
             wp_die("cannot ensure subscription to person updates: " . print_r($response, true));
+        }
+    } 
+
+    // {
+    //     "workflowId": "simpleinapp",
+    //     "personUid": "fcfc4132-1aaa-464f-9080-f49a06287f80",
+    //     "notificationPayload": [
+    //       {
+    //         "language": "en-US",
+    //         "notification": "You need a new app for live broadcasts [cta text=\"Download here\" link=\"https://portal.bcc.no/en/bcc-connect-en/important-new-app-for-viewing-live-brunstad-transmissions/\"]"
+    //       },
+    //       {
+    //         "language": "no-NO",
+    //         "notification": "Du trenger en ny app for livesendinger [cta text=\"Last ned her\" link=\"https://portal.bcc.no/bcc-connect/viktig-informasjon-ny-app-vil-sende-live-fra-brunstad/\"]"
+    //       }
+    //     ]
+    //   }
+
+    public function send_notification($group_uids, $workflow, $payload) {
+        $token = $this->get_coreapi_token();
+
+
+        //$request_url =  $this->_settings->coreapi_base_url . "/notifications/notification?createSubscribers=false&pushNotifications=true";
+        $request_url =  "https://ca-notifications-api-prod.salmonmoss-1fccea79.westeurope.azurecontainerapps.io" . "/notifications/notification?createSubscribers=false&pushNotifications=true";
+        $request_body = array(
+            "workflowId" => $workflow,
+            "groupUid" => $group_uids[0], //First group only for now
+            "notificationPayload" => $payload
+        );
+
+        $response = wp_remote_post($request_url, array(
+            "body" => wp_json_encode( $request_body ),
+            "headers" => array(
+                "Authorization" => "Bearer " . $token,
+                "Content-Type" => "application/json"
+            )
+        ));
+
+        if ( is_wp_error( $response ) ) {
+            wp_die( $response->get_error_message() );
+        }
+
+        if ($response['response']['code'] != 200) {
+            wp_die("Could not send notification: " . print_r($response, true));
         }
     } 
 
