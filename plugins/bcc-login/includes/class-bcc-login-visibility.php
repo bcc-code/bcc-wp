@@ -53,6 +53,7 @@ class BCC_Login_Visibility {
         add_action( 'admin_enqueue_scripts', array( $this, 'bcc_enqueue_quick_edit_scripts' ) );
 
         add_shortcode('bcc_groups_filtering', array($this, 'bcc_groups_filtering'));
+        add_shortcode('bcc_groups_filtered_tags', array($this, 'bcc_groups_filtered_tags'));
         add_shortcode('get_bcc_group_name', array($this, 'get_bcc_group_name_by_id'));
     }
 
@@ -730,9 +731,9 @@ class BCC_Login_Visibility {
         $bcc_groups_selected = isset($_GET['target-groups']) ? $_GET['target-groups'] : array();
 
         $html = '<div class="bcc-filter">' .
+            '<button>' . __( "Filtre", "bcc-login" ) . '<i class="icon-angle-down"></i></button>' .
             '<a href="javascript:void(0)" id="toggle-bcc-filter"> <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM64 256c0-17.7 14.3-32 32-32H352c17.7 0 32 14.3 32 32s-14.3 32-32 32H96c-17.7 0-32-14.3-32-32zM288 416c0 17.7-14.3 32-32 32H192c-17.7 0-32-14.3-32-32s14.3-32 32-32h64c17.7 0 32 14.3 32 32z" fill="currentColor"/></svg> <span>Filter</span></a>' .
             '<div id="bcc-filter-groups">' .
-                '<a href="javascript:void(0)" id="clear-bcc-groups">' . __('Clear all', 'bcc-login') . '</a>'  .
                 '<a href="javascript:void(0)" id="close-bcc-groups">Close</a>';
         
         $html .= '<ul>';
@@ -749,6 +750,26 @@ class BCC_Login_Visibility {
 
         return $html;
     }
+
+    function bcc_groups_filtered_tags() {
+        $html = '';
+
+        if (isset($_GET['target-groups'])) {
+            $html .= '<div class="bcc-target-groups__filtered">';
+                $html .= '<a href="javascript:void(0)" id="clear-bcc-groups">' . __('Clear all', 'bcc-login') . '</a>';
+
+                foreach ($_GET['target-groups'] as $target_group) {
+                    $html .= '<div class="bcc-target-groups__item">' .
+                        '<span>' . $this->get_group_name($target_group) . '</span>' .
+                        '<a href="javascript:void(0)" class="remove-bcc-group" data-group-id="' . $target_group . '">X</a>' .
+                    '</div>';
+                }
+            $html .= '</div>';
+        }
+
+        return $html;
+    }
+
 
     function get_bcc_group_name_by_id($atts) {
         $attributes = shortcode_atts(array('uid' => ''), $atts);

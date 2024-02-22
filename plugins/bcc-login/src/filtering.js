@@ -15,6 +15,14 @@ jQuery(function ($) {
     $("body").removeClass("no-scroll");
   });
 
+  $(document).on("click", ".remove-bcc-group", function () {
+    const groupId = $(this).attr("data-group-id");
+    $(
+      '#bcc-filter-groups input[type="checkbox"][id="' + groupId + '"]'
+    ).trigger("click");
+    $(this).parent().remove();
+  });
+
   $(document).on(
     "change",
     '#bcc-filter-groups input[type="checkbox"]',
