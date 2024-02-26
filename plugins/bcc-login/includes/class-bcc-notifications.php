@@ -74,7 +74,7 @@ class BCC_Notifications {
                                 'title' => $translation->post_title,
                                 'language' => $language_code,
                                 'excerpt' => $excerpt,
-                                'url' => get_permalink( $translation->ID) ?? ($site_url . '/?p=' . $translation->ID . '&lang=' . $language_code),
+                                'url' => get_permalink( $translation ) ?? ($site_url . '/?p=' . $translation->ID . '&lang=' . $language_code),
                                 'image_url' => get_the_post_thumbnail_url($translation->ID,'thumbnail'),
                                 'date' => str_replace(' ','T',$translation->post_date_gmt) . 'Z'
                             ];
@@ -95,7 +95,7 @@ class BCC_Notifications {
                 'title' => $post->post_title,   
                 'language' => $site_language,
                 'excerpt' => $excerpt,
-                'url' => get_permalink( $post->ID) ?? ($site_url . '/?p=' . $post->ID),
+                'url' => get_permalink( $post ) ?? ($site_url . '/?p=' . $post->ID),
                 'image_url' => get_the_post_thumbnail_url($post->ID,'thumbnail'),
                 'date' => str_replace(' ','T',$post->post_date_gmt) . 'Z'
             ];
