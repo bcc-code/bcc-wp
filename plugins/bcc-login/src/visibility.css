@@ -1,7 +1,6 @@
-.target-audience {
-    margin-top: 20px;
+.bcc-groups__search.components-base-control {
+    margin-bottom: 24px !important;
 }
-
-.block-editor-block-inspector .target-audience .components-base-control {
-    margin-bottom: 0;
+.bcc-groups__checkbox.components-base-control {
+    margin-bottom: 0.5rem !important;
 }

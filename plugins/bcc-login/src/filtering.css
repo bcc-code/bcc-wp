@@ -1,0 +1,155 @@
+.bcc-filter {
+    position: relative;
+}
+
+.bcc-filter ul {
+    padding-left: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.bcc-filter li {
+    position: relative;
+    margin-bottom: 4px !important;
+}
+
+.bcc-filter li:before {
+    display: none !important;
+}
+
+.bcc-filter label,
+.bcc-filter input {
+    cursor: pointer;
+}
+
+.bcc-filter input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+.bcc-filter label {
+    color: #4B5563;
+    line-height: 20px;
+    font-size: 14px;
+    display: flex;
+    gap: 6px;
+    padding-block: 4px;
+    transition: .3s ease-in-out;
+}
+
+.bcc-filter .bcc-checkbox {
+    width: 19px;
+    height: 19px;
+    border-radius: 4px;
+    border: 2px solid #E5E7EB;
+    flex-shrink: 0;
+}
+
+.bcc-filter label:hover,
+.bcc-filter input:checked+label {
+    color: #111827;
+    font-weight: 500;
+}
+
+.bcc-filter input:checked+label .bcc-checkbox {
+    background-color: #30715E;
+    border: 2px solid #30715E;
+}
+
+.bcc-filter #toggle-bcc-filter {
+    padding: 8px 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 6px;
+    border: 1px solid #2A5B4E;
+    background: #30715E;
+    color: #fff;
+    font-weight: bold;
+    box-shadow: 0px 4px 20px -10px rgba(58, 143, 118, 0.10), 20px 8px 20px -2px rgba(58, 143, 118, 0.06);
+}
+
+.bcc-filter #close-bcc-groups {
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    height: 40px;
+}
+
+.bcc-filter #toggle-bcc-filter {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.bcc-filter #bcc-filter-groups.active {
+    display: block;
+}
+
+body.no-scroll {
+    overflow: hidden;
+}
+
+.bcc-target-groups__filtered {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 16px;
+}
+
+.bcc-target-groups__item, #clear-bcc-groups {
+    padding: 2px 10px;
+    border-radius: 100rem;
+    background-color: rgb(243, 250, 247);
+    font-size: 14px;
+}
+
+#clear-bcc-groups {
+    background-color: rgb(250, 243, 243);
+}
+
+.bcc-target-groups__item span:after {
+    content: "|";
+    opacity: 0.25;
+    padding: 0 4px;
+}
+
+@media (max-width: 1023px) {
+    .bcc-filter #bcc-filter-groups {
+        position: fixed;
+        inset: 0;
+        top: var(--wp-admin--admin-bar--height);
+        z-index: 99999;
+        background: #fff;
+        padding: 16px;
+        text-align: left;
+        overflow-y: auto;
+        display: none;
+    }
+}
+
+@media (min-width: 1024px) {
+    @supports (text-shadow: 1px 0 0 #000) {
+        .bcc-filter label:hover,
+        .bcc-filter input:checked+label {
+            font-weight: normal;
+            text-shadow: 0.2px 0 0 currentColor;
+        }
+    }
+
+    .bcc-filter #close-bcc-groups,
+    .bcc-filter #toggle-bcc-filter {
+        display: none;
+    }
+
+    .bcc-filter #bcc-filter-groups {
+        display: block;
+        position: relative;
+    }
+}

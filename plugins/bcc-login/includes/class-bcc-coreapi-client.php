@@ -13,7 +13,7 @@ class BCC_Coreapi_Client
     }
 
     function get_site_groups() {
-        if(isset($this->_site_groups)) {
+        if (isset($this->_site_groups)) {
             return $this->_site_groups;
         }
         $group_uids = $this->_settings->site_groups;
@@ -21,7 +21,7 @@ class BCC_Coreapi_Client
         $cache_key = 'coreapi_groups_' . implode($group_uids);
 
         $cached_response = get_transient($cache_key);
-        if($cached_response) {
+        if ($cached_response !== false) {
             return $cached_response;
         }
 
@@ -65,7 +65,7 @@ class BCC_Coreapi_Client
         $cache_key = 'coreapi_user_groups_'.$user_uid;
 
         $cached_response = get_transient($cache_key);
-        if($cached_response !== false) {
+        if ($cached_response !== false) {
             return $cached_response;
         }
 
@@ -77,13 +77,12 @@ class BCC_Coreapi_Client
         return $user_groups;
     }
 
-    function fetch_groups_for_user($user_uid)
-    {
-        if(empty( $this->_settings->site_groups)) return array();
+    function fetch_groups_for_user($user_uid) {
+        if (empty($this->_settings->site_groups)) return array();
 
         $token = $this->get_coreapi_token();
 
-        $request_url =  $this->_settings->coreapi_base_url . "/v2/persons/". $user_uid . "/checkGroupMemberships";
+        $request_url = $this->_settings->coreapi_base_url . "/v2/persons/". $user_uid . "/checkGroupMemberships";
         $request_body = array(
             "groupUids" => $this->_settings->site_groups
         );
@@ -95,9 +94,8 @@ class BCC_Coreapi_Client
             )
         ));
 
-
-        if ( is_wp_error( $response ) ) {
-            wp_die( $response->get_error_message() );
+        if (is_wp_error($response)) {
+            wp_die($response->get_error_message());
         }
 
         if ($response['response']['code'] != 200) {
@@ -111,7 +109,7 @@ class BCC_Coreapi_Client
     }
 
     public function ensure_subscription_to_person_updates() {
-        if(str_contains(site_url(), "localhost")){
+        if (str_contains(site_url(), "localhost") || str_contains(site_url(), ".local") ) {
             return;
         }
 
