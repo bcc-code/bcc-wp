@@ -511,7 +511,11 @@ class BCC_Login_Visibility {
             if (!$user_groups) {
                 return '';
             }
-            if (count(array_intersect($block_groups, $user_groups)) == 0) {
+
+            // Filter blocks which user should have access to - except when user has full content access
+            if (count(array_intersect($block_groups, $user_groups)) == 0 &&
+                count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0
+            ) {
                 return '';
             }
         }
