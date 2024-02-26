@@ -16,8 +16,8 @@ class BCC_Notifications {
 
     public function on_post_status_transition(  $new_status, $old_status, $post ) {
        if ('publish' === $new_status && 'publish' !== $old_status) {
-            //wp_schedule_single_event( time() + 180, 'send_scheduled_notification', array( $post->ID ) );
-            $this->send_notification($post->ID);
+            wp_schedule_single_event( time() + 30, 'send_scheduled_notification', array( $post->ID ) );
+            //$this->send_notification($post->ID);
        }
     }
 
