@@ -22,6 +22,7 @@ require_once( 'includes/class-bcc-login-feed.php' );
 require_once( 'includes/class-bcc-login-updater.php');
 require_once( 'includes/class-bcc-coreapi-client.php');
 require_once( 'includes/class-bcc-storage.php');
+require_once( 'includes/class-bcc-notifications.php');
 require_once( 'includes/class-exclusive-lock.php');
 
 class BCC_Login {
@@ -45,6 +46,7 @@ class BCC_Login {
     private BCC_Login_Feed $_feed;
     private BCC_Login_Updater $_updater;
     private BCC_Coreapi_Client $_coreapi;
+    private BCC_Notifications $_notifications;
     private BCC_Storage $_storage;
     
 
@@ -69,6 +71,7 @@ class BCC_Login {
         $this->_widgets = new BCC_Login_Widgets( $this->_settings, $this->_client );
         $this->_feed = new BCC_Login_Feed( $this->_settings, $this->_client );
         $this->_updater = new BCC_Login_Updater( $this->plugin, $this->plugin_slug, $this->plugin_version, $this->plugin_name );
+        $this->_notifications = new BCC_Notifications( $this->_settings, $this->_coreapi );
 
         if (!empty($this->_settings->site_groups) || !empty($this->_settings->full_content_access_groups)) {
             $this->_coreapi->ensure_subscription_to_person_updates();
