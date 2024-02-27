@@ -381,7 +381,7 @@ class BCC_Login_Visibility {
         if (!isset($_GET['target-groups']))
             return;
 
-        if (is_admin() || array_key_exists('post_type', $query->query) && $query->query['post_type'] === 'nav_menu_item')
+        if (is_admin() || !$this->is_a_supported_post_type($query))
             return;
 
         // Get original meta query
@@ -467,6 +467,9 @@ class BCC_Login_Visibility {
                 }
             }
         }
+
+        if (!is_array($user_site_groups))
+            return array();
 
         // Sort by name
         usort($user_site_groups, fn($a, $b) => $a->name <=> $b->name);
@@ -773,7 +776,6 @@ class BCC_Login_Visibility {
         return $html;
     }
 
-
     function get_bcc_group_name_by_id($atts) {
         $attributes = shortcode_atts(array('uid' => ''), $atts);
         $uid = $attributes['uid'];
@@ -781,6 +783,10 @@ class BCC_Login_Visibility {
             return;
 
         return $this->get_group_name($uid);
+    }
+
+    function is_a_supported_post_type($query) {
+        return array_key_exists('post_type', $query->query) && in_array($query->query['post_type'], $this->post_types);
     }
 
     /**

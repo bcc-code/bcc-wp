@@ -51,7 +51,6 @@ class BCC_Coreapi_Client
             )
         ) );
 
-
         if ( is_wp_error( $response ) ) {
             wp_die( $response->get_error_message() );
         }
