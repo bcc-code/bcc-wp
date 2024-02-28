@@ -25,7 +25,8 @@ class BCC_Login_Visibility {
         self::VISIBILITY_MEMBER => 'Members'
     );
 
-    private $post_types = array( 'post', 'page' );
+    private $visibility_post_types = array( 'post', 'page' );
+    private $post_types_allowing_filtering = array( 'post', 'page' );
 
     function __construct( BCC_Login_Settings $settings, BCC_Login_Client $client, BCC_Coreapi_Client $groups ) {
         $this->_settings = $settings;
@@ -39,7 +40,7 @@ class BCC_Login_Visibility {
         add_action( 'updated_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
         add_action( 'enqueue_block_editor_assets', array( $this, 'on_block_editor_assets' ) );
         add_filter( 'pre_get_posts', array( $this, 'filter_pre_get_posts' ) );
-        add_filter( 'pre_get_posts', array( $this, 'filter_by_selected_target_groups' ) );
+        add_filter( 'pre_get_posts', array( $this, 'filter_by_queried_target_groups' ) );
         add_filter( 'wp_get_nav_menu_items', array( $this, 'filter_menu_items' ), 20 );
         add_filter( 'render_block', array( $this, 'on_render_block' ), 10, 2 );
 
@@ -61,9 +62,10 @@ class BCC_Login_Visibility {
      * Registers the `bcc_login_visibility` meta for posts and pages.
      */
     function on_init() {
-        $this->post_types = apply_filters( 'visibility_post_types_filter', $this->post_types );
+        $this->visibility_post_types = apply_filters( 'visibility_post_types_filter', $this->visibility_post_types );
+        $this->post_types_allowing_filtering = apply_filters( 'post_types_for_filtering_target_groups', $this->post_types_allowing_filtering );
 
-        foreach ( $this->post_types as $post_type ) {
+        foreach ( $this->visibility_post_types as $post_type ) {
             add_filter( "manage_{$post_type}_posts_columns", array( $this, 'add_post_audience_column' ) );
             add_action( "manage_{$post_type}_posts_custom_column", array( $this, 'populate_post_audience_column'), 10, 2 );
 
@@ -283,8 +285,9 @@ class BCC_Login_Visibility {
             return $query;
         }
 
-        // Don't filter menu items. They are handled in 'filter_menu_items()'
-        if ( array_key_exists('post_type', $query->query) && $query->query['post_type'] === 'nav_menu_item' ) {
+        // Don't filter visibility for not supported post types
+        // Menu items are e.g. handled in 'filter_menu_items()'
+        if ( !$this->supports_target_groups_visibility($query) ) {
             return $query;
         }
 
@@ -377,11 +380,11 @@ class BCC_Login_Visibility {
      * @param WP_Query $query
      * @return WP_Query
      */
-    function filter_by_selected_target_groups($query) {
+    function filter_by_queried_target_groups($query) {
         if (!isset($_GET['target-groups']))
             return;
 
-        if (is_admin() || !$this->is_a_supported_post_type($query))
+        if (is_admin() || !$this->supports_target_groups_filtering($query))
             return;
 
         // Get original meta query
@@ -418,7 +421,7 @@ class BCC_Login_Visibility {
                 continue;
             }
 
-            if ( in_array( $item->object, $this->post_types, true ) ) {
+            if ( in_array( $item->object, $this->visibility_post_types, true ) ) {
                 $visibility = (int) get_post_meta( $item->object_id, 'bcc_login_visibility', true );
                 if (!$visibility) {
                     $visibility = $this->_settings->default_visibility;
@@ -785,8 +788,12 @@ class BCC_Login_Visibility {
         return $this->get_group_name($uid);
     }
 
-    function is_a_supported_post_type($query) {
-        return array_key_exists('post_type', $query->query) && in_array($query->query['post_type'], $this->post_types);
+    function supports_target_groups_visibility($query) {
+        return array_key_exists('post_type', $query->query) && in_array($query->query['post_type'], $this->visibility_post_types);
+    }
+
+    function supports_target_groups_filtering($query) {
+        return array_key_exists('post_type', $query->query) && in_array($query->query['post_type'], $this->post_types_allowing_filtering);
     }
 
     /**
