@@ -724,7 +724,7 @@ class BCC_Login_Visibility {
     function get_group_name($group_uid) {
         foreach ($this->_coreapi->get_site_groups() as $group) {
             if ($group->uid === $group_uid) {
-                return $group->name;
+                return __( $group->name, 'bcc-login' );
             }
         }
         return "";
