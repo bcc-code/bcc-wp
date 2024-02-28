@@ -214,7 +214,7 @@ addFilter(
                 <GroupsOptions
                   heading={__("Block Groups")}
                   siteGroups={window.siteGroups}
-                  selectedGroups={attributes.bccGroups}
+                  selectedGroups={attributes.bccGroups ?? []}
                   onUpdateGroup={(value) => {
                     setAttributes({
                       bccGroups: value,
