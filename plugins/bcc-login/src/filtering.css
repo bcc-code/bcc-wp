@@ -76,10 +76,9 @@
 }
 
 .bcc-filter #close-bcc-groups {
-    position: absolute;
-    right: 16px;
-    top: 16px;
-    height: 40px;
+    display: block;
+    margin-bottom: 1rem;
+    font-size: 14px;
 }
 
 .bcc-filter #toggle-bcc-filter {

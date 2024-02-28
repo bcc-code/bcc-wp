@@ -25,7 +25,8 @@ class BCC_Login_Visibility {
         self::VISIBILITY_MEMBER => 'Members'
     );
 
-    private $post_types = array( 'post', 'page' );
+    private $visibility_post_types = array( 'post', 'page' );
+    private $post_types_allowing_filtering = array( 'post', 'page' );
 
     function __construct( BCC_Login_Settings $settings, BCC_Login_Client $client, BCC_Coreapi_Client $groups ) {
         $this->_settings = $settings;
@@ -39,7 +40,7 @@ class BCC_Login_Visibility {
         add_action( 'updated_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
         add_action( 'enqueue_block_editor_assets', array( $this, 'on_block_editor_assets' ) );
         add_filter( 'pre_get_posts', array( $this, 'filter_pre_get_posts' ) );
-        add_filter( 'pre_get_posts', array( $this, 'filter_by_selected_target_groups' ) );
+        add_filter( 'pre_get_posts', array( $this, 'filter_by_queried_target_groups' ) );
         add_filter( 'wp_get_nav_menu_items', array( $this, 'filter_menu_items' ), 20 );
         add_filter( 'render_block', array( $this, 'on_render_block' ), 10, 2 );
 
@@ -61,9 +62,10 @@ class BCC_Login_Visibility {
      * Registers the `bcc_login_visibility` meta for posts and pages.
      */
     function on_init() {
-        $this->post_types = apply_filters( 'visibility_post_types_filter', $this->post_types );
+        $this->visibility_post_types = apply_filters( 'visibility_post_types_filter', $this->visibility_post_types );
+        $this->post_types_allowing_filtering = apply_filters( 'post_types_for_filtering_target_groups', $this->post_types_allowing_filtering );
 
-        foreach ( $this->post_types as $post_type ) {
+        foreach ( $this->visibility_post_types as $post_type ) {
             add_filter( "manage_{$post_type}_posts_columns", array( $this, 'add_post_audience_column' ) );
             add_action( "manage_{$post_type}_posts_custom_column", array( $this, 'populate_post_audience_column'), 10, 2 );
 
@@ -283,8 +285,9 @@ class BCC_Login_Visibility {
             return $query;
         }
 
-        // Don't filter menu items. They are handled in 'filter_menu_items()'
-        if ( array_key_exists('post_type', $query->query) && $query->query['post_type'] === 'nav_menu_item' ) {
+        // Don't filter visibility for not supported post types
+        // Menu items are e.g. handled in 'filter_menu_items()'
+        if ( !$this->supports_target_groups_visibility($query) ) {
             return $query;
         }
 
@@ -377,11 +380,11 @@ class BCC_Login_Visibility {
      * @param WP_Query $query
      * @return WP_Query
      */
-    function filter_by_selected_target_groups($query) {
+    function filter_by_queried_target_groups($query) {
         if (!isset($_GET['target-groups']))
             return;
 
-        if (is_admin() || array_key_exists('post_type', $query->query) && $query->query['post_type'] === 'nav_menu_item')
+        if (is_admin() || !$this->supports_target_groups_filtering($query))
             return;
 
         // Get original meta query
@@ -418,7 +421,7 @@ class BCC_Login_Visibility {
                 continue;
             }
 
-            if ( in_array( $item->object, $this->post_types, true ) ) {
+            if ( in_array( $item->object, $this->visibility_post_types, true ) ) {
                 $visibility = (int) get_post_meta( $item->object_id, 'bcc_login_visibility', true );
                 if (!$visibility) {
                     $visibility = $this->_settings->default_visibility;
@@ -467,6 +470,9 @@ class BCC_Login_Visibility {
                 }
             }
         }
+
+        if (!is_array($user_site_groups))
+            return array();
 
         // Sort by name
         usort($user_site_groups, fn($a, $b) => $a->name <=> $b->name);
@@ -735,9 +741,9 @@ class BCC_Login_Visibility {
         $bcc_groups_selected = isset($_GET['target-groups']) ? $_GET['target-groups'] : array();
 
         $html = '<div class="bcc-filter">' .
-            '<a href="javascript:void(0)" id="toggle-bcc-filter"> <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM64 256c0-17.7 14.3-32 32-32H352c17.7 0 32 14.3 32 32s-14.3 32-32 32H96c-17.7 0-32-14.3-32-32zM288 416c0 17.7-14.3 32-32 32H192c-17.7 0-32-14.3-32-32s14.3-32 32-32h64c17.7 0 32 14.3 32 32z" fill="currentColor"/></svg> <span>Filter</span></a>' .
+            '<a href="javascript:void(0)" id="toggle-bcc-filter"> <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM64 256c0-17.7 14.3-32 32-32H352c17.7 0 32 14.3 32 32s-14.3 32-32 32H96c-17.7 0-32-14.3-32-32zM288 416c0 17.7-14.3 32-32 32H192c-17.7 0-32-14.3-32-32s14.3-32 32-32h64c17.7 0 32 14.3 32 32z" fill="currentColor"/></svg> <span>' . __('Filters', 'bcc-login') . '</span></a>' .
             '<div id="bcc-filter-groups">' .
-                '<a href="javascript:void(0)" id="close-bcc-groups">Close</a>';
+                '<a href="javascript:void(0)" id="close-bcc-groups">' . __('Close', 'bcc-login') . '</a>';
         
         $html .= '<ul>';
         foreach ($user_site_groups as $group) :
@@ -773,7 +779,6 @@ class BCC_Login_Visibility {
         return $html;
     }
 
-
     function get_bcc_group_name_by_id($atts) {
         $attributes = shortcode_atts(array('uid' => ''), $atts);
         $uid = $attributes['uid'];
@@ -781,6 +786,14 @@ class BCC_Login_Visibility {
             return;
 
         return $this->get_group_name($uid);
+    }
+
+    function supports_target_groups_visibility($query) {
+        return array_key_exists('post_type', $query->query) && in_array($query->query['post_type'], $this->visibility_post_types);
+    }
+
+    function supports_target_groups_filtering($query) {
+        return array_key_exists('post_type', $query->query) && in_array($query->query['post_type'], $this->post_types_allowing_filtering);
     }
 
     /**
