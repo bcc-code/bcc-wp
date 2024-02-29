@@ -26,7 +26,6 @@ class BCC_Coreapi_Client
 
         $group_uids = $this->_settings->site_groups;
         $this->_site_groups = $this->fetch_groups($group_uids);
-        $this->translate_site_groups();
 
         $expiration_duration = 60 * 60 * 24; // 1 day
         set_transient($cache_key, $this->_site_groups, $expiration_duration);
@@ -61,12 +60,6 @@ class BCC_Coreapi_Client
         return $body->data;
     }
     
-    function translate_site_groups()
-    {
-        foreach ($this->_site_groups as $ind => $group) {
-            $this->_site_groups[$ind]->name = __( $group->name, 'bcc-login' );
-        }
-    }
 
     function get_groups_for_user($user_uid) {
         $cache_key = 'coreapi_user_groups_'.$user_uid;

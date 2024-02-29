@@ -684,11 +684,11 @@ class BCC_Login_Visibility {
                 <div class="inline-edit-col">
                     <div class="inline-edit-group wp-clearfix">
                         <label class="post-audience">
-                            <span class="title">Groups</span>
+                            <span class="title">' . __( 'Groups', 'bcc-login' ) . '</span>
                             <span>';
                                 foreach ($this->_coreapi->get_site_groups() as $ind => $group) {
                                     echo '<br><input type="checkbox" name="bcc_groups[]" id="option-'. $group->uid .'" value="'. $group->uid .'">
-                                        <label for="option-'. $group->uid .'">'. $group->name .'</label>';
+                                        <label for="option-'. $group->uid .'">'. __( $group->name, 'bcc-login' ) .'</label>';
                                 }
                             echo '</span>
                         </label>
@@ -744,7 +744,7 @@ class BCC_Login_Visibility {
     function get_group_name($group_uid) {
         foreach ($this->_coreapi->get_site_groups() as $group) {
             if ($group->uid === $group_uid) {
-                return $group->name;
+                return __( $group->name, 'bcc-login' );
             }
         }
         return "";
@@ -763,7 +763,7 @@ class BCC_Login_Visibility {
         foreach ($user_site_groups as $group) :
             $html .= '<li>' .
                 '<input type="checkbox" id="'. $group->uid .'" value="'. $group->uid .'" name="target-groups[]"' . (in_array($group->uid, $queried_target_groups) ? 'checked' : '') . '/>' .
-                '<label for="' . $group->uid . '"><div class="bcc-checkbox"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"><path fill="#fff" d="M6.3 11.767a.498.498 0 0 1-.208-.042.862.862 0 0 1-.192-.125L2.883 8.583a.565.565 0 0 1-.166-.416c0-.167.055-.306.166-.417a.546.546 0 0 1 .4-.167c.156 0 .29.056.4.167L6.3 10.367l6-6a.546.546 0 0 1 .4-.167c.156 0 .295.056.417.167a.555.555 0 0 1 .166.408.555.555 0 0 1-.166.408L6.7 11.6a.862.862 0 0 1-.192.125.498.498 0 0 1-.208.042Z"/></svg></div>' . $group->name . '</label>' .
+                '<label for="' . $group->uid . '"><div class="bcc-checkbox"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"><path fill="#fff" d="M6.3 11.767a.498.498 0 0 1-.208-.042.862.862 0 0 1-.192-.125L2.883 8.583a.565.565 0 0 1-.166-.416c0-.167.055-.306.166-.417a.546.546 0 0 1 .4-.167c.156 0 .29.056.4.167L6.3 10.367l6-6a.546.546 0 0 1 .4-.167c.156 0 .295.056.417.167a.555.555 0 0 1 .166.408.555.555 0 0 1-.166.408L6.7 11.6a.862.862 0 0 1-.192.125.498.498 0 0 1-.208.042Z"/></svg></div>' . __( $group->name, 'bcc-login' )  . '</label>' .
             '</li>';
         endforeach;
         $html .= '</ul>';
