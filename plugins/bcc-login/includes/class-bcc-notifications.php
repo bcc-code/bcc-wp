@@ -28,7 +28,7 @@ class BCC_Notifications {
         $text = str_replace('[postTitle]', $post->post_title, $text);
         $text = str_replace('[postExcerpt]', get_the_excerpt($post), $text);
         $text = str_replace('[postUrl]', get_permalink( $post ) ?? (get_site_url() . '/?p=' . $post->ID . (isset($language) ? '&lang=' . $language : '')), $text);
-        $text = str_replace('[postImageUrl]', get_the_post_thumbnail_url($post->ID,'thumbnail'), $text);
+        $text = str_replace('[postImageUrl]', get_the_post_thumbnail_url($post->ID,'large'), $text);
         return $text;
     }
 
@@ -97,7 +97,7 @@ class BCC_Notifications {
                                     'language' => $language_code,
                                     'excerpt' => $excerpt,
                                     'url' => get_permalink( $translation ) ?? ($site_url . '/?p=' . $translation->ID . '&lang=' . $language_code),
-                                    'image_url' => get_the_post_thumbnail_url($translation->ID,'thumbnail'),
+                                    'image_url' => get_the_post_thumbnail_url($translation->ID,'large'),
                                     'date' => str_replace(' ','T',$translation->post_date_gmt) . 'Z'
                                 ];
                             }                        
@@ -119,7 +119,7 @@ class BCC_Notifications {
                     'language' => $site_language,
                     'excerpt' => $excerpt,
                     'url' => get_permalink( $post ) ?? ($site_url . '/?p=' . $post->ID),
-                    'image_url' => get_the_post_thumbnail_url($post->ID,'thumbnail'),
+                    'image_url' => get_the_post_thumbnail_url($post->ID,'large'),
                     'date' => str_replace(' ','T',$post->post_date_gmt) . 'Z'
                 ];
             }
