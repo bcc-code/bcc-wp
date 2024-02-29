@@ -1,0 +1,6 @@
+<wpml-config>
+  <custom-fields>
+     <custom-field action="copy">bcc_login_visibility</custom-field>
+     <custom-field action="copy">bcc_groups</custom-field>
+  </custom-fields>
+</wpml-config>
