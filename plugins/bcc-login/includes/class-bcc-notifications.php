@@ -137,8 +137,8 @@ class BCC_Notifications {
                 //         }
                 //     }
                 // }
-                $this->core_api->send_notification($post_groups, 'simpleinapp', $inapp_payload);
-                $this->core_api->send_notification($post_groups, 'simpleemail', $email_payload);
+                $this->core_api->send_notification($notification_groups, 'simpleinapp', $inapp_payload);
+                $this->core_api->send_notification($notification_groups, 'simpleemail', $email_payload);
             }
         }
 
