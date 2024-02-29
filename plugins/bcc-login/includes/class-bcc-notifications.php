@@ -117,17 +117,19 @@ class BCC_Notifications {
                 $inapp_payload = [];
                 $email_payload = [];
                 foreach ($payload as $item) {
+                    switch_to_locale(str_replace('-', '_', $item["language"]));
                     $inapp_payload[] = [
                         "language" => $item["language"],
-                        "notification" => $item["title"] . '<br><small>' . $item["excerpt"] . '</small> [cta text="' . $this->get_read_more_text($item["language"]) . '" link="' . $item["url"] . '"]'
+                        "notification" => $item["title"] . '<br><small>' . $item["excerpt"] . '</small> [cta text="' . __('Read more', 'bcc-login')  . '" link="' . $item["url"] . '"]'
                     ];
                     $email_payload[] = [
                         "language" => $item["language"],
                         "subject" =>  $item["title"],
                         "banner" => $item["image_url"] !== false ? $item["image_url"] : null,
                         "title" =>  $item["title"],
-                        "body" =>  $item["excerpt"] . '<br> [cta text="' . $this->get_read_more_text($item["language"]) . '" link="' . $item["url"] . '"]'
+                        "body" =>  $item["excerpt"] . '<br> [cta text="' . __('Read more', 'bcc-login') . '" link="' . $item["url"] . '"]'
                     ];
+                    restore_previous_locale();
                 }
                 // // Set subtitle to title from other language (should probably be fixed in template...)
                 // foreach ($email_payload as $email) {
@@ -144,27 +146,5 @@ class BCC_Notifications {
 
     }
 
-
-    function get_read_more_text($lang) {
-        if ($lang && strlen($lang) >= 2) {
-            $lang_code = substr($lang, 0, 2);
-            switch ($lang_code) {
-                case "no":
-                    return 'Les mer';
-                    break;
-                case "nb":
-                    return 'Les mer';
-                    break;                    
-                case "en":
-                    return 'Read more';
-                    break;
-                default:
-                    return 'Read more';
-                    break;
-            }
-        }
-        return 'Read more';
-        
-    }
 
 }
