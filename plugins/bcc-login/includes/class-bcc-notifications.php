@@ -16,9 +16,17 @@ class BCC_Notifications {
 
     public function on_post_status_transition(  $new_status, $old_status, $post ) {
        if ('publish' === $new_status && 'publish' !== $old_status) {
-            wp_schedule_single_event( time() + 30, 'bcc_send_scheduled_notification', array( $post->ID ) );
-            //$this->send_notification($post->ID);
+            //wp_schedule_single_event( time() + 30, 'bcc_send_scheduled_notification', array( $post->ID ) );
+            $this->send_notification($post->ID);
        }
+    }
+
+    public function replace_notification_params($text, $post, $language) {
+        $text = str_replace('[postTitle]', $post->post_title, $text);
+        $text = str_replace('[postExcerpt]', get_the_excerpt($post), $text);
+        $text = str_replace('[postUrl]', get_permalink( $post ) ?? (get_site_url() . '/?p=' . $post->ID . (isset($language) ? '&lang=' . $language : '')), $text);
+        $text = str_replace('[postImageUrl]', get_the_post_thumbnail_url($post->ID,'thumbnail'), $text);
+        return $text;
     }
 
     public function send_notification( $post_id ) {
@@ -76,10 +84,12 @@ class BCC_Notifications {
                         foreach ( $translations as $lang => $details ) {
                             $translation = get_post($details->element_id);
                             $language_details = apply_filters( 'wpml_post_language_details', NULL, $translation->ID );
-                            $language_code = str_replace('_', '-', $language_details["locale"]);
+                            $locale = $language_details["locale"];
+                            $language_code = str_replace('_', '-', $locale);
                             $excerpt = get_the_excerpt($translation);
                             if ($translation->post_status == 'publish') {
                                 $payload[] = [
+                                    'post' => $translation,
                                     'title' => $translation->post_title,
                                     'language' => $language_code,
                                     'excerpt' => $excerpt,
@@ -101,6 +111,7 @@ class BCC_Notifications {
             if (!$is_multilinguage_post){
                 $excerpt = get_the_excerpt($post);
                 $payload[] = [
+                    'post' => $post,
                     'title' => $post->post_title,   
                     'language' => $site_language,
                     'excerpt' => $excerpt,
@@ -117,20 +128,37 @@ class BCC_Notifications {
                 $inapp_payload = [];
                 $email_payload = [];
                 foreach ($payload as $item) {
-                    switch_to_locale(str_replace('-', '_', $item["language"]));
-                    $inapp_payload[] = [
-                        "language" => $item["language"],
-                        "notification" => $item["title"] . '<br><small>' . $item["excerpt"] . '</small> [cta text="' . __('Read more', 'bcc-login')  . '" link="' . $item["url"] . '"]'
-                    ];
-                    $email_payload[] = [
-                        "language" => $item["language"],
-                        "subject" =>  $item["title"],
-                        "banner" => $item["image_url"] !== false ? $item["image_url"] : null,
-                        "title" =>  $item["title"],
-                        "body" =>  $item["excerpt"] . '<br> [cta text="' . __('Read more', 'bcc-login') . '" link="' . $item["url"] . '"]'
-                    ];
+                    $wp_lang = str_replace('-', '_', $item["language"]);
+                    switch_to_locale($wp_lang);
+
+                    $templates = array_key_exists($wp_lang, $this->settings->notification_templates) 
+                    ? $this->settings->notification_templates[$wp_lang] 
+                    : (array_key_exists($site_language, $this->_settings->notification_templates) 
+                        ? $this->settings->notification_templates[$site_language]
+                        : null);
+
+                    if ($templates) {
+                        $inapp_payload[] = [
+                            "language" => $item["language"],
+                            "notification" => $item["title"] . '<br><small>' . $item["excerpt"] . '</small> [cta text="' . __('Read more', 'bcc-login')  . '" link="' . $item["url"] . '"]'
+                        ];
+
+                        $email_subject = $this->replace_notification_params($templates["email_subject"] ?? "[postTitle]", $item["post"], $wp_lang);
+                        $email_title = $this->replace_notification_params($templates["email_title"] ?? "", $item["post"], $wp_lang);
+                        $email_body = $this->replace_notification_params($templates["email_body"] ?? "", $item["post"], $wp_lang);
+                        
+                        $email_payload[] = [
+                            "language" => $item["language"],
+                            "subject" =>  $email_subject,
+                            "banner" => $item["image_url"] !== false ? $item["image_url"] : null,
+                            "title" =>  $email_title,
+                            "body" =>  $email_body
+                        ];
+                    }
                     restore_previous_locale();
                 }
+
+
                 // // Set subtitle to title from other language (should probably be fixed in template...)
                 // foreach ($email_payload as $email) {
                 //     foreach ($email_payload as $other_email) {

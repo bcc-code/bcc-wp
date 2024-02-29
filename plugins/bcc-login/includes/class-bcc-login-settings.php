@@ -19,6 +19,8 @@ class BCC_Login_Settings {
     public $notification_groups = array();
     public $full_content_access_groups = array();
     public $filtering_groups = array();
+    public $notification_languages = array();
+    public $notification_templates = array();
     public $coreapi_audience;
     public $coreapi_base_url;
 }
@@ -100,6 +102,25 @@ class BCC_Login_Settings_Provider {
             $settings->notification_groups = explode(",", $notification_groups_option);
         }
 
+        $notification_languages_option = get_option('bcc_notification_languages');
+        if ($notification_languages_option) {
+            $settings->notification_languages = explode(",", $notification_languages_option);
+        }
+
+        foreach ( $settings->notification_languages as $key => $language ) {
+            $settings->notification_templates[ $language ] = array();
+            $settings->notification_templates[ $language ]['language'] = $language;
+
+            $email_body_option = get_option('bcc_notification_' . $language . '_email_body');
+            $settings->notification_templates[ $language ]['email_body'] = $email_body_option ? $email_body_option : ''; 
+            
+            $email_subject_option = get_option('bcc_notification_' . $language . '_email_subject');
+            $settings->notification_templates[ $language ]['email_subject'] = $email_subject_option ? $email_subject_option : '';  
+
+            $email_title_option = get_option('bcc_notification_' . $language . '_email_title');
+            $settings->notification_templates[ $language ]['email_title'] = $email_title_option ? $email_title_option : ''; 
+        }
+
         $filtering_groups_option = get_option('bcc_filtering_groups');
         if ($filtering_groups_option) {
             $settings->filtering_groups = explode(",", $filtering_groups_option);
@@ -158,6 +179,7 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_feed_key' );
         register_setting( $this->option_name, 'bcc_site_groups' );
         register_setting( $this->option_name, 'bcc_notification_groups' );
+        register_setting( $this->option_name, 'bcc_notification_languages' );
         register_setting( $this->option_name, 'bcc_full_content_access_groups' );
         register_setting( $this->option_name, 'bcc_filtering_groups' );
         register_setting( $this->option_name, 'show_protected_menu_items' );
@@ -168,11 +190,16 @@ class BCC_Login_Settings_Provider {
             $this->_settings->client_secret,
             $this->_settings->coreapi_audience
         );
+        $use_notification_settings = $use_groups_settings; // Tie notification settings to groupsettings for now
 
         add_settings_section( 'general', '', null, $this->options_page );
         if ( $use_groups_settings )
         {
             add_settings_section( 'groups', __( 'Groups', 'bcc-login' ), null, $this->options_page );
+        }
+        if ( $use_notification_settings )
+        {
+            add_settings_section( 'notifications', __( 'Notifications', 'bcc-login' ), null, $this->options_page );
         }
 
         add_settings_field(
@@ -263,19 +290,6 @@ class BCC_Login_Settings_Provider {
             );
         
             add_settings_field(
-                'bcc_notification_groups',
-                'Notification Groups',
-                array( $this, 'render_text_field' ),
-                $this->options_page,
-                'groups',
-                array(
-                    'name' => 'bcc_notification_groups',
-                    'value' => join(",", $this->_settings->notification_groups),
-                    'description' => 'Provide group uids for groups that may receive notifications (comma delimited).'
-                )
-            );
-        
-            add_settings_field(
                 'bcc_full_content_access_groups',
                 'Full Content Access Groups',
                 array( $this, 'render_text_field' ),
@@ -300,6 +314,83 @@ class BCC_Login_Settings_Provider {
                     'description' => 'Provide group uids for groups that should be displayed in the filter widget (comma delimited).'
                 )
             );
+        }
+
+        if ($use_notification_settings) {
+
+            add_settings_field(
+                'bcc_notification_groups',
+                'Notification Groups',
+                array( $this, 'render_text_field' ),
+                $this->options_page,
+                'notifications',
+                array(
+                    'name' => 'bcc_notification_groups',
+                    'value' => join(",", $this->_settings->notification_groups),
+                    'description' => 'Provide group uids for groups that may receive notifications (comma delimited).'
+                )
+            );
+
+            add_settings_field(
+                'bcc_notification_languages',
+                'Notification Languages',
+                array( $this, 'render_text_field' ),
+                $this->options_page,
+                'notifications',
+                array(
+                    'name' => 'bcc_notification_languages',
+                    'value' => join(",", $this->_settings->notification_languages),
+                    'description' => 'List of languages that are supported for notification templates (comma delimited) E.g. en_US, nb_NO, de_DE etc.'
+                )
+            );
+
+            foreach ($this->_settings->notification_languages as $language) {
+                register_setting( $this->option_name, 'bcc_notification_' . $language . '_email_subject');
+                register_setting( $this->option_name, 'bcc_notification_' . $language . '_email_title');
+                register_setting( $this->option_name, 'bcc_notification_' . $language . '_email_body');
+
+
+                add_settings_field(
+                    'bcc_notification_' . $language . '_email_subject',
+                    'Email Subject (' . $language . ')',
+                    array( $this, 'render_text_field' ),
+                    $this->options_page,
+                    'notifications',
+                    array(
+                        'name' => 'bcc_notification_' . $language . '_email_subject',
+                        'value' => array_key_exists($language, $this->_settings->notification_templates) ? $this->_settings->notification_templates[$language]["email_subject"] : '',
+                        'description' => 'Email subject template for ' . $language . '. Use parameters like [firstName], [lastName], [postTitle], [postExcerpt]'
+                    )
+                );
+
+                add_settings_field(
+                    'bcc_notification_' . $language . '_email_title',
+                    'Email Title (' . $language . ')',
+                    array( $this, 'render_text_field' ),
+                    $this->options_page,
+                    'notifications',
+                    array(
+                        'name' => 'bcc_notification_' . $language . '_email_title',
+                        'value' => array_key_exists($language, $this->_settings->notification_templates) ? $this->_settings->notification_templates[$language]["email_title"] : '',
+                        'description' => 'Email subject template for ' . $language . '. Use parameters like [firstName], [lastName], [postTitle], [postExcerpt]'
+                    )
+                );
+
+                add_settings_field(
+                    'bcc_notification_' . $language . '_email_body',
+                    'Email Body (' . $language . ')',
+                    array( $this, 'render_textarea_field' ),
+                    $this->options_page,
+                    'notifications',
+                    array(
+                        'name' => 'bcc_notification_' . $language . '_email_body',
+                        'value' => array_key_exists($language, $this->_settings->notification_templates) ? $this->_settings->notification_templates[$language]["email_body"] : '',
+                        'description' => 'Email body template for ' . $language . '. Use parameters like [firstName], [lastName], [cta link="" text=""], [postTitle], [postExcerpt], [postUrl], [postImageUrl]'
+                    )
+                );
+            }
+
+
         }
 
         add_settings_field(
@@ -409,6 +500,20 @@ class BCC_Login_Settings_Provider {
             value="<?php echo htmlspecialchars($args['value']); ?>"
             <?php echo isset( $args['readonly'] ) && $args['readonly'] ? 'readonly onclick="return false;"' : ''; ?>
         >
+        <?php
+        $this->render_field_description( $args );
+    }
+
+        /**
+     * Renders a text box in settings page.
+     */
+    function render_textarea_field( $args ) { ?>
+        <textarea 
+            id="<?php echo $args['name']; ?>"
+            name="<?php echo $args['name']; ?>"   
+            class="large-text"
+            <?php echo isset( $args['readonly'] ) && $args['readonly'] ? 'readonly onclick="return false;"' : ''; ?>
+         ><?php echo htmlspecialchars($args['value']); ?></textarea>
         <?php
         $this->render_field_description( $args );
     }
