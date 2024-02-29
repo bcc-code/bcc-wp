@@ -126,6 +126,7 @@ class BCC_Login_Settings_Provider {
 
         add_action( 'admin_menu', array( $this, 'add_options_page' ) );
         add_action( 'admin_init', array( $this, 'register_settings' ) );
+        add_action( 'update_option_bcc_site_groups', array( $this, 'on_site_groups_option_update' ), 10, 3 );
     }
 
     /**
@@ -430,6 +431,13 @@ class BCC_Login_Settings_Provider {
                 <?php endif; ?>
             </p>
         <?php endif;
+    }
+
+    /**
+     * Action hook for bcc_site_groups option update.
+     */
+    function on_site_groups_option_update($old_value, $value, $option) {
+        delete_transient('coreapi_groups');
     }
 
     /**
