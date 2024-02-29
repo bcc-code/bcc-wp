@@ -53,8 +53,8 @@ class BCC_Login_Visibility {
         add_action( 'admin_enqueue_scripts', array( $this, 'bcc_enqueue_visibility_scripts' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'bcc_enqueue_quick_edit_scripts' ) );
 
-        add_shortcode('bcc_groups_filtering', array($this, 'bcc_groups_filtering'));
-        add_shortcode('bcc_groups_filtered_tags', array($this, 'bcc_groups_filtered_tags'));
+        add_shortcode('target_groups_filter_widget', array($this, 'target_groups_filter_widget'));
+        add_shortcode('tags_for_queried_target_groups', array($this, 'tags_for_queried_target_groups'));
         add_shortcode('get_bcc_group_name', array($this, 'get_bcc_group_name_by_id'));
     }
 
@@ -739,9 +739,9 @@ class BCC_Login_Visibility {
         return "";
     }
 
-    function bcc_groups_filtering() {
+    function target_groups_filter_widget() {
         $user_site_groups = $this->get_user_bcc_groups_list();
-        $bcc_groups_selected = isset($_GET['target-groups']) ? $_GET['target-groups'] : array();
+        $queried_target_groups = isset($_GET['target-groups']) ? $_GET['target-groups'] : array();
 
         $html = '<div class="bcc-filter">' .
             '<a href="javascript:void(0)" id="toggle-bcc-filter"> <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM64 256c0-17.7 14.3-32 32-32H352c17.7 0 32 14.3 32 32s-14.3 32-32 32H96c-17.7 0-32-14.3-32-32zM288 416c0 17.7-14.3 32-32 32H192c-17.7 0-32-14.3-32-32s14.3-32 32-32h64c17.7 0 32 14.3 32 32z" fill="currentColor"/></svg> <span>' . __('Filters', 'bcc-login') . '</span></a>' .
@@ -751,7 +751,7 @@ class BCC_Login_Visibility {
         $html .= '<ul>';
         foreach ($user_site_groups as $group) :
             $html .= '<li>' .
-                '<input type="checkbox" id="'. $group->uid .'" value="'. $group->uid .'" name="target-groups[]"' . (in_array($group->uid, $bcc_groups_selected) ? 'checked' : '') . '/>' .
+                '<input type="checkbox" id="'. $group->uid .'" value="'. $group->uid .'" name="target-groups[]"' . (in_array($group->uid, $queried_target_groups) ? 'checked' : '') . '/>' .
                 '<label for="' . $group->uid . '"><div class="bcc-checkbox"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"><path fill="#fff" d="M6.3 11.767a.498.498 0 0 1-.208-.042.862.862 0 0 1-.192-.125L2.883 8.583a.565.565 0 0 1-.166-.416c0-.167.055-.306.166-.417a.546.546 0 0 1 .4-.167c.156 0 .29.056.4.167L6.3 10.367l6-6a.546.546 0 0 1 .4-.167c.156 0 .295.056.417.167a.555.555 0 0 1 .166.408.555.555 0 0 1-.166.408L6.7 11.6a.862.862 0 0 1-.192.125.498.498 0 0 1-.208.042Z"/></svg></div>' . $group->name . '</label>' .
             '</li>';
         endforeach;
@@ -763,7 +763,7 @@ class BCC_Login_Visibility {
         return $html;
     }
 
-    function bcc_groups_filtered_tags() {
+    function tags_for_queried_target_groups() {
         $html = '';
 
         if (isset($_GET['target-groups'])) {
