@@ -16,6 +16,7 @@ class BCC_Login_Settings {
     public $feed_key;
     public $show_protected_menu_items;
     public $site_groups = array();
+    public $notification_groups = array();
     public $full_content_access_groups = array();
     public $coreapi_audience;
     public $coreapi_base_url;
@@ -93,6 +94,11 @@ class BCC_Login_Settings_Provider {
             $settings->full_content_access_groups = explode(",", $full_content_access_groups_option);
         }
 
+        $notification_groups_option = get_option('bcc_notification_groups');
+        if ($notification_groups_option) {
+            $settings->notification_groups = explode(",", $notification_groups_option);
+        }
+
         // Backwards compatibility with old plugin configuration.
         if ( ! isset( $settings->client_id ) ) {
             $old_oidc_settings = (array) get_option( 'openid_connect_generic_settings', array () );
@@ -144,10 +150,22 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_member_organization_name' );
         register_setting( $this->option_name, 'bcc_feed_key' );
         register_setting( $this->option_name, 'bcc_site_groups' );
+        register_setting( $this->option_name, 'bcc_notification_groups' );
         register_setting( $this->option_name, 'bcc_full_content_access_groups' );
         register_setting( $this->option_name, 'show_protected_menu_items' );
 
+        $use_groups_settings = !empty($this->_settings->site_groups) || BCC_Coreapi_Client::check_groups_access(
+            $this->_settings->token_endpoint,
+            $this->_settings->client_id,
+            $this->_settings->client_secret,
+            $this->_settings->coreapi_audience
+        );
+
         add_settings_section( 'general', '', null, $this->options_page );
+        if ( $use_groups_settings )
+        {
+            add_settings_section( 'groups', __( 'Groups', 'bcc-login' ), null, $this->options_page );
+        }
 
         add_settings_field(
             'client_id',
@@ -222,38 +240,39 @@ class BCC_Login_Settings_Provider {
             )
         );
 
-        if (!empty($this->_settings->site_groups) || BCC_Coreapi_Client::check_groups_access(
-            $this->_settings->token_endpoint,
-            $this->_settings->client_id,
-            $this->_settings->client_secret,
-            $this->_settings->coreapi_audience
-        )) {
+        if ($use_groups_settings) {
             add_settings_field(
                 'bcc_site_groups',
                 'Site Groups',
                 array( $this, 'render_text_field' ),
                 $this->options_page,
-                'general',
+                'groups',
                 array(
                     'name' => 'bcc_site_groups',
                     'value' => join(",", $this->_settings->site_groups),
                     'description' => 'Provide group uids for groups you\'re going to use (comma delimited).'
                 )
             );
-        }
-
-        if (!empty($this->_settings->full_content_access_groups) || BCC_Coreapi_Client::check_groups_access(
-            $this->_settings->token_endpoint,
-            $this->_settings->client_id,
-            $this->_settings->client_secret,
-            $this->_settings->coreapi_audience
-        )) {
+        
+            add_settings_field(
+                'bcc_notification_groups',
+                'Notification Groups',
+                array( $this, 'render_text_field' ),
+                $this->options_page,
+                'groups',
+                array(
+                    'name' => 'bcc_notification_groups',
+                    'value' => join(",", $this->_settings->notification_groups),
+                    'description' => 'Provide group uids for groups that may receive notifications (comma delimited).'
+                )
+            );
+        
             add_settings_field(
                 'bcc_full_content_access_groups',
                 'Full Content Access Groups',
                 array( $this, 'render_text_field' ),
                 $this->options_page,
-                'general',
+                'groups',
                 array(
                     'name' => 'bcc_full_content_access_groups',
                     'value' => join(",", $this->_settings->full_content_access_groups),

@@ -47,7 +47,7 @@ class BCC_Coreapi_Client
 
         $qry = json_encode($qry);
 
-        $response = wp_remote_get( $this->_settings->coreapi_base_url. "/groups?fields=uid,name&filter=$qry", array(
+        $response = wp_remote_get( str_replace("https://", "https://core.", $this->_settings->coreapi_base_url) . "/groups?fields=uid,name&filter=$qry", array(
             "headers" => array(
                 "Authorization" => "Bearer ".$token
             )
@@ -90,7 +90,7 @@ class BCC_Coreapi_Client
 
         $token = $this->get_coreapi_token();
 
-        $request_url = $this->_settings->coreapi_base_url . "/v2/persons/". $user_uid . "/checkGroupMemberships";
+        $request_url = str_replace("https://", "https://core.", $this->_settings->coreapi_base_url) . "/v2/persons/". $user_uid . "/checkGroupMemberships";
         $request_body = array(
             "groupUids" => $this->_settings->site_groups
         );
@@ -146,7 +146,7 @@ class BCC_Coreapi_Client
     private function subscribe_to_person_updates() {
         $token = $this->get_coreapi_token();
 
-        $request_url =  $this->_settings->coreapi_base_url . "/pubsub/subscriptions";
+        $request_url =  str_replace("https://", "https://pubsub.", $this->_settings->coreapi_base_url) . "/pubsub/subscriptions";
         $request_body = array(
             "type" => "no.bcc.api.person.updated",
             "endPoint" => site_url() . "?bcc-login=invalidate-person-cache",
@@ -190,7 +190,7 @@ class BCC_Coreapi_Client
 
 
         //$request_url =  $this->_settings->coreapi_base_url . "/notifications/notification?createSubscribers=false&pushNotifications=true";
-        $request_url =  "https://ca-notifications-api-prod.salmonmoss-1fccea79.westeurope.azurecontainerapps.io" . "/notifications/notification?createSubscribers=false&pushNotifications=true";
+        $request_url =  str_replace("https://", "https://notifications.", $this->_settings->coreapi_base_url) . "/notifications/notification?createSubscribers=false&pushNotifications=true";
         $request_body = array(
             "workflowId" => $workflow,
             "groupUid" => $group_uids[0], //First group only for now
