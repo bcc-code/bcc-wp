@@ -17,10 +17,11 @@ class BCC_Login_Settings {
     public $show_protected_menu_items;
     public $site_groups = array();
     public $notification_groups = array();
-    public $full_content_access_groups = array();
-    public $filtering_groups = array();
     public $notification_languages = array();
     public $notification_templates = array();
+    public $notification_delay = 0;
+    public $full_content_access_groups = array();
+    public $filtering_groups = array();
     public $coreapi_audience;
     public $coreapi_base_url;
 }
@@ -102,6 +103,11 @@ class BCC_Login_Settings_Provider {
             $settings->notification_groups = explode(",", $notification_groups_option);
         }
 
+        $notification_delay_option = get_option('bcc_notification_delay');
+        if ($notification_delay_option) {
+            $settings->notification_delay = (int)$notification_delay_option;
+        }
+
         $notification_languages_option = get_option('bcc_notification_languages');
         if ($notification_languages_option) {
             $settings->notification_languages = explode(",", $notification_languages_option);
@@ -180,6 +186,7 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_site_groups' );
         register_setting( $this->option_name, 'bcc_notification_groups' );
         register_setting( $this->option_name, 'bcc_notification_languages' );
+        register_setting( $this->option_name, 'bcc_notification_delay' );
         register_setting( $this->option_name, 'bcc_full_content_access_groups' );
         register_setting( $this->option_name, 'bcc_filtering_groups' );
         register_setting( $this->option_name, 'show_protected_menu_items' );
@@ -328,6 +335,19 @@ class BCC_Login_Settings_Provider {
                     'name' => 'bcc_notification_groups',
                     'value' => join(",", $this->_settings->notification_groups),
                     'description' => 'Provide group uids for groups that may receive notifications (comma delimited).'
+                )
+            );
+
+            add_settings_field(
+                'bcc_notification_delay',
+                'Notification Delay',
+                array( $this, 'render_text_field' ),
+                $this->options_page,
+                'notifications',
+                array(
+                    'name' => 'bcc_notification_delay',
+                    'value' => $this->_settings->notification_delay,
+                    'description' => 'How long to wait (s) before sending notifications. Delays can be used to allow time for publishing translations etc.'
                 )
             );
 
