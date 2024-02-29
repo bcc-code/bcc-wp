@@ -18,6 +18,7 @@ class BCC_Login_Settings {
     public $site_groups = array();
     public $notification_groups = array();
     public $full_content_access_groups = array();
+    public $filtering_groups = array();
     public $coreapi_audience;
     public $coreapi_base_url;
 }
@@ -99,6 +100,11 @@ class BCC_Login_Settings_Provider {
             $settings->notification_groups = explode(",", $notification_groups_option);
         }
 
+        $filtering_groups_option = get_option('bcc_filtering_groups');
+        if ($filtering_groups_option) {
+            $settings->filtering_groups = explode(",", $filtering_groups_option);
+        }
+
         // Backwards compatibility with old plugin configuration.
         if ( ! isset( $settings->client_id ) ) {
             $old_oidc_settings = (array) get_option( 'openid_connect_generic_settings', array () );
@@ -153,6 +159,7 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_site_groups' );
         register_setting( $this->option_name, 'bcc_notification_groups' );
         register_setting( $this->option_name, 'bcc_full_content_access_groups' );
+        register_setting( $this->option_name, 'bcc_filtering_groups' );
         register_setting( $this->option_name, 'show_protected_menu_items' );
 
         $use_groups_settings = !empty($this->_settings->site_groups) || BCC_Coreapi_Client::check_groups_access(
@@ -278,6 +285,19 @@ class BCC_Login_Settings_Provider {
                     'name' => 'bcc_full_content_access_groups',
                     'value' => join(",", $this->_settings->full_content_access_groups),
                     'description' => 'Groups that always can see published content regardless of group settings on content.'
+                )
+            );
+        
+            add_settings_field(
+                'bcc_filtering_groups',
+                'Filtering Groups',
+                array( $this, 'render_text_field' ),
+                $this->options_page,
+                'groups',
+                array(
+                    'name' => 'bcc_filtering_groups',
+                    'value' => join(",", $this->_settings->filtering_groups),
+                    'description' => 'Provide group uids for groups that should be displayed in the filter widget (comma delimited).'
                 )
             );
         }
