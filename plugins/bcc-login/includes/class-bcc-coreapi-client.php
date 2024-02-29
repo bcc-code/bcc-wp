@@ -10,22 +10,21 @@ class BCC_Coreapi_Client
     {
         $this->_settings = $login_settings;
         $this->_storage = $storage;
-
     }
 
     function get_site_groups() {
         if (isset($this->_site_groups)) {
             return $this->_site_groups;
         }
-        $group_uids = $this->_settings->site_groups;
 
-        $cache_key = 'coreapi_groups_' . implode($group_uids);
-
+        $cache_key = 'coreapi_groups';
         $cached_response = get_transient($cache_key);
+
         if ($cached_response !== false) {
             return $cached_response;
         }
 
+        $group_uids = $this->_settings->site_groups;
         $this->_site_groups = $this->fetch_groups($group_uids);
         $this->translate_site_groups();
 
