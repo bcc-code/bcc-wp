@@ -453,13 +453,24 @@ class BCC_Login_Visibility {
         return $this->_coreapi->get_groups_for_user($person_uid);
     }
 
-    private function get_user_bcc_groups_list() {
+    private function get_user_bcc_filtering_groups_list() {
         $site_groups = $this->_coreapi->get_site_groups();
+        $filtering_groups = array();
+
+        // Take only filtering groups from site groups 
+        if (!empty($this->_settings->filtering_groups)) {
+            foreach ($site_groups as $site_group) {
+                if (in_array($site_group->uid, $this->_settings->filtering_groups)) {
+                    $filtering_groups[] = $site_group;
+                }
+            }
+        }
+
         $user_site_groups = array();
 
         if ( current_user_can( 'edit_posts' ) ) {
             // Show all site groups for admins
-            $user_site_groups = $site_groups;
+            $user_site_groups = $filtering_groups;
         }
         else {
             $user_groups = $this->get_current_user_groups();
@@ -467,7 +478,7 @@ class BCC_Login_Visibility {
                 return;
             }
             
-            foreach ($site_groups as $site_group) {
+            foreach ($filtering_groups as $site_group) {
                 if (in_array($site_group->uid, $user_groups)) {
                     $user_site_groups[] = $site_group;
                 }
@@ -740,7 +751,7 @@ class BCC_Login_Visibility {
     }
 
     function target_groups_filter_widget() {
-        $user_site_groups = $this->get_user_bcc_groups_list();
+        $user_site_groups = $this->get_user_bcc_filtering_groups_list();
         $queried_target_groups = isset($_GET['target-groups']) ? $_GET['target-groups'] : array();
 
         $html = '<div class="bcc-filter">' .
