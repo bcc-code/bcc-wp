@@ -30,7 +30,7 @@ class BCC_Notifications {
         $text = str_replace('[postUrl]', get_permalink( $post ) ?? (get_site_url() . '/?p=' . $post->ID . (isset($language) ? '&lang=' . $language : '')), $text);
         $text = str_replace('[postImageUrl]', get_the_post_thumbnail_url($post->ID,'large'), $text);
         return $text;
-    }
+    } 
 
     public function send_notification( $post_id ) {
         // Fetch the post object since only the ID is passed through scheduling.
