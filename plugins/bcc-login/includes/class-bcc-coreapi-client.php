@@ -185,7 +185,7 @@ class BCC_Coreapi_Client
         $request_url =  str_replace("https://", "https://notifications.", $this->_settings->coreapi_base_url) . "/notifications/notification?createSubscribers=false&pushNotifications=true";
         $request_body = array(
             "workflowId" => $workflow,
-            "groupUid" => $group_uids[0], //First group only for now
+            "groupUids" => join(",",$group_uids), 
             "notificationPayload" => $payload
         );
 
