@@ -161,17 +161,9 @@ class BCC_Notifications {
                     restore_previous_locale();
                 }
 
-
-                // // Set subtitle to title from other language (should probably be fixed in template...)
-                // foreach ($email_payload as $email) {
-                //     foreach ($email_payload as $other_email) {
-                //         if ($email["language"] != $other_email["language"]) {
-                //             $email["sub_title"] = $other_email["title"];
-                //         }
-                //     }
-                // }
-                $this->core_api->send_notification($notification_groups, 'simpleinapp', $inapp_payload);
-                $this->core_api->send_notification($notification_groups, 'simpleemail', $email_payload);
+                $this->core_api->send_notification($notification_groups, 'email', 'simpleemail', $email_payload);
+                $this->core_api->send_notification($notification_groups, 'inapp', 'simpleinapp', $inapp_payload);
+                
             }
         }
 

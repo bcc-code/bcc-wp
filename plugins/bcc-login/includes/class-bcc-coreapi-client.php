@@ -177,15 +177,16 @@ class BCC_Coreapi_Client
     //     ]
     //   }
 
-    public function send_notification($group_uids, $workflow, $payload) {
+    // Type = email, sms, inapp
+    public function send_notification($group_uids, $type, $workflow, $payload) {
         $token = $this->get_coreapi_token();
 
 
         //$request_url =  $this->_settings->coreapi_base_url . "/notifications/notification?createSubscribers=false&pushNotifications=true";
-        $request_url =  str_replace("https://", "https://notifications.", $this->_settings->coreapi_base_url) . "/notifications/notification?createSubscribers=false&pushNotifications=true";
+        $request_url =  str_replace("https://", "https://notifications.", $this->_settings->coreapi_base_url) . "/notifications/notification/". $type ."?createSubscribers=false&pushNotifications=true";
         $request_body = array(
             "workflowId" => $workflow,
-            "groupUids" => join(",",$group_uids), 
+            "groupUids" => $group_uids, 
             "notificationPayload" => $payload
         );
 
