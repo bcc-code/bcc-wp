@@ -141,6 +141,7 @@ class BCC_Login_Visibility {
                     return $this->not_allowed_to_view_page();
                 } else {
                     wp_redirect( wp_login_url("/") );
+                    return;
                 }
             }
             return;
@@ -154,10 +155,10 @@ class BCC_Login_Visibility {
 
         if ( $visibility && $visibility > $level ) {
             if ( is_user_logged_in() ) {
-                //die('A');
                 return $this->not_allowed_to_view_page();
             } else {
                 wp_redirect( wp_login_url($visited_url) );
+                return;
             }
         }
 
@@ -167,16 +168,19 @@ class BCC_Login_Visibility {
                 return;
             }
 
+            if ( !is_user_logged_in() ) {
+                wp_redirect( wp_login_url($visited_url) );
+                return;
+            }
+
             $user_groups = $this->get_current_user_groups();
             if (!$user_groups) {
-                //die('B');
                 return $this->not_allowed_to_view_page();
             }
 
             if (count(array_intersect($post_groups, $user_groups)) == 0 &&
                 count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0)
             {
-                //die('C');
                 return $this->not_allowed_to_view_page();
             }
         }
