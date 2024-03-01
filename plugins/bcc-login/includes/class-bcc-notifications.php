@@ -141,8 +141,11 @@ class BCC_Notifications {
                         : null);
 
                     if ($templates) {
+
+                        $payload_lang = str_replace('nb-NO','no-NO',$item["language"]);
+
                         $inapp_payload[] = [
-                            "language" => $item["language"],
+                            "language" => $payload_lang,
                             "notification" => $item["title"] . '<br><small>' . $item["excerpt"] . '</small> [cta text="' . __('Read more', 'bcc-login')  . '" link="' . $item["url"] . '"]'
                         ];
 
@@ -151,7 +154,7 @@ class BCC_Notifications {
                         $email_body = $this->replace_notification_params($templates["email_body"] ?? "", $item["post"], $wp_lang);
                         
                         $email_payload[] = [
-                            "language" => $item["language"],
+                            "language" => $payload_lang,
                             "subject" =>  $email_subject,
                             "banner" => $item["image_url"] !== false ? $item["image_url"] : null,
                             "title" =>  $email_title,
