@@ -56,6 +56,7 @@ class BCC_Login_Visibility {
         add_shortcode('target_groups_filter_widget', array($this, 'target_groups_filter_widget'));
         add_shortcode('tags_for_queried_target_groups', array($this, 'tags_for_queried_target_groups'));
         add_shortcode('get_bcc_group_name', array($this, 'get_bcc_group_name_by_id'));
+        add_shortcode('get_number_of_user_groups', array($this, 'get_number_of_user_groups'));
     }
 
     /**
@@ -132,7 +133,7 @@ class BCC_Login_Visibility {
 
         $post = get_post();
         $level      = $this->_client->get_current_user_level();
-        $visibility = $this->_settings->default_visibility;
+        $visibility = (int)$this->_settings->default_visibility;
 
         // Post may not be defined when the user is visiting the homepage
         if ( !$post ) {
@@ -151,7 +152,6 @@ class BCC_Login_Visibility {
         if ( $post_visibility ) {
             $visibility = $post_visibility;
         }
-
 
         if ( $visibility && $visibility > $level ) {
             if ( is_user_logged_in() ) {
@@ -496,6 +496,10 @@ class BCC_Login_Visibility {
         usort($user_site_groups, fn($a, $b) => $a->name <=> $b->name);
 
         return $user_site_groups;
+    }
+
+    public function get_number_of_user_groups() {
+        return count($this->get_user_bcc_filtering_groups_list());
     }
 
     /**
