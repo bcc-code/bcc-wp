@@ -273,7 +273,7 @@ class BCC_Login_Visibility {
         if (!empty($this->_settings->site_groups) ) {
             wp_add_inline_script(
                 $script_handle,
-                'var siteGroups = ' . json_encode($this->_coreapi->get_site_groups()),
+                'var siteGroups = ' . json_encode($this->_coreapi->get_translated_site_groups()),
                 'before'
             );
         }
@@ -458,7 +458,7 @@ class BCC_Login_Visibility {
     }
 
     private function get_user_bcc_filtering_groups_list() {
-        $site_groups = $this->_coreapi->get_site_groups();
+        $site_groups = $this->_coreapi->get_translated_site_groups();
         $filtering_groups = array();
 
         // Take only filtering groups from site groups 
@@ -694,9 +694,9 @@ class BCC_Login_Visibility {
                         <label class="post-audience">
                             <span class="title">' . __( 'Groups', 'bcc-login' ) . '</span>
                             <span>';
-                                foreach ($this->_coreapi->get_site_groups() as $ind => $group) {
+                                foreach ($this->_coreapi->get_translated_site_groups() as $ind => $group) {
                                     echo '<br><input type="checkbox" name="bcc_groups[]" id="option-'. $group->uid .'" value="'. $group->uid .'">
-                                        <label for="option-'. $group->uid .'">'. __( $group->name, 'bcc-login' ) .'</label>';
+                                        <label for="option-'. $group->uid .'">'. $group->name .'</label>';
                                 }
                             echo '</span>
                         </label>
@@ -750,11 +750,12 @@ class BCC_Login_Visibility {
     // end Quick Edit
 
     function get_group_name($group_uid) {
-        foreach ($this->_coreapi->get_site_groups() as $group) {
+        foreach ($this->_coreapi->get_translated_site_groups() as $group) {
             if ($group->uid === $group_uid) {
-                return __( $group->name, 'bcc-login' );
+                return $group->name;
             }
         }
+        
         return "";
     }
 

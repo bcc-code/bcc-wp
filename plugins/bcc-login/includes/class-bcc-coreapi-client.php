@@ -33,6 +33,16 @@ class BCC_Coreapi_Client
         return $this->_site_groups;
     }
 
+    function get_translated_site_groups() {
+        $site_groups = $this->get_site_groups();
+
+        foreach ($site_groups as $id => $group) {
+            $site_groups[$id]->name = __( $group->name, 'bcc-login' );
+        }
+
+        return $site_groups;
+    }
+
     function fetch_groups($group_uids)
     {
         $token = $this->get_coreapi_token();
