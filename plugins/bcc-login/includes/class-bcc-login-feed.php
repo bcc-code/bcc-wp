@@ -1,7 +1,6 @@
 <?php
 
 class BCC_Login_Feed {
-
     private BCC_Login_Settings $_settings;
     private BCC_Login_Client $_client;
 
@@ -29,6 +28,4 @@ class BCC_Login_Feed {
             return '<category>internal</category>';
         }
     }
-
-
 }

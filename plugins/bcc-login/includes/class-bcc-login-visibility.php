@@ -56,6 +56,7 @@ class BCC_Login_Visibility {
         add_shortcode('target_groups_filter_widget', array($this, 'target_groups_filter_widget'));
         add_shortcode('tags_for_queried_target_groups', array($this, 'tags_for_queried_target_groups'));
         add_shortcode('get_bcc_group_name', array($this, 'get_bcc_group_name_by_id'));
+        add_shortcode('get_number_of_user_groups', array($this, 'get_number_of_user_groups'));
     }
 
     /**
@@ -132,7 +133,7 @@ class BCC_Login_Visibility {
 
         $post = get_post();
         $level      = $this->_client->get_current_user_level();
-        $visibility = $this->_settings->default_visibility;
+        $visibility = (int)$this->_settings->default_visibility;
 
         // Post may not be defined when the user is visiting the homepage
         if ( !$post ) {
@@ -151,7 +152,6 @@ class BCC_Login_Visibility {
         if ( $post_visibility ) {
             $visibility = $post_visibility;
         }
-
 
         if ( $visibility && $visibility > $level ) {
             if ( is_user_logged_in() ) {
@@ -273,7 +273,7 @@ class BCC_Login_Visibility {
         if (!empty($this->_settings->site_groups) ) {
             wp_add_inline_script(
                 $script_handle,
-                'var siteGroups = ' . json_encode($this->_coreapi->get_site_groups()),
+                'var siteGroups = ' . json_encode($this->_coreapi->get_translated_site_groups()),
                 'before'
             );
         }
@@ -458,7 +458,7 @@ class BCC_Login_Visibility {
     }
 
     private function get_user_bcc_filtering_groups_list() {
-        $site_groups = $this->_coreapi->get_site_groups();
+        $site_groups = $this->_coreapi->get_translated_site_groups();
         $filtering_groups = array();
 
         // Take only filtering groups from site groups 
@@ -496,6 +496,10 @@ class BCC_Login_Visibility {
         usort($user_site_groups, fn($a, $b) => $a->name <=> $b->name);
 
         return $user_site_groups;
+    }
+
+    public function get_number_of_user_groups() {
+        return count($this->get_user_bcc_filtering_groups_list());
     }
 
     /**
@@ -690,9 +694,9 @@ class BCC_Login_Visibility {
                         <label class="post-audience">
                             <span class="title">' . __( 'Groups', 'bcc-login' ) . '</span>
                             <span>';
-                                foreach ($this->_coreapi->get_site_groups() as $ind => $group) {
+                                foreach ($this->_coreapi->get_translated_site_groups() as $ind => $group) {
                                     echo '<br><input type="checkbox" name="bcc_groups[]" id="option-'. $group->uid .'" value="'. $group->uid .'">
-                                        <label for="option-'. $group->uid .'">'. __( $group->name, 'bcc-login' ) .'</label>';
+                                        <label for="option-'. $group->uid .'">'. $group->name .'</label>';
                                 }
                             echo '</span>
                         </label>
@@ -746,11 +750,12 @@ class BCC_Login_Visibility {
     // end Quick Edit
 
     function get_group_name($group_uid) {
-        foreach ($this->_coreapi->get_site_groups() as $group) {
+        foreach ($this->_coreapi->get_translated_site_groups() as $group) {
             if ($group->uid === $group_uid) {
-                return __( $group->name, 'bcc-login' );
+                return $group->name;
             }
         }
+        
         return "";
     }
 
