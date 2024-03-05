@@ -19,6 +19,7 @@ class BCC_Login_Settings {
     public $notification_groups = array();
     public $notification_languages = array();
     public $notification_templates = array();
+    public $notification_post_types = array();
     public $notification_delay = 0;
     public $full_content_access_groups = array();
     public $filtering_groups = array();
@@ -108,6 +109,13 @@ class BCC_Login_Settings_Provider {
             $settings->notification_delay = (int)$notification_delay_option;
         }
 
+        $notification_post_types_option = get_option('bcc_notification_post_types');
+        if ($notification_post_types_option) {
+            $settings->notification_post_types = explode(",", $notification_post_types_option);
+        } else {
+            $settings->notification_post_types = array('post', 'page');
+        }
+
         $notification_languages_option = get_option('bcc_notification_languages');
         if ($notification_languages_option) {
             $settings->notification_languages = explode(",", $notification_languages_option);
@@ -186,6 +194,7 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_site_groups' );
         register_setting( $this->option_name, 'bcc_notification_groups' );
         register_setting( $this->option_name, 'bcc_notification_languages' );
+        register_setting( $this->option_name, 'bcc_notification_post_types' );
         register_setting( $this->option_name, 'bcc_notification_delay' );
         register_setting( $this->option_name, 'bcc_full_content_access_groups' );
         register_setting( $this->option_name, 'bcc_filtering_groups' );
@@ -324,6 +333,19 @@ class BCC_Login_Settings_Provider {
         }
 
         if ($use_notification_settings) {
+
+            add_settings_field(
+                'bcc_notification_post_types',
+                'Notification Post Types',
+                array( $this, 'render_text_field' ),
+                $this->options_page,
+                'notifications',
+                array(
+                    'name' => 'bcc_notification_post_types',
+                    'value' => join(",", $this->_settings->notification_post_types),
+                    'description' => 'Post types that may receive notifications (comma delimited identifiers).'
+                )
+            );
 
             add_settings_field(
                 'bcc_notification_groups',

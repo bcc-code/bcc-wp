@@ -14,8 +14,9 @@ class BCC_Notifications {
 
     }
 
+    // NB: This does not run if a post is published without first being saved as a draft.
     public function on_post_status_transition(  $new_status, $old_status, $post ) {
-       if ('publish' === $new_status && 'publish' !== $old_status) {
+       if ('publish' === $new_status && 'publish' !== $old_status && in_array( $post->post_type, $this->settings->notification_post_types )) {
             if ($this->settings->notification_delay > 0) {
                 wp_schedule_single_event( time() + $this->settings->notification_delay, 'bcc_send_scheduled_notification', array( $post->ID ) );    
             } else {
@@ -146,7 +147,9 @@ class BCC_Notifications {
 
                         $inapp_payload[] = [
                             "language" => $payload_lang,
-                            "notification" => $item["title"] . '<br><small>' . $item["excerpt"] . '</small> [cta text="' . __('Read more', 'bcc-login')  . '" link="' . $item["url"] . '"]'
+                            "title" => $item["title"],
+                            "content" =>  $item["excerpt"] . ' [cta text="' . __('Read more', 'bcc-login')  . '" link="' . $item["url"] . '"]',
+                            "notification" =>  $item["excerpt"] . ' [cta text="' . __('Read more', 'bcc-login')  . '" link="' . $item["url"] . '"]' //obsolete
                         ];
 
                         $email_subject = $this->replace_notification_params($templates["email_subject"] ?? "[postTitle]", $item["post"], $wp_lang);
@@ -158,7 +161,8 @@ class BCC_Notifications {
                             "subject" =>  $email_subject,
                             "banner" => $item["image_url"] !== false ? $item["image_url"] : null,
                             "title" =>  $email_title,
-                            "body" =>  $email_body
+                            "content" =>  $email_body,
+                            "body" =>  $email_body, //obsolete
                         ];
                     }
                     restore_previous_locale();
