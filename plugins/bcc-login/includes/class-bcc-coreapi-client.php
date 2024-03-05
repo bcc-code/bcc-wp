@@ -43,10 +43,7 @@ class BCC_Coreapi_Client
         return $site_groups;
     }
 
-    function fetch_groups($group_uids)
-    {
-        $token = $this->get_coreapi_token();
-
+    function fetch_groups($group_uids) {
         $qry = array(
             "uid" => array(
                 "_in" => $group_uids,
@@ -55,21 +52,39 @@ class BCC_Coreapi_Client
 
         $qry = json_encode($qry);
 
-        $response = wp_remote_get( str_replace("https://", "https://core.", $this->_settings->coreapi_base_url) . "/groups?fields=uid,name&filter=$qry", array(
-            "headers" => array(
-                "Authorization" => "Bearer ".$token
-            )
-        ) );
+        $body = $this->send_get_request(
+            str_replace("https://", "https://core.", $this->_settings->coreapi_base_url) . "/groups?fields=uid,name&filter=$qry"
+        );
+
+        return $body->data;
+    }
+
+    function send_get_request($link) {
+        $response = null;
+        $body = null;
+        $retries = 3;
+        $token = $this->get_coreapi_token();
+
+        while ( (is_wp_error($response) || !$body || $body && !is_array($body->data) ) && $retries-- > 0) {
+            $response = wp_remote_get( $link, array(
+                "timeout" => 30,
+                "headers" => array(
+                    "Authorization" => "Bearer " . $token
+                )
+            ) );
+
+            if ( is_wp_error( $response ) )
+                continue;
+
+            $body = json_decode($response['body']);
+        }
 
         if ( is_wp_error( $response ) ) {
             wp_die( $response->get_error_message() );
         }
 
-        $body = json_decode($response['body']);
-
-        return $body->data;
+        return $body;
     }
-    
 
     function get_groups_for_user($user_uid) {
         $cache_key = 'coreapi_user_groups_'.$user_uid;
@@ -111,7 +126,6 @@ class BCC_Coreapi_Client
         if ($response['response']['code'] != 200) {
             wp_die("cannot fetch groups for user: " . print_r($response['body'], true));
         }
-
 
         $body = json_decode($response['body']);
 
