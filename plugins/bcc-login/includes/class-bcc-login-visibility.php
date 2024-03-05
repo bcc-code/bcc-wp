@@ -25,7 +25,7 @@ class BCC_Login_Visibility {
         self::VISIBILITY_MEMBER => 'Members'
     );
 
-    private $visibility_post_types = array( 'post', 'page' );
+    private $visibility_post_types = array( 'post', 'page', 'nav_menu_item' );
     private $post_types_allowing_filtering = array( 'post', 'page' );
 
     function __construct( BCC_Login_Settings $settings, BCC_Login_Client $client, BCC_Coreapi_Client $groups ) {
