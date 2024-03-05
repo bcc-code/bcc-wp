@@ -2,5 +2,6 @@
 data/mysql/*
 node_modules
 plugins/*/build
+plugins/sitepress-multilingual-cms
 .env
 .DS_Store
