@@ -20,6 +20,7 @@ class BCC_Login_Settings {
     public $notification_languages = array();
     public $notification_templates = array();
     public $notification_post_types = array();
+    public $notification_dry_run = 0;
     public $notification_delay = 0;
     public $full_content_access_groups = array();
     public $filtering_groups = array();
@@ -109,6 +110,9 @@ class BCC_Login_Settings_Provider {
             $settings->notification_delay = (int)$notification_delay_option;
         }
 
+        $settings->notification_dry_run = get_option('bcc_notification_dry_run', 0);
+        
+
         $notification_post_types_option = get_option('bcc_notification_post_types');
         if ($notification_post_types_option) {
             $settings->notification_post_types = explode(",", $notification_post_types_option);
@@ -196,6 +200,7 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_notification_languages' );
         register_setting( $this->option_name, 'bcc_notification_post_types' );
         register_setting( $this->option_name, 'bcc_notification_delay' );
+        register_setting( $this->option_name, 'bcc_notification_dry_run' );
         register_setting( $this->option_name, 'bcc_full_content_access_groups' );
         register_setting( $this->option_name, 'bcc_filtering_groups' );
         register_setting( $this->option_name, 'show_protected_menu_items' );
@@ -370,6 +375,19 @@ class BCC_Login_Settings_Provider {
                     'name' => 'bcc_notification_delay',
                     'value' => $this->_settings->notification_delay,
                     'description' => 'How long to wait (s) before sending notifications. Delays can be used to allow time for publishing translations etc.'
+                )
+            );
+
+            add_settings_field(
+                'bcc_notification_dry_run',
+                'Notification Dry Run',
+                array( $this, 'render_checkbox_field' ),
+                $this->options_page,
+                'notifications',
+                array(
+                    'name' => 'bcc_notification_dry_run',
+                    'value' => $this->_settings->notification_dry_run,
+                    'label' => 'Don\'t actually send notifications, just simulate them.'
                 )
             );
 

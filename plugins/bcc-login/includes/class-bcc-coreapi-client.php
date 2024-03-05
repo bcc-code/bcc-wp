@@ -10,6 +10,12 @@ class BCC_Coreapi_Client
     {
         $this->_settings = $login_settings;
         $this->_storage = $storage;
+        add_filter( 'http_request_timeout', array( $this, 'extend_http_request_timeout' ) );
+    }
+
+    function extend_http_request_timeout( ) {
+        // 10 minutes to allow sending notifications
+        return 600;
     }
 
     function get_site_groups() {
@@ -187,16 +193,19 @@ class BCC_Coreapi_Client
     //     ]
     //   }
 
+
+
+
     // Type = email, sms, inapp
     public function send_notification($group_uids, $type, $workflow, $payload) {
         $token = $this->get_coreapi_token();
 
 
         //$request_url =  $this->_settings->coreapi_base_url . "/notifications/notification?createSubscribers=false&pushNotifications=true";
-        $request_url =  str_replace("https://", "https://notifications.", $this->_settings->coreapi_base_url) . "/notifications/notification/". $type ."?createSubscribers=false&pushNotifications=true";
+        $request_url =  str_replace("https://", "https://notifications.", $this->_settings->coreapi_base_url) . "/notifications/notification/". $type ."?createSubscribers=false&pushNotifications=" . ($this->_settings->notification_dry_run ? "false" : "true");
         $request_body = array(
             "workflowId" => $workflow,
-            "groupUids" => $group_uids, 
+            "groupUids" => array_values($group_uids), 
             "notificationPayload" => $payload
         );
 

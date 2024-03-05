@@ -21,6 +21,7 @@ class BCC_Notifications {
                 wp_schedule_single_event( time() + $this->settings->notification_delay, 'bcc_send_scheduled_notification', array( $post->ID ) );    
             } else {
                 $this->send_notification($post->ID);    
+
             }
        }
     }
@@ -47,6 +48,9 @@ class BCC_Notifications {
 
         // Notification logic goes here.
         if (isset($post_groups) && !empty($post_groups)) {
+
+            
+
 
             $notification_groups = array_intersect($post_groups, $this->settings->notification_groups);
             if (empty($notification_groups)){
@@ -124,7 +128,6 @@ class BCC_Notifications {
                     'date' => str_replace(' ','T',$post->post_date_gmt) . 'Z'
                 ];
             }
-
 
             if (!empty($payload))
             {

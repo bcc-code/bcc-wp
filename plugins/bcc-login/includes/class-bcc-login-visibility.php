@@ -111,6 +111,7 @@ class BCC_Login_Visibility {
     function on_template_redirect() {
         global $wp;
 
+
         if ($this->should_skip_auth()) {
             return;
         }
@@ -148,12 +149,16 @@ class BCC_Login_Visibility {
             return;
         }
 
+
         $post_visibility = (int) get_post_meta( $post->ID, 'bcc_login_visibility', true );
+
+        // die($post_visibility . ' ... ' .  $post->ID . ' ... ' . $post->post_type .  '....' . $post->post_name);
+
         if ( $post_visibility ) {
             $visibility = $post_visibility;
         }
 
-        if ( $visibility && $visibility > $level ) {
+        if ( $visibility && $visibility > $level ) {                    
             if ( is_user_logged_in() ) {
                 return $this->not_allowed_to_view_page();
             } else {
@@ -184,6 +189,8 @@ class BCC_Login_Visibility {
                 return $this->not_allowed_to_view_page();
             }
         }
+
+
     }
 
     private function not_allowed_to_view_page() {
@@ -294,13 +301,16 @@ class BCC_Login_Visibility {
      * @return WP_Query
      */
     function filter_pre_get_posts( $query ) {
+
+
         if ( current_user_can( 'edit_posts' ) || $query->is_singular ) {
             return $query;
         }
 
+
         // Don't filter visibility for not supported post types
         // Menu items are e.g. handled in 'filter_menu_items()'
-        if ( !$this->supports_target_groups_visibility($query) ) {
+        if ( !$this->supports_target_groups_visibility($query) || $query->query['post_type'] == 'nav_menu_item' ) {
             return $query;
         }
 
@@ -419,6 +429,7 @@ class BCC_Login_Visibility {
      * @return WP_Post[]
      */
     function filter_menu_items( $items ) {
+
         if ( current_user_can( 'edit_posts' ) || $this->_settings->show_protected_menu_items ) {
             return $items;
         }
@@ -427,6 +438,8 @@ class BCC_Login_Visibility {
         $removed = array();
 
         foreach ( $items as $key => $item ) {
+
+
             // Don't render children of removed menu items.
             if ( $item->menu_item_parent && in_array( $item->menu_item_parent, $removed, true ) ) {
                 $removed[] = $item->ID;
