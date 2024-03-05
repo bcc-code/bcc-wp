@@ -148,8 +148,8 @@ class BCC_Notifications {
                         $inapp_payload[] = [
                             "language" => $payload_lang,
                             "title" => $item["title"],
-                            "content" =>  $item["excerpt"] . ' [cta text="' . __('Read more', 'bcc-login')  . '" link="' . $item["url"] . '"]',
-                            "notification" =>  $item["excerpt"] . ' [cta text="' . __('Read more', 'bcc-login')  . '" link="' . $item["url"] . '"]' //obsolete
+                            "content" =>  $item["excerpt"] . '<br> [cta text="' . __('Read more', 'bcc-login')  . '" link="' . $item["url"] . '"]',
+                            "notification" =>  $item["excerpt"] . '<br> [cta text="' . __('Read more', 'bcc-login')  . '" link="' . $item["url"] . '"]' //obsolete
                         ];
 
                         $email_subject = $this->replace_notification_params($templates["email_subject"] ?? "[postTitle]", $item["post"], $wp_lang);
