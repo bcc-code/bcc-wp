@@ -276,6 +276,12 @@ class BCC_Login_Visibility {
                 'var siteGroups = ' . json_encode($this->_coreapi->get_translated_site_groups()),
                 'before'
             );
+        } else {
+            wp_add_inline_script(
+                $script_handle,
+                'var siteGroups = []',
+                'before'
+            );
         }
 
     }

@@ -19,7 +19,7 @@ import {
 } from "@wordpress/compose";
 
 const { defaultLevel, levels, localName } = window.bccLoginPostVisibility;
-let filteredSiteGroups = siteGroups;
+let filteredSiteGroups = siteGroups || [];
 
 const visibilityOptions = [
   {
@@ -80,7 +80,7 @@ function GroupsOptions({
 }) {
   const [searchInput, setSearchInput] = useState("");
 
-  if (!siteGroups) {
+  if (!siteGroups || siteGroups.length === 0) {
     return;
   }
 
