@@ -41,6 +41,7 @@ services:
       - "./plugins/bcc-login:/var/www/html/wp-content/plugins/bcc-login"
       - "./plugins/bcc-signon:/var/www/html/wp-content/plugins/bcc-signon"
       - "./plugins/bcc-wp-proxy:/var/www/html/wp-content/plugins/bcc-wp-proxy"
+      - "./plugins/sitepress-multilingual-cms:/var/www/html/wp-content/plugins/sitepress-multilingual-cms"
       - ".htaccess:/var/www/html/.htaccess"
     networks:
       - wp
