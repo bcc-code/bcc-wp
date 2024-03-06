@@ -132,33 +132,26 @@ class BCC_Login_Visibility {
             return;
         }
 
-        $post = get_post();
+        $post_id = 0;
+        if ( is_home () ) {
+            $post_id =  get_option('page_for_posts');
+        } else if ( is_front_page() ) {
+            $post_id =  get_option('page_on_front');
+        }
+
+        $post = $post_id ? get_post($post_id) : get_post();
         $level      = $this->_client->get_current_user_level();
-        $visibility = (int)$this->_settings->default_visibility;
+        $visibility = (int)$this->_settings->default_visibility;        
 
-        // Post may not be defined when the user is visiting the homepage
-        if ( !$post ) {
-            if ($visibility > $level) {
-                if ( is_user_logged_in() ) {
-                    return $this->not_allowed_to_view_page();
-                } else {
-                    wp_redirect( wp_login_url("/") );
-                    return;
-                }
+        // Get visibility from current post
+        if ($post) {
+            $post_visibility = (int) get_post_meta( $post->ID, 'bcc_login_visibility', true );
+            if ( $post_visibility ) {
+                $visibility = $post_visibility;
             }
-            return;
-        }
+        }        
 
-
-        $post_visibility = (int) get_post_meta( $post->ID, 'bcc_login_visibility', true );
-
-        // die($post_visibility . ' ... ' .  $post->ID . ' ... ' . $post->post_type .  '....' . $post->post_name);
-
-        if ( $post_visibility ) {
-            $visibility = $post_visibility;
-        }
-
-        if ( $visibility && $visibility > $level ) {                    
+        if ( $visibility && $visibility > $level ) {                
             if ( is_user_logged_in() ) {
                 return $this->not_allowed_to_view_page();
             } else {
@@ -167,11 +160,18 @@ class BCC_Login_Visibility {
             }
         }
 
+        if (!$post) {
+
+            return;
+        }
+
         if ( !empty($this->_settings->site_groups) ) {
             $post_groups = get_post_meta($post->ID, 'bcc_groups', false);
             if (!$post_groups) {
                 return;
             }
+
+
 
             if ( !is_user_logged_in() ) {
                 wp_redirect( wp_login_url($visited_url) );
@@ -308,9 +308,11 @@ class BCC_Login_Visibility {
         }
 
 
+
         // Don't filter visibility for not supported post types
         // Menu items are e.g. handled in 'filter_menu_items()'
-        if ( !$this->supports_target_groups_visibility($query) || $query->query['post_type'] == 'nav_menu_item' ) {
+        if ( !$this->supports_visibility_filter($query))  {
+
             return $query;
         }
 
@@ -348,13 +350,12 @@ class BCC_Login_Visibility {
                 )
             );
         }
+       
 
         $user_groups = $this->get_current_user_groups();
 
         // Filter posts which user should have access to - except when user has full content access
-        if (count($user_groups) > 0 &&
-            count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0
-        ) {
+        if (empty($user_groups) || count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0) {
             $group_rules = array();
 
             if (empty($user_groups)) {
@@ -364,7 +365,7 @@ class BCC_Login_Visibility {
                     'compare' => 'NOT EXISTS',
                 );
             } else {
-                // If user has groups - check if no group filters have been set ORE
+                // If user has groups - check if no group filters have been set OR if user has access to the groups
                 $group_rules = array(
                     'relation' => 'OR',
                     array(
@@ -447,7 +448,7 @@ class BCC_Login_Visibility {
                 continue;
             }
 
-            if ( in_array( $item->object, $this->visibility_post_types, true ) ) {
+            if ( $item->object == 'custom' || in_array( $item->object, $this->visibility_post_types, true ) ) {
                 $visibility = (int) get_post_meta( $item->object_id, 'bcc_login_visibility', true );
                 if (!$visibility) {
                     $visibility = $this->_settings->default_visibility;
@@ -457,6 +458,8 @@ class BCC_Login_Visibility {
                     $removed[] = $item->ID;
                     unset( $items[ $key ] );
                 }
+
+                // TODO: Check group-based visibility
             }
         }
 
@@ -830,8 +833,11 @@ class BCC_Login_Visibility {
         return $this->get_group_name($uid);
     }
 
-    function supports_target_groups_visibility($query) {
-        return array_key_exists('post_type', $query->query) && in_array($query->query['post_type'], $this->visibility_post_types);
+    function supports_visibility_filter($query) {
+        if (!array_key_exists('post_type', $query->query)){
+            return true;
+        }
+        return in_array($query->query['post_type'], $this->visibility_post_types) && $query->query['post_type'] != 'nav_menu_item';
     }
 
     function supports_target_groups_filtering($query) {
