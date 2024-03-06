@@ -301,18 +301,13 @@ class BCC_Login_Visibility {
      * @return WP_Query
      */
     function filter_pre_get_posts( $query ) {
-
-
         if ( current_user_can( 'edit_posts' ) || $query->is_singular ) {
             return $query;
         }
 
-
-
         // Don't filter visibility for not supported post types
         // Menu items are e.g. handled in 'filter_menu_items()'
         if ( !$this->supports_visibility_filter($query))  {
-
             return $query;
         }
 
@@ -351,7 +346,6 @@ class BCC_Login_Visibility {
             );
         }
        
-
         $user_groups = $this->get_current_user_groups();
 
         // Filter posts which user should have access to - except when user has full content access
@@ -405,17 +399,29 @@ class BCC_Login_Visibility {
      * @return WP_Query
      */
     function filter_by_queried_target_groups($query) {
-        if (!isset($_GET['target-groups']))
+        $target_groups = wp_doing_ajax()
+            ? (isset($_POST['target_groups']) ? $_POST['target_groups'] : null)
+            : (isset($_GET['target-groups']) ? $_GET['target-groups'] : null);
+
+        if (!$target_groups)
             return;
 
-        if (is_admin() || !$this->supports_target_groups_filtering($query))
-            return;
+        if (wp_doing_ajax()) {
+            // For Ajax requests
+            if (!isset($_POST['post_type']) && in_array($_POST['post_type'], $this->post_types_allowing_filtering))
+                return;
+        }
+        else {
+            // Normal requests
+            if (is_admin() || !$this->supports_target_groups_filtering($query))
+                return;
+        }
 
         // Get original meta query
         $meta_query = (array) $query->get('meta_query');
         $meta_query[] = array(
             'key'     => 'bcc_groups',
-            'value'   => $_GET['target-groups'],
+            'value'   => $target_groups,
             'compare' => 'IN'
         );
 
@@ -430,7 +436,6 @@ class BCC_Login_Visibility {
      * @return WP_Post[]
      */
     function filter_menu_items( $items ) {
-
         if ( current_user_can( 'edit_posts' ) || $this->_settings->show_protected_menu_items ) {
             return $items;
         }
@@ -439,8 +444,6 @@ class BCC_Login_Visibility {
         $removed = array();
 
         foreach ( $items as $key => $item ) {
-
-
             // Don't render children of removed menu items.
             if ( $item->menu_item_parent && in_array( $item->menu_item_parent, $removed, true ) ) {
                 $removed[] = $item->ID;
