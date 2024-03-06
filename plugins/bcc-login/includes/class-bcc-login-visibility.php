@@ -350,12 +350,9 @@ class BCC_Login_Visibility {
                 )
             );
         }
-
-        
+       
 
         $user_groups = $this->get_current_user_groups();
-
-
 
         // Filter posts which user should have access to - except when user has full content access
         if (empty($user_groups) || count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0) {
