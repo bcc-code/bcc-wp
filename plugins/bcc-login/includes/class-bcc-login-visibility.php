@@ -365,7 +365,7 @@ class BCC_Login_Visibility {
                     'compare' => 'NOT EXISTS',
                 );
             } else {
-                // If user has groups - check if no group filters have been set ORE
+                // If user has groups - check if no group filters have been set OR if user has access to the groups
                 $group_rules = array(
                     'relation' => 'OR',
                     array(
