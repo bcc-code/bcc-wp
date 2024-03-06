@@ -145,7 +145,6 @@ class BCC_Login_Visibility {
 
         // Get visibility from current post
         if ($post) {
-            //die(var_dump($post));
             $post_visibility = (int) get_post_meta( $post->ID, 'bcc_login_visibility', true );
             if ( $post_visibility ) {
                 $visibility = $post_visibility;
