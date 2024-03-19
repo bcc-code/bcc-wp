@@ -30,3 +30,4 @@ jobs:
           title: BCC WordPress Documentation
           description: Custom Wordpress themes and plugins which can be used in any BCC application
           branch: master
+          authentication: 'portal'
