@@ -504,7 +504,7 @@ class BCC_Login_Visibility {
         else {
             $user_groups = $this->get_current_user_groups();
             if (!$user_groups) {
-                return;
+                return array();
             }
             
             foreach ($filtering_groups as $site_group) {
