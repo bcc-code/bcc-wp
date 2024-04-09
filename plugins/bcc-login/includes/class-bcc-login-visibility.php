@@ -153,7 +153,7 @@ class BCC_Login_Visibility {
 
         if ( $visibility && $visibility > $level ) {                
             if ( is_user_logged_in() ) {
-                return $this->not_allowed_to_view_page();
+                return $this->not_allowed_to_view_page($visited_url);
             } else {
                 wp_redirect( wp_login_url($visited_url) );
                 return;
@@ -180,13 +180,13 @@ class BCC_Login_Visibility {
 
             $user_groups = $this->get_current_user_groups();
             if (!$user_groups) {
-                return $this->not_allowed_to_view_page();
+                return $this->not_allowed_to_view_page($visited_url);
             }
 
             if (count(array_intersect($post_groups, $user_groups)) == 0 &&
                 count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0)
             {
-                return $this->not_allowed_to_view_page();
+                return $this->not_allowed_to_view_page($visited_url);
             }
         }
 
