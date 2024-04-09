@@ -193,13 +193,17 @@ class BCC_Login_Visibility {
 
     }
 
-    private function not_allowed_to_view_page() {
+    private function not_allowed_to_view_page($visited_url = "") {
         wp_die(
             sprintf(
-                '%s<br><a href="%s">%s</a>',
+                '%s<br><a href="%s">%s</a><br><br>%s<br><a href="%s">%s</a>',
                 __( 'Sorry, you are not allowed to view this page.', 'bcc-login' ),
                 site_url(),
-                __( 'Go to the front page', 'bcc-login' )
+                __( 'Go to the front page', 'bcc-login' ),
+                __( 'Are you logged in with the correct user?', 'bcc-login' ),
+                wp_login_url($visited_url, true),
+                __( 'Login with your user', 'bcc-login' ),
+
             ),
             __( 'Unauthorized' ),
             array(
