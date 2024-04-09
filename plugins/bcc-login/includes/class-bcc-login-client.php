@@ -10,9 +10,9 @@ class BCC_Login_Client {
         add_action( 'parse_request', array( $this, 'on_parse_request' ) );
     }
 
-    function start_login() {
+    function start_login($reauth = false) {
         $state = $this->create_authentication_state();
-        $auth_url = $this->get_authorization_url( $state );
+        $auth_url = $this->get_authorization_url( $state, $reauth );
 
         // WP Engine doesn't cache pages with wordpress_* cookie set
         setcookie('wordpress_nocache', 'true');
@@ -308,8 +308,8 @@ class BCC_Login_Client {
         return $origin;
     }
 
-    private function get_authorization_url( Auth_State $state ) {
-        return sprintf(
+    private function get_authorization_url( Auth_State $state, $reauth = false ) {
+        $url = sprintf(
             '%1$s%2$sresponse_type=code&scope=%3$s&client_id=%4$s&state=%5$s&redirect_uri=%6$s&audience=%7$s',
             $this->_settings->authorization_endpoint,
             '?',
@@ -319,6 +319,10 @@ class BCC_Login_Client {
             rawurlencode( $this->get_full_redirect_url() ),
             rawurlencode( 'https://widgets.brunstad.org' )
         );
+        if ($reauth) {
+            $url = $url . "&prompt=login";
+        }
+        return $url;
     }
 
     private function request_tokens( $code ) {

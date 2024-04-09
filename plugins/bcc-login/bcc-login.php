@@ -114,7 +114,8 @@ class BCC_Login {
                 !in_array( $action, array( 'logout', 'lostpassword', 'rp', 'resetpass', 'register' ) )
             )
         ) {
-            $this->_client->start_login();
+            $reauth = isset( $_GET['reauth'] ) && $_GET['reauth'] == "1";
+            $this->_client->start_login($reauth);
         }        
     }
 
