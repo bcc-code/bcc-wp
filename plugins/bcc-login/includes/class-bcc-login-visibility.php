@@ -812,18 +812,20 @@ class BCC_Login_Visibility {
         return $html;
     }
 
-    function post_group_tags_widget() {
+    function post_group_tags_widget($atts) {
         $post_id = get_the_ID();
         if (!$post_id) return false;
 
+        $attributes = shortcode_atts(array('limit' => 1000), $atts);
+
         $post_groups = get_post_meta($post_id, 'bcc_groups', false);
         $filtering_groups = $this->_settings->filtering_groups;
-        $shown_groups = array_intersect($post_groups, $filtering_groups);
+        $shown_groups = array_slice(array_intersect($post_groups, $filtering_groups), 0, $attributes['limit']);
 
         $html = '';
 
         foreach ($shown_groups as $group) {
-            $html .= '<a class="bcc-group-tag" href="?target-groups[]='. $group . '">' . $this->get_group_name($group) . '</a>';
+            $html .= '<a class="bcc-group-tag" href="?target-groups[]='. $group . '"><span><i class="material-symbols-rounded">sell</i>' . $this->get_group_name($group) . '</span></a>';
         }
 
         return $html;
