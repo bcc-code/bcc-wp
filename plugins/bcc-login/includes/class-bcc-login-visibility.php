@@ -54,6 +54,7 @@ class BCC_Login_Visibility {
         add_action( 'admin_enqueue_scripts', array( $this, 'bcc_enqueue_quick_edit_scripts' ) );
 
         add_shortcode('target_groups_filter_widget', array($this, 'target_groups_filter_widget'));
+        add_shortcode('post_group_tags_widget', array($this, 'post_group_tags_widget'));
         add_shortcode('tags_for_queried_target_groups', array($this, 'tags_for_queried_target_groups'));
         add_shortcode('get_bcc_group_name', array($this, 'get_bcc_group_name_by_id'));
         add_shortcode('get_number_of_user_groups', array($this, 'get_number_of_user_groups'));
@@ -810,6 +811,24 @@ class BCC_Login_Visibility {
 
         return $html;
     }
+
+    function post_group_tags_widget() {
+        $post_id = get_the_ID();
+        if (!$post_id) return false;
+
+        $post_groups = get_post_meta($post_id, 'bcc_groups', false);
+        $filtering_groups = $this->_settings->filtering_groups;
+        $shown_groups = array_intersect($post_groups, $filtering_groups);
+
+        $html = '';
+
+        foreach ($shown_groups as $group) {
+            $html .= '<a class="bcc-group-tag" href="?target-groups[]='. $group . '">' . $this->get_group_name($group) . '</a>';
+        }
+
+        return $html;
+    }
+
 
     function tags_for_queried_target_groups() {
         $html = '';
