@@ -26,6 +26,7 @@ class BCC_Login_Settings {
     public $filtering_groups = array();
     public $coreapi_audience;
     public $coreapi_base_url;
+    public $disable_pubsub;
 }
 
 /**
@@ -73,6 +74,7 @@ class BCC_Login_Settings_Provider {
         $settings->feed_key = get_option('bcc_feed_key', get_option('private_newsfeed_link', '') );
         $settings->coreapi_audience = 'api.bcc.no';
         $settings->coreapi_base_url = 'https://api.bcc.no';
+        $settings->disable_pubsub = false;
 
         // Set settings from environment variables.
         foreach ( $this->environment_variables as $key => $constant ) {
@@ -94,6 +96,8 @@ class BCC_Login_Settings_Provider {
         if ($site_groups_option) {
             $settings->site_groups = explode(",", $site_groups_option);
         }
+
+        $settings->disable_pubsub = get_option('bcc_disable_pubsub');
 
         $full_content_access_groups_option = get_option('bcc_full_content_access_groups');
         if ($full_content_access_groups_option) {
@@ -171,7 +175,6 @@ class BCC_Login_Settings_Provider {
 
         add_action( 'admin_menu', array( $this, 'add_options_page' ) );
         add_action( 'admin_init', array( $this, 'register_settings' ) );
-        add_action( 'update_option_bcc_site_groups', array( $this, 'on_site_groups_option_update' ), 10, 3 );
     }
 
     /**
@@ -196,6 +199,7 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_member_organization_name' );
         register_setting( $this->option_name, 'bcc_feed_key' );
         register_setting( $this->option_name, 'bcc_site_groups' );
+        register_setting( $this->option_name, 'bcc_disable_pubsub' );
         register_setting( $this->option_name, 'bcc_notification_groups' );
         register_setting( $this->option_name, 'bcc_notification_languages' );
         register_setting( $this->option_name, 'bcc_notification_post_types' );
@@ -309,7 +313,18 @@ class BCC_Login_Settings_Provider {
                     'description' => 'Provide group uids for groups you\'re going to use (comma delimited).'
                 )
             );
-        
+            add_settings_field(
+                'bcc_disable_pubsub',
+                'Disable pubsub',
+                array( $this, 'render_checkbox_field' ),
+                $this->options_page,
+                'groups',
+                array(
+                    'name' => 'bcc_disable_pubsub',
+                    'value' => $this->_settings->disable_pubsub,
+                    'label' => 'This will make the post group access settings only update once a day. Only use in very resource limited environments (staging)'
+                )
+            );
             add_settings_field(
                 'bcc_full_content_access_groups',
                 'Full Content Access Groups',
@@ -616,13 +631,6 @@ class BCC_Login_Settings_Provider {
                 <?php endif; ?>
             </p>
         <?php endif;
-    }
-
-    /**
-     * Action hook for bcc_site_groups option update.
-     */
-    function on_site_groups_option_update($old_value, $value, $option) {
-        delete_transient('coreapi_groups');
     }
 
     /**
