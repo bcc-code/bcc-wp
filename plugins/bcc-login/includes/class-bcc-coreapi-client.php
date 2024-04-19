@@ -125,7 +125,7 @@ class BCC_Coreapi_Client
     }
 
     public function ensure_subscription_to_person_updates() {
-        if (str_contains(site_url(), "localhost") || str_contains(site_url(), ".local") ) {
+        if ($this->_settings->disable_pubsub) {
             return;
         }
 
@@ -151,7 +151,38 @@ class BCC_Coreapi_Client
         }
     }
 
-    private function subscribe_to_person_updates() {
+    public function unsubscribe_to_person_updates() {
+        if (str_contains(site_url(), "localhost") || str_contains(site_url(), ".local")) {
+            return;
+        }
+
+        $token = $this->get_coreapi_token();
+
+        $pubsub_base_url = str_replace("https://", "https://pubsub.", $this->_settings->coreapi_base_url);
+        $request_url =  $pubsub_base_url . "/pubsub/subscriptions/no.bcc.api.person.updated?subscriptionId=".parse_url(site_url())['host'];
+
+        $response = wp_remote_request($request_url, array(
+            "method" => "DELETE",
+            "headers" => array(
+                "Authorization" => "Bearer " . $token
+            )
+        ));
+
+        if ( is_wp_error( $response ) ) {
+            wp_die( $response->get_error_message() );
+        }
+
+        $response_code = $response['response']['code'];
+        if ($response_code != 200 && $response_code != 404 ) {
+            wp_die("cannot unsubscribe to person updates: " . print_r($response, true));
+        }
+    }
+
+    public function subscribe_to_person_updates() {
+        if (str_contains(site_url(), "localhost") || str_contains(site_url(), ".local")) {
+            return;
+        }
+
         $token = $this->get_coreapi_token();
 
         $request_url =  str_replace("https://", "https://pubsub.", $this->_settings->coreapi_base_url) . "/pubsub/subscriptions";
@@ -174,7 +205,7 @@ class BCC_Coreapi_Client
         }
 
         if ($response['response']['code'] != 200) {
-            wp_die("cannot ensure subscription to person updates: " . print_r($response, true));
+            wp_die("cannot subscribe to person updates: " . print_r($response, true));
         }
     } 
 
