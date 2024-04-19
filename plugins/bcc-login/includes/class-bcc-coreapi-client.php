@@ -158,9 +158,11 @@ class BCC_Coreapi_Client
 
         $token = $this->get_coreapi_token();
 
-        $request_url =  str_replace("https://", "https://pubsub.", $this->_settings->coreapi_base_url) . "/pubsub/subscriptions/no.bcc.api.person.updated";
+        $pubsub_base_url = str_replace("https://", "https://pubsub.", $this->_settings->coreapi_base_url);
+        $request_url =  $pubsub_base_url . "/pubsub/subscriptions/no.bcc.api.person.updated?subscriptionId=".parse_url(site_url())['host'];
 
-        $response = wp_remote_delete($request_url, array(
+        $response = wp_remote_request($request_url, array(
+            "method" => "DELETE",
             "headers" => array(
                 "Authorization" => "Bearer " . $token
             )
@@ -170,8 +172,9 @@ class BCC_Coreapi_Client
             wp_die( $response->get_error_message() );
         }
 
-        if ($response['response']['code'] != 200) {
-            wp_die("cannot ensure subscription to person updates: " . print_r($response, true));
+        $response_code = $response['response']['code'];
+        if ($response_code != 200 && $response_code != 404 ) {
+            wp_die("cannot unsubscribe to person updates: " . print_r($response, true));
         }
     }
 
@@ -202,7 +205,7 @@ class BCC_Coreapi_Client
         }
 
         if ($response['response']['code'] != 200) {
-            wp_die("cannot ensure subscription to person updates: " . print_r($response, true));
+            wp_die("cannot subscribe to person updates: " . print_r($response, true));
         }
     } 
 
