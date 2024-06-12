@@ -95,6 +95,7 @@ class BCC_Notifications {
                             $locale = $language_details["locale"];
                             $language_code = str_replace('_', '-', $locale);
                             $excerpt = get_the_excerpt($translation);
+                            switch_to_locale($locale);
                             if ($translation->post_status == 'publish') {
                                 $payload[] = [
                                     'post' => $translation,
@@ -105,7 +106,8 @@ class BCC_Notifications {
                                     'image_url' => get_the_post_thumbnail_url($translation->ID,'large'),
                                     'date' => str_replace(' ','T',$translation->post_date_gmt) . 'Z'
                                 ];
-                            }                        
+                            }   
+                            restore_previous_locale();
                         }
                     } else {
                         // Don't process non-default languages of posts that have translations
