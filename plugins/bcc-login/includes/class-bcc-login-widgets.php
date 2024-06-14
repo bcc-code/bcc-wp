@@ -16,7 +16,7 @@ class BCC_Login_Widgets {
     }
 
     function enqueue_styles() {
-        wp_enqueue_style( 'bcc-login-widgets', 'https://widgets.bcc.no/styles/widgets.css' );
+        wp_enqueue_style( 'bcc-login-widgets', $this->settings->widgets_base_url.'/styles/widgets.css' );
 
         if ( $this->should_show_topbar() ) {
             wp_add_inline_style( 'bcc-login-widgets', '@media screen and (max-width: 600px){.admin-bar .portal-top-bar{position:absolute;}}@media screen and (min-width: 850px){body{margin-top:48px!important;}.portal-top-bar-spacer{display:none;}.admin-bar .portal-top-bar{top:46px;}}' );
@@ -25,7 +25,7 @@ class BCC_Login_Widgets {
 
     function render_topbar() {
         if ( $this->should_show_topbar() ) {
-            echo '<script id="script-bcc-topbar" data-authentication-type="WebApp" data-authentication-location="' . site_url( '?bcc-login=access-token' ) . '" src="https://widgets.bcc.no/widgets/TopbarJs" defer></script>' . PHP_EOL;
+            echo '<script id="script-bcc-topbar" data-authentication-type="WebApp" data-authentication-location="' . site_url( '?bcc-login=access-token' ) . '" src="'.$this->settings->widgets_base_url.'/widgets/TopbarJs" defer></script>' . PHP_EOL;
         }
     }
 
@@ -53,7 +53,7 @@ class BCC_Login_Widgets {
             $html .= '<script id="script-bcc-calendar-week" data-authentication-type="WebApp" data-authentication-location="' . site_url( '?bcc-login=access-token' ) . '" ';
             $html .= 'data-language="' . $attributes['language'] . '" data-maxdays="' .  $attributes['maxdays'] . '" data-maxappointments="' . $attributes['maxappointments'] . '" ';
             $html .= 'data-calendars="' . $attributes['calendars'] .'" data-fullcalendarurl="' .  $attributes['fullcalendarurl'] . '" ';
-            $html .= 'src="https://widgets.bcc.no/widgets/CalendarWeekJs" defer></script>';
+            $html .= 'src="'.$this->settings->widgets_base_url.'/widgets/CalendarWeekJs" defer></script>';
 
             return $html . PHP_EOL;
         } );
@@ -64,7 +64,7 @@ class BCC_Login_Widgets {
             $html =  '<div id="bcc-calendar-month"></div>';
             $html .= '<script id="script-bcc-calendar-month" data-authentication-type="WebApp" data-authentication-location="' . site_url( '?bcc-login=access-token' ) . '" ';
             $html .= 'data-language="' . $attributes['language'] . '" data-calendars="' . $attributes['calendars'] . '" ';
-            $html .= 'src="https://widgets.bcc.no/widgets/CalendarMonthJs" defer></script>';
+            $html .= 'src="'.$this->settings->widgets_base_url.'/widgets/CalendarMonthJs" defer></script>';
             
             return $html . PHP_EOL;
         } );
@@ -75,7 +75,7 @@ class BCC_Login_Widgets {
             $html = '<div id="bcc-birthday"></div>';
             $html .= '<script id="script-bcc-birthday" data-authentication-type="WebApp" data-authentication-location="' . site_url( '?bcc-login=access-token' ) . '" ';
             $html .= 'data-language="' . $attributes['language'] . '" data-churchname="' . $attributes['churchname'] . '" data-maxdays="' . $attributes['maxdays'] . '" ';
-            $html .= 'src="https://widgets.bcc.no/widgets/BirthdayJs" defer></script>';
+            $html .= 'src="'.$this->settings->widgets_base_url.'/widgets/BirthdayJs" defer></script>';
 
             return $html . PHP_EOL;
         } );
