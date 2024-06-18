@@ -27,6 +27,7 @@ class BCC_Login_Settings {
     public $coreapi_audience;
     public $coreapi_base_url;
     public $disable_pubsub;
+    public $widgets_base_url;
 }
 
 /**
@@ -57,6 +58,7 @@ class BCC_Login_Settings_Provider {
         'show_protected_menu_items' => 'BCC_WP_SHOW_PROTECTED_MENU_ITEMS',
         'coreapi_audience'          => 'BCC_COREAPI_AUDIENCE',
         'coreapi_base_url'          => 'BCC_COREAPI_BASE_URL',
+        'widgets_base_url'          => 'BCC_WIDGETS_BASE_URL',
     );
 
     function __construct () {
@@ -75,6 +77,7 @@ class BCC_Login_Settings_Provider {
         $settings->coreapi_audience = 'api.bcc.no';
         $settings->coreapi_base_url = 'https://api.bcc.no';
         $settings->disable_pubsub = false;
+        $settings->widgets_base_url = 'https://widgets.bcc.no';
 
         // Set settings from environment variables.
         foreach ( $this->environment_variables as $key => $constant ) {
