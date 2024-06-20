@@ -90,12 +90,13 @@ class BCC_Notifications {
 
                     if ($is_orginal) {
                         foreach ( $translations as $lang => $details ) {
+                            $default_local = apply_filters('wpml_current_language', null);
                             $translation = get_post($details->element_id);
                             $language_details = apply_filters( 'wpml_post_language_details', NULL, $translation->ID );
                             $locale = $language_details["locale"];
                             $language_code = str_replace('_', '-', $locale);
                             $excerpt = get_the_excerpt($translation);
-                            switch_to_locale($locale);
+                            do_action('wpml_switch_language', $language_details["language_code"]);
                             if ($translation->post_status == 'publish') {
                                 $payload[] = [
                                     'post' => $translation,
@@ -107,7 +108,7 @@ class BCC_Notifications {
                                     'date' => str_replace(' ','T',$translation->post_date_gmt) . 'Z'
                                 ];
                             }   
-                            restore_previous_locale();
+                            do_action('wpml_switch_language', $default_local);
                         }
                     } else {
                         // Don't process non-default languages of posts that have translations
