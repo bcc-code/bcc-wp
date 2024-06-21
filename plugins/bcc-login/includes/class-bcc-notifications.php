@@ -14,14 +14,9 @@ class BCC_Notifications {
 
     }
 
-    //wpml plugin
-    $active_plugins = get_option('active_plugins');
-    $wpml_plugin = 'sitepress-multilingual-cms/sitepress.php';
-
-
-    // NB: This does not run if a post is published without first being saved as a draft, and the wpml plugin is installed
+    // NB: This does not run if a post is published without first being saved as a draft.
     public function on_post_status_transition(  $new_status, $old_status, $post ) {
-       if ('publish' === $new_status && 'publish' !== $old_status && in_array( $post->post_type, $this->settings->notification_post_types ) && in_array($wpml_plugin, $active_plugins)) {
+       if ('publish' === $new_status && 'publish' !== $old_status && in_array( $post->post_type, $this->settings->notification_post_types )) {
             if ($this->settings->notification_delay > 0) {
                 wp_schedule_single_event( time() + $this->settings->notification_delay, 'bcc_send_scheduled_notification', array( $post->ID ) );    
             } else {
