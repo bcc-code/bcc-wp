@@ -94,16 +94,18 @@ class BCC_Notifications {
                             $translation = get_post($details->element_id);
                             $language_details = apply_filters( 'wpml_post_language_details', NULL, $translation->ID );
                             $locale = $language_details["locale"];
-                            $language_code = str_replace('_', '-', $locale);
+                            $language = str_replace('_', '-', $locale);
+                            $language_code = $language_details["language_code"];
                             $excerpt = get_the_excerpt($translation);
-                            do_action('wpml_switch_language', $language_details["language_code"]);
+                            do_action('wpml_switch_language', $language_code);
                             if ($translation->post_status == 'publish') {
                                 $payload[] = [
                                     'post' => $translation,
                                     'title' => $translation->post_title,
-                                    'language' => $language_code,
+                                    'language' => $language,
+                                    'language_code' => $language_code,
                                     'excerpt' => $excerpt,
-                                    'url' => get_permalink( $translation ) ?? ($site_url . '/?p=' . $translation->ID . '&lang=' . $language_code),
+                                    'url' => get_permalink( $translation ) ?? ($site_url . '/?p=' . $translation->ID . '&lang=' . $language),
                                     'image_url' => get_the_post_thumbnail_url($translation->ID,'large'),
                                     'date' => str_replace(' ','T',$translation->post_date_gmt) . 'Z'
                                 ];
@@ -137,41 +139,45 @@ class BCC_Notifications {
 
                 $inapp_payload = [];
                 $email_payload = [];
-                foreach ($payload as $item) {
-                    $wp_lang = str_replace('-', '_', $item["language"]);
-                    switch_to_locale($wp_lang);
+                // Checks if WPML is installed and active.
+                if (defined('ICL_SITEPRESS_VERSION')) {
+                    foreach ($payload as $item) {
+                        $default_local = apply_filters('wpml_current_language', null);
+                        $wp_lang = str_replace('-', '_', $item["language"]);
+                        do_action('wpml_switch_language', $item["language_code"]);
 
-                    $templates = array_key_exists($wp_lang, $this->settings->notification_templates) 
-                    ? $this->settings->notification_templates[$wp_lang] 
-                    : (array_key_exists($site_language, $this->_settings->notification_templates) 
-                        ? $this->settings->notification_templates[$site_language]
-                        : null);
+                        $templates = array_key_exists($wp_lang, $this->settings->notification_templates) 
+                        ? $this->settings->notification_templates[$wp_lang] 
+                        : (array_key_exists($site_language, $this->_settings->notification_templates) 
+                            ? $this->settings->notification_templates[$site_language]
+                            : null);
 
-                    if ($templates) {
+                        if ($templates) {
 
-                        $payload_lang = str_replace('nb-NO','no-NO',$item["language"]);
+                            $payload_lang = str_replace('nb-NO','no-NO',$item["language"]);
 
-                        $inapp_payload[] = [
-                            "language" => $payload_lang,
-                            "title" => $item["title"],
-                            "content" =>  $item["excerpt"] . '<br> [cta text="' . __('Read more', 'bcc-login')  . '" link="' . $item["url"] . '"]',
-                            "notification" =>  $item["excerpt"] . '<br> [cta text="' . __('Read more', 'bcc-login')  . '" link="' . $item["url"] . '"]' //obsolete
-                        ];
+                            $inapp_payload[] = [
+                                "language" => $payload_lang,
+                                "title" => $item["title"],
+                                "content" =>  $item["excerpt"] . '<br> [cta text="' . __('Read more', 'bcc-login')  . '" link="' . $item["url"] . '"]',
+                                "notification" =>  $item["excerpt"] . '<br> [cta text="' . __('Read more', 'bcc-login')  . '" link="' . $item["url"] . '"]' //obsolete
+                            ];
 
-                        $email_subject = $this->replace_notification_params($templates["email_subject"] ?? "[postTitle]", $item["post"], $wp_lang);
-                        $email_title = $this->replace_notification_params($templates["email_title"] ?? "", $item["post"], $wp_lang);
-                        $email_body = $this->replace_notification_params($templates["email_body"] ?? "", $item["post"], $wp_lang);
+                            $email_subject = $this->replace_notification_params($templates["email_subject"] ?? "[postTitle]", $item["post"], $wp_lang);
+                            $email_title = $this->replace_notification_params($templates["email_title"] ?? "", $item["post"], $wp_lang);
+                            $email_body = $this->replace_notification_params($templates["email_body"] ?? "", $item["post"], $wp_lang);
                         
-                        $email_payload[] = [
-                            "language" => $payload_lang,
-                            "subject" =>  $email_subject,
-                            "banner" => $item["image_url"] !== false ? $item["image_url"] : null,
-                            "title" =>  $email_title,
-                            "content" =>  $email_body,
-                            "body" =>  $email_body, //obsolete
-                        ];
+                            $email_payload[] = [
+                                "language" => $payload_lang,
+                                "subject" =>  $email_subject,
+                                "banner" => $item["image_url"] !== false ? $item["image_url"] : null,
+                                "title" =>  $email_title,
+                                "content" =>  $email_body,
+                                "body" =>  $email_body, //obsolete
+                            ];
+                        }
+                        do_action('wpml_switch_language', $default_local);
                     }
-                    restore_previous_locale();
                 }
 
                 $this->core_api->send_notification($notification_groups, 'email', 'simpleemail', $email_payload);
