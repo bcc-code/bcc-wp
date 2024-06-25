@@ -41,7 +41,6 @@ class BCC_Notifications
     public function send_notification($post_id)
     {
         // Fetch the post object since only the ID is passed through scheduling.
-
         $post = get_post($post_id);
         $wpml_installed = defined('ICL_SITEPRESS_VERSION');
         if (!$post) {
@@ -55,14 +54,10 @@ class BCC_Notifications
         // Notification logic goes here.
         if (isset($post_groups) && !empty($post_groups)) {
 
-
-
-
             $notification_groups = array_intersect($post_groups, $this->settings->notification_groups);
             if (empty($notification_groups)) {
                 return;
             }
-
 
             // 2. Get default language and url for site
             $site_language = get_bloginfo('language'); //E.g. "en-US"
@@ -191,14 +186,10 @@ class BCC_Notifications
                     }
                 }
 
-
                 $this->core_api->send_notification($notification_groups, 'email', 'simpleemail', $email_payload);
                 $this->core_api->send_notification($notification_groups, 'inapp', 'simpleinapp', $inapp_payload);
 
             }
         }
-
     }
-
-
 }
