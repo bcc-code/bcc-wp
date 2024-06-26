@@ -142,12 +142,10 @@ class BCC_Notifications
                 foreach ($payload as $item) {
                     $default_local = apply_filters('wpml_current_language', null);
                     $wp_lang = str_replace('-', '_', $item["language"]);
+                    switch_to_locale($wp_lang);
                     if ($wpml_installed) {
                         do_action('wpml_switch_language', $item["language_code"]);
-                    } else {
-                        switch_to_locale($wp_lang);
                     }
-
 
                     $templates = array_key_exists($wp_lang, $this->settings->notification_templates)
                         ? $this->settings->notification_templates[$wp_lang]
@@ -181,9 +179,8 @@ class BCC_Notifications
                     }
                     if ($wpml_installed) {
                         do_action('wpml_switch_language', $default_local);
-                    } else {
-                        restore_previous_locale();
                     }
+                    restore_previous_locale();
                 }
 
                 $this->core_api->send_notification($notification_groups, 'email', 'simpleemail', $email_payload);
