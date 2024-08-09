@@ -825,7 +825,7 @@ class BCC_Login_Visibility {
         $html = '';
 
         foreach ($shown_groups as $group) {
-            $html .= '<a class="bcc-group-tag" href="?target-groups[]='. $group . '"><span><i class="material-symbols-rounded">sell</i>' . $this->get_group_name($group) . '</span></a>';
+            $html .= '<a class="bcc-badge bcc-badge-sm bcc-badge-custom" href="?target-groups[]='. $group . '"><i class="material-symbols-rounded">info</i><span>' . $this->get_group_name($group) . '</span></a>';
         }
 
         return $html;
