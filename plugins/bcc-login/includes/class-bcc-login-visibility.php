@@ -793,15 +793,15 @@ class BCC_Login_Visibility {
         $queried_target_groups = isset($_GET['target-groups']) ? $_GET['target-groups'] : array();
 
         $html = '<div class="bcc-filter">' .
-            '<a href="javascript:void(0)" id="toggle-bcc-filter"> <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM64 256c0-17.7 14.3-32 32-32H352c17.7 0 32 14.3 32 32s-14.3 32-32 32H96c-17.7 0-32-14.3-32-32zM288 416c0 17.7-14.3 32-32 32H192c-17.7 0-32-14.3-32-32s14.3-32 32-32h64c17.7 0 32 14.3 32 32z" fill="currentColor"/></svg> <span>' . __('Filters', 'bcc-login') . '</span></a>' .
+            '<a href="javascript:void(0)" id="toggle-bcc-filter" class="bcc-button bcc-button-secondary bcc-button-rounded bcc-button-with-icon"> <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM64 256c0-17.7 14.3-32 32-32H352c17.7 0 32 14.3 32 32s-14.3 32-32 32H96c-17.7 0-32-14.3-32-32zM288 416c0 17.7-14.3 32-32 32H192c-17.7 0-32-14.3-32-32s14.3-32 32-32h64c17.7 0 32 14.3 32 32z" fill="currentColor"/></svg> <span>' . __('Filters', 'bcc-login') . '</span></a>' .
             '<div id="bcc-filter-groups">' .
                 '<a href="javascript:void(0)" id="close-bcc-groups">' . __('Close', 'bcc-login') . '</a>';
         
         $html .= '<ul>';
         foreach ($user_site_groups as $group) :
-            $html .= '<li>' .
-                '<input type="checkbox" id="'. $group->uid .'" value="'. $group->uid .'" name="target-groups[]"' . (in_array($group->uid, $queried_target_groups) ? 'checked' : '') . '/>' .
-                '<label for="' . $group->uid . '"><div class="bcc-checkbox"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"><path fill="#fff" d="M6.3 11.767a.498.498 0 0 1-.208-.042.862.862 0 0 1-.192-.125L2.883 8.583a.565.565 0 0 1-.166-.416c0-.167.055-.306.166-.417a.546.546 0 0 1 .4-.167c.156 0 .29.056.4.167L6.3 10.367l6-6a.546.546 0 0 1 .4-.167c.156 0 .295.056.417.167a.555.555 0 0 1 .166.408.555.555 0 0 1-.166.408L6.7 11.6a.862.862 0 0 1-.192.125.498.498 0 0 1-.208.042Z"/></svg></div>' . __( $group->name, 'bcc-login' )  . '</label>' .
+            $html .= '<li class="bcc-checkbox-wrapper">' .
+                '<input type="checkbox" class="bcc-checkbox" id="'. $group->uid .'" value="'. $group->uid .'" name="target-groups[]"' . (in_array($group->uid, $queried_target_groups) ? 'checked' : '') . '/>' .
+                '<label for="' . $group->uid . '">' . __( $group->name, 'bcc-login' )  . '</label>' .
             '</li>';
         endforeach;
         $html .= '</ul>';
@@ -837,10 +837,10 @@ class BCC_Login_Visibility {
 
         if (isset($_GET['target-groups'])) {
             $html .= '<div class="bcc-target-groups__filtered">';
-                $html .= '<a href="javascript:void(0)" id="clear-bcc-groups">' . __('Clear all', 'bcc-login') . '</a>';
+                $html .= '<a href="javascript:void(0)" id="clear-bcc-groups" class="bcc-badge bcc-badge-sm bcc-badge-danger">' . __('Clear all', 'bcc-login') . '</a>';
 
                 foreach ($_GET['target-groups'] as $target_group) {
-                    $html .= '<div class="bcc-target-groups__item">' .
+                    $html .= '<div class="bcc-target-groups__item bcc-badge bcc-badge-sm bcc-badge-info">' .
                         '<span>' . $this->get_group_name($target_group) . '</span>' .
                         '<a href="javascript:void(0)" class="remove-bcc-group" data-group-id="' . $target_group . '">X</a>' .
                     '</div>';
