@@ -57,11 +57,11 @@ _Note: server details can be found in MyKinsta_
 <pre>#!/bin/bash
 TARGET="/www/{sitefolder_xxxxxxx}/public"
 GIT_DIR="/www/{sitefolder_xxxxxxx}/private/{sitename}.git"
-BRANCH="master"
+BRANCH="main"
 
 while read oldrev newrev ref
 do
-        # only checking out the master (or whatever branch you would like to deploy)
+        # only checking out the main (or whatever branch you would like to deploy)
         if [[ $ref = refs/heads/$BRANCH ]];
         then
                 echo "Ref $ref received. Deploying ${BRANCH} branch to production..."
@@ -84,7 +84,7 @@ done</pre>
 ## Push to GitHub (will deploy to Kinsta)
 
 When you now push to GitHub, the **kinsta.yml** workflow should be triggered.<br>
-If the commit is to **develop** it will deploy the changes to the **staging** environment, and if it is **master** it will deploy to the **live** env.
+If the commit is to **develop** it will deploy the changes to the **staging** environment, and if it is **main** it will deploy to the **live** env.
 
 Kinsta accepts the push from the GitHub action because the **BCC IT** account in Kinsta has the _kinsta_ public key added in Settings > SSH keys.
 
