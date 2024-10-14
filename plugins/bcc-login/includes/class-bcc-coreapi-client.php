@@ -323,6 +323,7 @@ class Token_Response {
     public $access_token;
     public $scope;
     public $expires_in;
+    public $token_type;
 }
 
 ?>
