@@ -119,9 +119,7 @@ class BCC_Login_Feed {
     // Add meta data relating to the orginal post (language). If this is the orginal,
     // then the values will match the Guid, Url on the current item.
     // Example:
-    // <bcc:originalPostLanguage>no</bcc:orginalPostLanguage>
-    // <bcc:originalPostGuid>https://bcc.no/?p=2343</bcc:originalPostGuid>
-    // <bcc:originalPostUrl>https://bcc.no/en-eller-annen-artikkel</bcc:originalPostUrl>
+    // <bcc:original isOrignal="false" language="no" guid="https://bcc.no/?p=2343" url="https://bcc.no/en-eller-annen-artikkel" />
     function add_original_language_to_items($the_list) {
         global $post;
         $post_type = get_post_type( $post );
@@ -165,15 +163,12 @@ class BCC_Login_Feed {
                             $original_post_permalink = get_permalink($details->element_id);
                             do_action('wpml_switch_language', $current_language);
 
-                            echo "\t\t<bcc:orginalItemLanguage>" . $lang_code . "</bcc:orginalItemLanguage>\n";
-                            echo "\t\t<bcc:orginalItemGuid>" . $original_post_guid . "</bcc:orginalItemGuid>\n";
-                            echo "\t\t<bcc:orginalItemUrl>" . $original_post_permalink . "</bcc:orginalItemUrl>\n";
+                            echo "\t\t<bcc:original isOriginal=\"" . ($is_orginal ? "true" : "false") . "\" language=\"" . $lang_code . "\" guid=\"" . $original_post_guid . "\" url=\"" . $original_post_permalink . "\" />\n";
                         }
                     }
                 } else {
-                    echo "\t\t<bcc:orginalItemLanguage>" . $site_language . "</bcc:orginalItemLanguage>\n";
-                    echo "\t\t<bcc:orginalItemGuid>" . $post->guid . "</bcc:orginalItemGuid>\n";
-                    echo "\t\t<bcc:orginalItemUrl>" . get_permalink($post->ID) . "</bcc:orginalItemUrl>\n";
+
+                    echo "\t\t<bcc:original isOriginal=\"true\" language=\"" . $site_language . "\" guid=\"" . $post->guid . "\" url=\"" . get_permalink($post->ID) . "\" />\n";
                 }
             }
 
