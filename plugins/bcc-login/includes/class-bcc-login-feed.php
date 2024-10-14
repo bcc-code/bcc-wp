@@ -11,11 +11,8 @@ class BCC_Login_Feed {
         add_filter('the_excerpt_rss', array( $this, 'add_image_to_rss' ));
         add_filter( 'the_category_rss', array( $this, 'add_internal_category_to_member_items'), 10, 2 ); 
         add_action('pre_get_posts', array( $this,'include_custom_post_types_in_feed'));
-        add_filter( 'rss2_item', array( $this, 'add_visibility_to_items')); 
-        add_filter( 'rss2_item', array( $this, 'add_target_groups_to_items')); 
-        add_filter( 'rss2_item', array( $this, 'add_original_language_to_items')); 
-        add_filter( 'rss2_item', array( $this, 'add_post_type_to_items')); 
         add_filter( 'rss2_ns', array( $this, 'add_custom_bcc_namespace'));
+        add_filter( 'rss2_item', array( $this, 'add_custom_elements_to_items')); 
     }
 
     function add_custom_bcc_namespace() {
@@ -62,6 +59,17 @@ class BCC_Login_Feed {
         return $result;
     }
 
+    function add_custom_elements_to_items($the_list){
+       $this->add_visibility_to_items($the_list); 
+       $this->add_groups_to_items($the_list);
+       $this->add_post_type_to_items($the_list);
+       $this->add_original_language_to_items($the_list);
+    }
+
+    // Include basic visibility settings in feed: 
+    // - public (no authentication required)
+    // - user (requires authentication)
+    // - internal:{district name} (requires affiliation with organization in specified district)
     function add_visibility_to_items ($the_list) {
         global $post;
         $visibility = $this->_settings->default_visibility;
@@ -74,27 +82,46 @@ class BCC_Login_Feed {
         } else if ($visibility == BCC_Login_Visibility::VISIBILITY_SUBSCRIBER){
             echo "<bcc:visibility>user</bcc:visibility>\n"; 
         } else if ($visibility == BCC_Login_Visibility::VISIBILITY_MEMBER){
-            echo "<bcc:visibility>member:" . $this->_settings->member_organization_name . "</bcc:visibility>\n"; 
+            echo "<bcc:visibility>internal:" . $this->_settings->member_organization_name . "</bcc:visibility>\n"; 
         }
     }
 
-    function add_target_groups_to_items($the_list) {
+    // Include group uid for each group that the post is visible for or targetted at (notification group)
+    // E.g. 
+    // <bcc:visiblityGroup>d4c434a7-504a-4246-9a10-def7dbfa982c</bcc:visiblityGroup>
+    // <bcc:visiblityGroup>25f5bc4d-48e0-4a6e-bf05-6b2a15d70861</bcc:visiblityGroup>
+    // <bcc:notificationGroup>d4c434a7-504a-4246-9a10-def7dbfa982c</bcc:notificationGroup>
+    function add_groups_to_items($the_list) {
         global $post;
         $result = '';
         if ( !empty($this->_settings->site_groups) ) {
             $post_groups = get_post_meta($post->ID, 'bcc_groups', false);
             foreach ($post_groups as $group){
-                $result = $result . "\t\t<bcc:targetGroup>" . $group . "</bcc:targetGroup>\n";
+                $result = $result . "\t\t<bcc:visibilityGroup>" . $group . "</bcc:visibilityGroup>\n";
             }
+            if (in_array($post->post_type, $this->_settings->notification_post_types)){
+                $notification_groups = array_intersect($post_groups, $this->_settings->notification_groups);
+                foreach ($notification_groups as $group){
+                    $result = $result . "\t\t<bcc:notificationGroup>" . $group . "</bcc:notificationGroup>\n";
+                }
+            }
+
         }
         echo $result;
     }
 
+    // Include post type element (e.g. <bcc:type>post</bcc:type>)
     function add_post_type_to_items($the_list) {
         global $post;
         echo "\t\t<bcc:type>" . $post->post_type . "</bcc:type>\n";
     }
 
+    // Add meta data relating to the orginal post (language). If this is the orginal,
+    // then the values will match the Guid, Url on the current item.
+    // Example:
+    // <bcc:originalPostLanguage>no</bcc:orginalPostLanguage>
+    // <bcc:originalPostGuid>https://bcc.no/?p=2343</bcc:originalPostGuid>
+    // <bcc:originalPostUrl>https://bcc.no/en-eller-annen-artikkel</bcc:originalPostUrl>
     function add_original_language_to_items($the_list) {
         global $post;
         $post_type = get_post_type( $post );
