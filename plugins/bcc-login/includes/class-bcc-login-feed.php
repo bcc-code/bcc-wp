@@ -119,7 +119,7 @@ class BCC_Login_Feed {
     // Add meta data relating to the orginal post (language). If this is the orginal,
     // then the values will match the Guid, Url on the current item.
     // Example:
-    // <bcc:original isOrignal="false" language="no" guid="https://bcc.no/?p=2343" url="https://bcc.no/en-eller-annen-artikkel" />
+    // <bcc:translatedFrom language="no" guid="https://bcc.no/?p=2343" url="https://bcc.no/en-eller-annen-artikkel" />
     function add_original_language_to_items($the_list) {
         global $post;
         $post_type = get_post_type( $post );
@@ -163,12 +163,12 @@ class BCC_Login_Feed {
                             $original_post_permalink = get_permalink($details->element_id);
                             do_action('wpml_switch_language', $current_language);
 
-                            echo "\t\t<bcc:original isOriginal=\"" . ($is_orginal ? "true" : "false") . "\" language=\"" . $lang_code . "\" guid=\"" . $original_post_guid . "\" url=\"" . $original_post_permalink . "\" />\n";
+                            echo "\t\t<bcc:translatedFrom language=\"" . $lang_code . "\" guid=\"" . $original_post_guid . "\" url=\"" . $original_post_permalink . "\" />\n";
                         }
                     }
                 } else {
-
-                    echo "\t\t<bcc:original isOriginal=\"true\" language=\"" . $site_language . "\" guid=\"" . $post->guid . "\" url=\"" . get_permalink($post->ID) . "\" />\n";
+                    // Redundant
+                    // echo "\t\t<bcc:original isOriginal=\"true\" language=\"" . $site_language . "\" guid=\"" . $post->guid . "\" url=\"" . get_permalink($post->ID) . "\" />\n";
                 }
             }
 
