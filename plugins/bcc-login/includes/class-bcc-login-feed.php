@@ -150,13 +150,12 @@ class BCC_Login_Feed {
                     $trid = apply_filters('wpml_element_trid', NULL, $post_id, 'post_' . $post_type);
                     $translations = apply_filters('wpml_get_element_translations', NULL, $trid, 'post_' . $post_type);
 
-                    // Determine if current post is the original
-                    $is_orginal = false;
                     foreach ($translations as $lang_code => $details) {
                         if ($details->element_id == $post_id) {
-                            $is_orginal = $details->original == "1";
+                            break; //Current post is original
                         }
-                        if ($details->original == "1"){
+                        if ($details->original == "1") {
+                            // Another language is original
                             $original_post = get_post($details->element_id); // Get post object by ID
                             $original_post_guid = $original_post->guid; // Extract the GUID
                             do_action('wpml_switch_language', $lang_code);
@@ -164,11 +163,10 @@ class BCC_Login_Feed {
                             do_action('wpml_switch_language', $current_language);
 
                             echo "\t\t<bcc:translatedFrom language=\"" . $lang_code . "\" guid=\"" . $original_post_guid . "\" url=\"" . $original_post_permalink . "\" />\n";
+
+                            break;
                         }
                     }
-                } else {
-                    // Redundant
-                    // echo "\t\t<bcc:original isOriginal=\"true\" language=\"" . $site_language . "\" guid=\"" . $post->guid . "\" url=\"" . get_permalink($post->ID) . "\" />\n";
                 }
             }
 
