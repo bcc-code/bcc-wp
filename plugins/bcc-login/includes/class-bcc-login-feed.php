@@ -127,48 +127,40 @@ class BCC_Login_Feed {
         
         $wpml_installed = defined('ICL_SITEPRESS_VERSION');
 
-         // 2. Get default language
-        $site_language = get_bloginfo('language'); //E.g. "en-US"
-        $site_language = substr($site_language, 0, 2);
-        if ($site_language == "nb"){
-            $site_language = "no";
-        }
-        $is_multilinguage_post = false;
-
-        // 4. Handle multilingual posts
+        // 4. Handle multilingual posts (in WMPL)
         if ($wpml_installed) {
-                // WPML is installed and active.
+            // WPML is installed and active.
 
-                // Get default language for site
-                $current_language = ICL_LANGUAGE_CODE;
+            // Get default language for site
+            $current_language = ICL_LANGUAGE_CODE;
 
-                // Check if post has been translated
-                $has_translations = apply_filters('wpml_element_has_translations', '', $post_id, $post_type);
-                if ($has_translations) {
+            // Check if post has been translated
+            $has_translations = apply_filters('wpml_element_has_translations', '', $post_id, $post_type);
+            if ($has_translations) {
 
-                    $is_multilinguage_post = true;
-                    $trid = apply_filters('wpml_element_trid', NULL, $post_id, 'post_' . $post_type);
-                    $translations = apply_filters('wpml_get_element_translations', NULL, $trid, 'post_' . $post_type);
+                $is_multilinguage_post = true;
+                $trid = apply_filters('wpml_element_trid', NULL, $post_id, 'post_' . $post_type);
+                $translations = apply_filters('wpml_get_element_translations', NULL, $trid, 'post_' . $post_type);
 
-                    foreach ($translations as $lang_code => $details) {
-                        if ($details->element_id == $post_id) {
-                            break; //Current post is original
-                        }
-                        if ($details->original == "1") {
-                            // Another language is original
-                            $original_post = get_post($details->element_id); // Get post object by ID
-                            $original_post_guid = $original_post->guid; // Extract the GUID
-                            do_action('wpml_switch_language', $lang_code);
-                            $original_post_permalink = get_permalink($details->element_id);
-                            do_action('wpml_switch_language', $current_language);
+                foreach ($translations as $lang_code => $details) {
+                    if ($details->element_id == $post_id) {
+                        break; //Current post is original
+                    }
+                    if ($details->original == "1") {
+                        // Another language is original
+                        $original_post = get_post($details->element_id); // Get post object by ID
+                        $original_post_guid = $original_post->guid; // Extract the GUID
+                        do_action('wpml_switch_language', $lang_code);
+                        $original_post_permalink = get_permalink($details->element_id);
+                        do_action('wpml_switch_language', $current_language);
 
-                            echo "\t\t<bcc:translatedFrom language=\"" . $lang_code . "\" guid=\"" . $original_post_guid . "\" url=\"" . $original_post_permalink . "\" />\n";
+                        echo "\t\t<bcc:translatedFrom language=\"" . $lang_code . "\" guid=\"" . $original_post_guid . "\" url=\"" . $original_post_permalink . "\" />\n";
 
-                            break;
-                        }
+                        break;
                     }
                 }
             }
+        }
 
     }
 }
