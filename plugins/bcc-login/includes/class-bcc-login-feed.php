@@ -86,6 +86,31 @@ class BCC_Login_Feed {
         }
     }
 
+    function array_union($x, $y)
+    { 
+        if (empty($x) && empty($y)){
+            return [];
+        }
+        if (empty($x)){
+            return $y;
+        }
+        if (empty($y)){
+            return $x;
+        }
+        // Use array_merge to combine three arrays:
+        // 1. Intersection of $x and $y
+        // 2. Elements in $x that are not in $y
+        // 3. Elements in $y that are not in $x
+        $aunion = array_merge(
+            array_intersect($x, $y),   // Intersection of $x and $y
+            array_diff($x, $y),        // Elements in $x but not in $y
+            array_diff($y, $x)         // Elements in $y but not in $x
+        );
+
+        // Return the resulting array representing the union
+        return $aunion;
+    }
+
     // Include group uid for each group that the post is visible for or targetted at (notification group)
     // E.g. 
     // <bcc:visiblityGroup>d4c434a7-504a-4246-9a10-def7dbfa982c</bcc:visiblityGroup>
@@ -94,12 +119,18 @@ class BCC_Login_Feed {
     function add_groups_to_items($the_list) {
         global $post;
         $result = '';
-        if ( !empty($this->_settings->site_groups) ) {
+        if ( !empty($this->_settings->site_groups) || !empty($this->_settings->full_content_access_groups) ) {
+            // Get groups that are checked on post
             $post_groups = get_post_meta($post->ID, 'bcc_groups', false);
-            foreach ($post_groups as $group){
+
+            // Visiblity Groups: Groups that are checked on post + groups with access to all posts
+            $visibility_post_groups = $this->array_union($post_groups, $this->_settings->full_content_access_groups);
+            foreach ($visibility_post_groups as $group){
                 $result = $result . "\t\t<bcc:visibilityGroup>" . $group . "</bcc:visibilityGroup>\n";
             }
+
             if (in_array($post->post_type, $this->_settings->notification_post_types)){
+                // Notification Groups: Groups that are checked on posts + are eligable for notification
                 $notification_groups = array_intersect($post_groups, $this->_settings->notification_groups);
                 foreach ($notification_groups as $group){
                     $result = $result . "\t\t<bcc:notificationGroup>" . $group . "</bcc:notificationGroup>\n";
