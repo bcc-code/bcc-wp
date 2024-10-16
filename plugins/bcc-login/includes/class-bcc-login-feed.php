@@ -109,31 +109,12 @@ class BCC_Login_Feed {
     }
 
     function add_custom_elements_to_items($the_list){
-       $this->add_visibility_to_items($the_list); 
-       $this->add_groups_to_items($the_list);
+       $this->add_visibility_and_groups_to_items($the_list); 
        $this->add_post_type_to_items($the_list);
        $this->add_original_language_to_items($the_list);
     }
 
-    // Include basic visibility settings in feed: 
-    // - public (no authentication required)
-    // - user (requires authentication)
-    // - internal:{district name} (requires affiliation with organization in specified district)
-    function add_visibility_to_items ($the_list) {
-        global $post;
-        $visibility = $this->_settings->default_visibility;
-        if ( $bcc_login_visibility = (int) get_post_meta( $post->ID, 'bcc_login_visibility', true ) ) {
-            $visibility = $bcc_login_visibility;
-        }
-        if ($visibility == BCC_Login_Visibility::VISIBILITY_PUBLIC){
-            echo "<bcc:visibility>public</bcc:visibility>\n"; 
 
-        } else if ($visibility == BCC_Login_Visibility::VISIBILITY_SUBSCRIBER){
-            echo "<bcc:visibility>user</bcc:visibility>\n"; 
-        } else if ($visibility == BCC_Login_Visibility::VISIBILITY_MEMBER){
-            echo "<bcc:visibility>internal:" . $this->_settings->member_organization_name . "</bcc:visibility>\n"; 
-        }
-    }
 
     function array_union($x, $y)
     { 
@@ -160,12 +141,39 @@ class BCC_Login_Feed {
         return $aunion;
     }
 
+    function add_visibility_and_groups_to_items($the_list){
+        global $post;
+        $visibility = $this->_settings->default_visibility;
+        if ( $bcc_login_visibility = (int) get_post_meta( $post->ID, 'bcc_login_visibility', true ) ) {
+            $visibility = $bcc_login_visibility;
+        }
+        $this->add_visibility_to_items($the_list,$visibility);
+        $this->add_groups_to_items($the_list, $visibility);
+    }
+
+    // Include basic visibility settings in feed: 
+    // - public (no authentication required)
+    // - user (requires authentication)
+    // - internal:{district name} (requires affiliation with organization in specified district)
+    function add_visibility_to_items ($the_list, $visibility) {
+        
+        if ($visibility == BCC_Login_Visibility::VISIBILITY_PUBLIC){
+            echo "<bcc:visibility>public</bcc:visibility>\n"; 
+
+        } else if ($visibility == BCC_Login_Visibility::VISIBILITY_SUBSCRIBER){
+            echo "<bcc:visibility>user</bcc:visibility>\n"; 
+        } else if ($visibility == BCC_Login_Visibility::VISIBILITY_MEMBER){
+            echo "<bcc:visibility>internal:" . $this->_settings->member_organization_name . "</bcc:visibility>\n"; 
+        }
+    }
+
+    
     // Include group uid for each group that the post is visible for or targetted at (notification group)
     // E.g. 
     // <bcc:visiblityGroup>d4c434a7-504a-4246-9a10-def7dbfa982c</bcc:visiblityGroup>
     // <bcc:visiblityGroup>25f5bc4d-48e0-4a6e-bf05-6b2a15d70861</bcc:visiblityGroup>
     // <bcc:notificationGroup>d4c434a7-504a-4246-9a10-def7dbfa982c</bcc:notificationGroup>
-    function add_groups_to_items($the_list) {
+    function add_groups_to_items($the_list, $visibility) {
         global $post;
         $result = '';
         if ( !empty($this->_settings->site_groups) || !empty($this->_settings->full_content_access_groups) ) {
@@ -173,9 +181,12 @@ class BCC_Login_Feed {
             $post_groups = get_post_meta($post->ID, 'bcc_groups', false);
 
             // Visiblity Groups: Groups that are checked on post + groups with access to all posts
-            $visibility_post_groups = $this->array_union($post_groups, $this->_settings->full_content_access_groups);
-            foreach ($visibility_post_groups as $group){
-                $result = $result . "\t\t<bcc:visibilityGroup>" . $group . "</bcc:visibilityGroup>\n";
+            if ($visibility != BCC_Login_Visibility::VISIBILITY_PUBLIC)
+            {
+                $visibility_post_groups = $this->array_union($post_groups, $this->_settings->full_content_access_groups);
+                foreach ($visibility_post_groups as $group){
+                    $result = $result . "\t\t<bcc:visibilityGroup>" . $group . "</bcc:visibilityGroup>\n";
+                }
             }
 
             if (in_array($post->post_type, $this->_settings->notification_post_types)){
