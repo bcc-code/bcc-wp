@@ -8,12 +8,61 @@ class BCC_Login_Feed {
     function __construct( BCC_Login_Settings $settings, BCC_Login_Client $client, BCC_Login_Visibility $visibility ) {
         $this->_settings = $settings;
         $this->_client = $client;
+        add_action( 'pre_get_posts', array( $this, 'add_paging_support') );
         add_filter('the_excerpt_rss', array( $this, 'add_image_to_rss' ));
         add_filter( 'the_category_rss', array( $this, 'add_internal_category_to_member_items'), 10, 2 ); 
         add_action('pre_get_posts', array( $this,'include_custom_post_types_in_feed'));
         add_filter( 'rss2_ns', array( $this, 'add_custom_bcc_namespace'));
         add_filter( 'rss2_item', array( $this, 'add_custom_elements_to_items')); 
     }
+
+
+
+    function add_paging_support( $query ) {
+        // Only target feed queries
+        if ( $query->is_feed()) {
+
+            // Check for the "updated-min" parameter and modify the query
+            if ( isset( $_GET['updated-min'] ) ) {
+                $updated_min = sanitize_text_field( $_GET['updated-min'] );
+
+                // Parse RFC3339 date-time and convert to GMT
+                try {
+                    $date = new DateTime( $updated_min );
+                    $date->setTimezone( new DateTimeZone('UTC') ); // Convert to UTC (GMT)
+                    $updated_min_gmt = $date->format('Y-m-d H:i:s'); // Convert to WordPress-readable format (Y-m-d H:i:s)
+                } catch (Exception $e) {
+                    // Handle parsing error (invalid date format)
+                    $updated_min_gmt = false;
+                }
+
+                if ( $updated_min_gmt ) {
+                    $query->set('date_query', array(
+                        array(
+                            'column' => 'post_modified_gmt', // Use post modified date
+                            'after'  => $updated_min_gmt, // Date after the 'updated-min' value (in GMT)
+                            'inclusive' => true,
+                        ),
+                    ));
+                }
+            }
+
+            // Check for the "max-results" parameter and modify the number of posts
+            if ( isset( $_GET['max-results'] ) && is_numeric( $_GET['max-results'] ) ) {
+                $max_results = (int) $_GET['max-results'];
+                $query->set('posts_per_rss', $max_results);
+            }
+
+            // Check if the "page" parameter exists in the URL
+            if ( isset( $_GET['page'] ) && is_numeric( $_GET['page'] ) ) {
+                $page = (int) $_GET['page'];
+                
+                // Set the 'paged' parameter to the value of the 'page' parameter
+                $query->set( 'paged', $page );
+            }
+        }
+    }
+    
 
     function add_custom_bcc_namespace() {
         echo 'xmlns:bcc="https://developer.bcc.no/bcc-widgets/integration/news" ';
