@@ -147,10 +147,14 @@ class BCC_Login_Feed {
         echo "\t\t<bcc:type>" . $post->post_type . "</bcc:type>\n";
     }
 
+    function escape_xml($string) {
+        return htmlspecialchars($string, ENT_QUOTES | ENT_XML1, 'UTF-8');
+    }
+
     // Add meta data relating to the orginal post (language). If this is the orginal,
     // then the values will match the Guid, Url on the current item.
     // Example:
-    // <bcc:translatedFrom language="no" guid="https://bcc.no/?p=2343" url="https://bcc.no/en-eller-annen-artikkel" />
+    // <bcc:translatedFrom language="no" guid="https://bcc.no/?p=2343" url="https://bcc.no/en-eller-annen-artikkel" title="Hello verden!" />
     function add_original_language_to_items($the_list) {
         global $post;
         $post_type = get_post_type( $post );
@@ -185,7 +189,7 @@ class BCC_Login_Feed {
                         $original_post_permalink = get_permalink($details->element_id);
                         do_action('wpml_switch_language', $current_language);
 
-                        echo "\t\t<bcc:translatedFrom language=\"" . $lang_code . "\" guid=\"" . $original_post_guid . "\" url=\"" . $original_post_permalink . "\" />\n";
+                        echo "\t\t<bcc:translatedFrom language=\"" . $lang_code . "\" guid=\"" . $this->escape_xml($original_post_guid) . "\" url=\"" . $this->escape_xml($original_post_permalink) . "\" title=\"" . $this->escape_xml($original_post->post_title) . "\"/>\n";
 
                         break;
                     }
