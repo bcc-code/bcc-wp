@@ -69,7 +69,7 @@ class BCC_Login {
         $this->_users = new BCC_Login_Users($this->_settings);
         $this->_visibility = new BCC_Login_Visibility( $this->_settings, $this->_client, $this->_coreapi );
         $this->_widgets = new BCC_Login_Widgets( $this->_settings, $this->_client );
-        $this->_feed = new BCC_Login_Feed( $this->_settings, $this->_client );
+        $this->_feed = new BCC_Login_Feed( $this->_settings, $this->_client, $this->_visibility );
         $this->_updater = new BCC_Login_Updater( $this->plugin, $this->plugin_slug, $this->plugin_version, $this->plugin_name );
         $this->_notifications = new BCC_Notifications( $this->_settings, $this->_coreapi );
 
