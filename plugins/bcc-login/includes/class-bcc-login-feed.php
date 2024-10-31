@@ -147,8 +147,22 @@ class BCC_Login_Feed {
         if ( $bcc_login_visibility = (int) get_post_meta( $post->ID, 'bcc_login_visibility', true ) ) {
             $visibility = $bcc_login_visibility;
         }
+        if ( !empty($this->_settings->site_groups)) {
+            // Get groups that are checked on post
+            $post_groups = get_post_meta($post->ID, 'bcc_groups', false);
+
+            // Make sure posts with a group set don't have public visiblity
+            if (!empty($post_groups))
+            {
+                if ($visibility == BCC_Login_Visibility::VISIBILITY_PUBLIC) {
+                    $visibility = BCC_Login_Visibility::VISIBILITY_SUBSCRIBER;
+                }
+            }
+
+        }
         $this->add_visibility_to_items($the_list,$visibility);
         $this->add_groups_to_items($the_list, $visibility);
+
     }
 
     // Include basic visibility settings in feed: 
@@ -227,7 +241,7 @@ class BCC_Login_Feed {
             // WPML is installed and active.
 
             // Get default language for site
-            $current_language = ICL_LANGUAGE_CODE;
+            $current_language = apply_filters( 'wpml_current_language', null );
 
             // Check if post has been translated
             $has_translations = apply_filters('wpml_element_has_translations', '', $post_id, $post_type);
