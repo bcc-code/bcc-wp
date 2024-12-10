@@ -99,30 +99,40 @@ class BCC_Coreapi_Client
         $token = $this->get_coreapi_token();
 
         $request_url = str_replace("https://", "https://core.", $this->_settings->coreapi_base_url) . "/v2/persons/". $user_uid . "/checkGroupMemberships";
-        $request_body = array(
-            "groupUids" => $this->_settings->site_groups
-        );
+        $batch_size = 50;
+        $total_groups = count($this->_settings->site_groups);
+        $user_groups = [];
 
-        $response = wp_remote_post($request_url, array(
-            "body" => wp_json_encode( $request_body ),
-            "headers" => array(
-                "Authorization" => "Bearer " . $token
-            )
-        ));
+        for ($i = 0; $i < $total_groups; $i += $batch_size) {
 
-        if (is_wp_error($response)) {
-            wp_die($response->get_error_message());
+            $batch = array_slice($this->_settings->site_groups, $i, $batch_size);
+            $request_body = array(
+                "groupUids" => $batch
+            );
+
+            $response = wp_remote_post($request_url, array(
+                "body" => wp_json_encode( $request_body ),
+                "headers" => array(
+                    "Authorization" => "Bearer " . $token
+                )
+            ));
+
+            if (is_wp_error($response)) {
+                wp_die($response->get_error_message());
+            }
+
+            if ($response['response']['code'] != 200) {
+                wp_die("cannot fetch groups for user: " . print_r($response['body'], true));
+            }
+
+            $body = json_decode($response['body']);
+
+            $user_groups = array_merge($user_groups, $body->data->groupUids);
         }
-
-        if ($response['response']['code'] != 200) {
-            wp_die("cannot fetch groups for user: " . print_r($response['body'], true));
-        }
-
-
-        $body = json_decode($response['body']);
-
-        return $body->data->groupUids;
+        return $user_groups;
     }
+
+
 
     public function ensure_subscription_to_person_updates() {
         if ($this->_settings->disable_pubsub) {
