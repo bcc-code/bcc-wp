@@ -282,6 +282,7 @@ class BCC_Login_Visibility {
         );
 
         if (!empty($this->_settings->site_groups) ) {
+
             wp_add_inline_script(
                 $script_handle,
                 'var siteGroups = ' . json_encode($this->_coreapi->get_translated_site_groups()),
@@ -291,6 +292,21 @@ class BCC_Login_Visibility {
             wp_add_inline_script(
                 $script_handle,
                 'var siteGroups = []',
+                'before'
+            );
+        }
+
+        if (!empty($this->_settings->site_group_tags) ) {
+
+            wp_add_inline_script(
+                $script_handle,
+                'var siteGroupTags = ' . json_encode($this->_settings->site_group_tags),
+                'before'
+            );
+        } else {
+            wp_add_inline_script(
+                $script_handle,
+                'var siteGroupTags = []',
                 'before'
             );
         }

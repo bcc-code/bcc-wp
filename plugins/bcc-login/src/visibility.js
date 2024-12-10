@@ -7,6 +7,7 @@ import {
   CheckboxControl,
   SearchControl,
 } from "@wordpress/components";
+import GroupSelector from './components/group-selector';
 import { registerPlugin } from "@wordpress/plugins";
 import { InspectorControls } from "@wordpress/block-editor";
 import { PluginPostStatusInfo } from "@wordpress/edit-post";
@@ -159,20 +160,52 @@ registerPlugin("bcc-login-visibility", {
   )),
 });
 
-registerPlugin("bcc-groups", {
+// registerPlugin("bcc-groups", {
+//   render: compose([
+//     withSelect((select) => {
+//       const { getEditedPostAttribute } = select("core/editor");
+//       const meta = getEditedPostAttribute("meta");
+//       return {
+//         selectedGroups: meta.bcc_groups ?? [],
+//         siteGroups: window.siteGroups,
+//       };
+//     }),
+//     withDispatch((dispatch) => {
+//       const { editPost } = dispatch("core/editor");
+//       return {
+//         onUpdateGroup(value) {
+//           editPost({
+//             meta: {
+//               bcc_groups: value,
+//             },
+//           });
+//         },
+//       };
+//     }),
+//     withInstanceId,
+//   ])((props) => (
+//     <PluginPostStatusInfo>
+//       <GroupsOptions heading={__("Post Groups")} {...props} />
+//     </PluginPostStatusInfo>
+//   )),
+// });
+
+
+registerPlugin("bcc-groups-2", {
   render: compose([
     withSelect((select) => {
       const { getEditedPostAttribute } = select("core/editor");
       const meta = getEditedPostAttribute("meta");
       return {
-        selectedGroups: meta.bcc_groups ?? [],
-        siteGroups: window.siteGroups,
+        value: (meta.bcc_groups ?? []).join(","),
+        options: window.siteGroups,
+        tags: window.siteGroupTags,
       };
     }),
     withDispatch((dispatch) => {
       const { editPost } = dispatch("core/editor");
       return {
-        onUpdateGroup(value) {
+        onChange(value) {
           editPost({
             meta: {
               bcc_groups: value,
@@ -184,7 +217,7 @@ registerPlugin("bcc-groups", {
     withInstanceId,
   ])((props) => (
     <PluginPostStatusInfo>
-      <GroupsOptions heading={__("Post Groups")} {...props} />
+      <GroupSelector label={__("Post Groups")} {...props} />
     </PluginPostStatusInfo>
   )),
 });
@@ -210,7 +243,21 @@ addFilter(
                 }}
                 {...props}
               />
-              <PanelRow>
+            <PanelRow>
+                <GroupSelector
+                  label={__("Block Groups")}
+                  tags={window.siteGroupTags}
+                  options={window.siteGroups}
+                  value={(attributes.bccGroups ?? []).join(",")}
+                  onChange={(value) => {
+                    setAttributes({
+                      bccGroups: value,
+                    });
+                  }}
+                />
+              </PanelRow>
+
+              {/* <PanelRow>
                 <GroupsOptions
                   heading={__("Block Groups")}
                   siteGroups={window.siteGroups}
@@ -222,7 +269,7 @@ addFilter(
                   }}
                   {...props}
                 />
-              </PanelRow>
+              </PanelRow> */}
             </PanelBody>
           </InspectorControls>
           <BlockEdit {...props} />
