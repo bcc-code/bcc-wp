@@ -5,6 +5,7 @@ class BCC_Coreapi_Client
     private BCC_Login_Settings $_settings;
     private BCC_Storage $_storage;
     private $_site_groups;
+    private $_all_groups;
 
     function __construct(BCC_Login_Settings $login_settings, BCC_Storage $storage)
     {
@@ -16,6 +17,54 @@ class BCC_Coreapi_Client
     function extend_http_request_timeout( ) {
         // 10 minutes to allow sending notifications
         return 600;
+    }
+
+    public function get_all_groups() {
+        if (isset($this->_all_groups)) {
+            return $this->_all_groups;
+        }
+
+        $cache_key = 'coreapi_all_groups';
+        $cached_response = get_transient($cache_key);
+
+        if ($cached_response !== false && !empty($cached_response)) {
+            return $cached_response;
+        }
+
+        $groups = [];
+
+        // Get groups by tag
+        $group_tags = $this->_settings->site_group_tags;
+        $result = $this->fetch_groups_by_tags($group_tags);
+        foreach ($result as $group) {
+            $groups[$group->uid] = $group;
+        }
+
+        // Get groups already in use on site
+        $group_uids = $this->_settings->site_groups;
+        $result = $this->fetch_groups($group_uids);
+        foreach ($result as $group) {
+            $groups[$group->uid] = $group;
+        }
+
+        // $group_uids = $this->_settings->filtering_groups;
+        // $result = $this->fetch_groups($group_uids);
+        // foreach ($result as $group) {
+        //     $groups[$group->uid] = $group;
+        // }
+
+        // $group_uids = $this->_settings->notification_groups;
+        // $result = $this->fetch_groups($group_uids);
+        // foreach ($result as $group) {
+        //     $groups[$group->uid] = $group;
+        // }
+    
+        $this->_all_groups = array_values($groups);
+        
+        $expiration_duration = 60 * 60 * 24; // 1 day
+        set_transient($cache_key, $this->_all_groups, $expiration_duration);
+
+        return $this->_all_groups;
     }
 
     function get_site_groups() {
@@ -61,7 +110,50 @@ class BCC_Coreapi_Client
 
         $qry = json_encode($qry);
 
-        $response = wp_remote_get( str_replace("https://", "https://core.", $this->_settings->coreapi_base_url) . "/groups?fields=uid,name&filter=$qry", array(
+        $response = wp_remote_get( str_replace("https://", "https://core.", $this->_settings->coreapi_base_url) . "/groups?fields=uid,name,tags&filter=$qry", array(
+            "headers" => array(
+                "Authorization" => "Bearer ".$token
+            )
+        ) );
+
+        if ( is_wp_error( $response ) ) {
+            wp_die( $response->get_error_message() );
+        }
+
+        $body = json_decode($response['body']);
+
+        return $body->data;
+    }
+
+    function fetch_groups_by_tags($tags) {
+        if (is_string($tags)) {
+            $tags = explode(',', $tags);
+        }
+
+        $all_groups = [];
+
+        foreach ($tags as $tag) {
+            $groups = $this->fetch_groups_by_tag(trim($tag));
+            foreach ($groups as $group) {
+                $all_groups[$group->uid] = $group;
+            }
+        }
+        return array_values($all_groups);
+    }
+
+    function fetch_groups_by_tag($tag)
+    {
+        $token = $this->get_coreapi_token();
+
+        $qry = array(
+            "tags" => array(
+                "_contains" => array ( $tag ),
+            )
+        );
+
+        $qry = json_encode($qry);
+
+        $response = wp_remote_get( str_replace("https://", "https://core.", $this->_settings->coreapi_base_url) . "/groups?limit=1000&fields=uid,name,tags&filter=$qry", array(
             "headers" => array(
                 "Authorization" => "Bearer ".$token
             )
@@ -99,30 +191,40 @@ class BCC_Coreapi_Client
         $token = $this->get_coreapi_token();
 
         $request_url = str_replace("https://", "https://core.", $this->_settings->coreapi_base_url) . "/v2/persons/". $user_uid . "/checkGroupMemberships";
-        $request_body = array(
-            "groupUids" => $this->_settings->site_groups
-        );
+        $batch_size = 50; //Max supported by core API
+        $total_groups = count($this->_settings->site_groups);
+        $user_groups = [];
 
-        $response = wp_remote_post($request_url, array(
-            "body" => wp_json_encode( $request_body ),
-            "headers" => array(
-                "Authorization" => "Bearer " . $token
-            )
-        ));
+        for ($i = 0; $i < $total_groups; $i += $batch_size) {
 
-        if (is_wp_error($response)) {
-            wp_die($response->get_error_message());
+            $batch = array_slice($this->_settings->site_groups, $i, $batch_size);
+            $request_body = array(
+                "groupUids" => $batch
+            );
+
+            $response = wp_remote_post($request_url, array(
+                "body" => wp_json_encode( $request_body ),
+                "headers" => array(
+                    "Authorization" => "Bearer " . $token
+                )
+            ));
+
+            if (is_wp_error($response)) {
+                wp_die($response->get_error_message());
+            }
+
+            if ($response['response']['code'] != 200) {
+                wp_die("cannot fetch groups for user: " . print_r($response['body'], true));
+            }
+
+            $body = json_decode($response['body']);
+
+            $user_groups = array_merge($user_groups, $body->data->groupUids);
         }
-
-        if ($response['response']['code'] != 200) {
-            wp_die("cannot fetch groups for user: " . print_r($response['body'], true));
-        }
-
-
-        $body = json_decode($response['body']);
-
-        return $body->data->groupUids;
+        return $user_groups;
     }
+
+
 
     public function ensure_subscription_to_person_updates() {
         if ($this->_settings->disable_pubsub) {

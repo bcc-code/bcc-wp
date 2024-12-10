@@ -84,6 +84,7 @@ class BCC_Login {
         add_action( 'wp_head', array( $this, 'hide_admin_bar' ) );
 
         add_action( 'update_option_bcc_site_groups', array( $this, 'on_site_groups_option_update' ), 10, 3 );
+        add_action( 'update_option_bcc_site_group_tags', array( $this, 'on_site_groups_option_update' ), 10, 3 );
         add_action( 'update_option_bcc_disable_pubsub', array( $this, 'on_disable_pubsub_option_update' ), 10, 3 );
 
         add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'plugin_settings_link'));
@@ -221,6 +222,7 @@ class BCC_Login {
      */
     function on_site_groups_option_update($old_value, $value, $option) {
         delete_transient('coreapi_groups');
+        delete_transient('coreapi_all_groups');
     }
 
     /**
