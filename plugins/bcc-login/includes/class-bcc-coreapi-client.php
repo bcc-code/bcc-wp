@@ -110,7 +110,7 @@ class BCC_Coreapi_Client
 
         $qry = json_encode($qry);
 
-        $response = wp_remote_get( str_replace("https://", "https://core.", $this->_settings->coreapi_base_url) . "/groups?fields=uid,name,tags&filter=$qry", array(
+        $response = wp_remote_get( str_replace("https://", "https://core.", $this->_settings->coreapi_base_url) . "/groups?limit=1000&fields=uid,name,tags&filter=$qry", array(
             "headers" => array(
                 "Authorization" => "Bearer ".$token
             )
