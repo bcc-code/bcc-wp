@@ -15,6 +15,7 @@ class BCC_Login_Settings {
     public $default_visibility;
     public $feed_key;
     public $show_protected_menu_items;
+    public $site_group_tags = array();
     public $site_groups = array();
     public $notification_groups = array();
     public $notification_languages = array();
@@ -35,6 +36,8 @@ class BCC_Login_Settings {
  */
 class BCC_Login_Settings_Provider {
     private BCC_Login_Settings $_settings;
+    private BCC_Coreapi_Client $_coreapi;
+    private BCC_Storage $_storage;
 
     protected $option_name = 'bcc_login_settings';
     protected $options_page = 'bcc_login';
@@ -79,6 +82,8 @@ class BCC_Login_Settings_Provider {
         $settings->disable_pubsub = false;
         $settings->widgets_base_url = 'https://widgets.bcc.no';
 
+        
+
         // Set settings from environment variables.
         foreach ( $this->environment_variables as $key => $constant ) {
             if ( defined( $constant ) && constant( $constant ) != '' ) {
@@ -94,6 +99,11 @@ class BCC_Login_Settings_Provider {
         // Set settings from options
         $settings->default_visibility = get_option( 'bcc_default_visibility', $settings->default_visibility ?? 2 ); // default to authenticated users
         $settings->member_organization_name = get_option( 'bcc_member_organization_name', $settings->member_organization_name );
+
+        $site_group_tags_option = get_option('bcc_site_group_tags');
+        if ($site_group_tags_option) {
+            $settings->site_group_tags = explode(",", $site_group_tags_option);
+        }
 
         $site_groups_option = get_option('bcc_site_groups');
         if ($site_groups_option) {
@@ -176,9 +186,37 @@ class BCC_Login_Settings_Provider {
 
         $this->_settings = $settings;
 
+        $this->_storage = new BCC_Storage($this->_settings->client_secret );
+        $this->_coreapi = new BCC_Coreapi_Client($this->_settings, $this->_storage );
+
+        add_action('admin_enqueue_scripts', array( $this, 'enqueue_bcc_login_config_script' ) );
         add_action( 'admin_menu', array( $this, 'add_options_page' ) );
         add_action( 'admin_init', array( $this, 'register_settings' ) );
     }
+
+    function enqueue_bcc_login_config_script() {
+
+        wp_enqueue_style( 'primereact-css', BCC_LOGIN_URL . 'src/primereact/fluent-light/theme.css' );
+
+        $script_path    = BCC_LOGIN_PATH . 'build/settings.asset.php';
+        $script_url     = BCC_LOGIN_URL . 'build/settings.js';
+        $script_handle = 'bcc-login-settings';
+
+        if ( ! file_exists( $script_path ) ) {
+            return;
+        }
+
+        $script_asset = require $script_path;
+
+        wp_enqueue_script(
+            $script_handle,
+            $script_url,
+            $script_asset['dependencies'],
+            $script_asset['version'],
+            true
+        );
+    }
+
 
     /**
      * Registers the settings page under the «Settings» section.
@@ -201,6 +239,7 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_default_visibility' );
         register_setting( $this->option_name, 'bcc_member_organization_name' );
         register_setting( $this->option_name, 'bcc_feed_key' );
+        register_setting( $this->option_name, 'bcc_site_group_tags' );
         register_setting( $this->option_name, 'bcc_site_groups' );
         register_setting( $this->option_name, 'bcc_disable_pubsub' );
         register_setting( $this->option_name, 'bcc_notification_groups' );
@@ -304,16 +343,42 @@ class BCC_Login_Settings_Provider {
         );
 
         if ($use_groups_settings) {
+
+            $all_groups = $this->_coreapi->get_all_groups();
+            $allowed_filtering_groups = array_values(array_filter($all_groups, function($group) {
+                return in_array($group->uid, $this->_settings->site_groups) || in_array($group->uid, $this->_settings->filtering_groups);
+            }));
+            $allowed_notification_groups = array_values(array_filter($all_groups, function($group) {
+                return in_array($group->uid, $this->_settings->site_groups) || in_array($group->uid, $this->_settings->notification_groups);
+            }));
+
+            
+
+            add_settings_field(
+                'bcc_site_group_tags',
+                'Group Tags',
+                array( $this, 'render_text_field' ),
+                $this->options_page,
+                'groups',
+                array(
+                    'name' => 'bcc_site_group_tags',
+                    'value' => join(",", $this->_settings->site_group_tags),
+                    'description' => 'Comma delimited list of tags to retrieve groups for.'
+                )
+            );
+
             add_settings_field(
                 'bcc_site_groups',
                 'Site Groups',
-                array( $this, 'render_text_field' ),
+                array( $this, 'render_group_selector_field' ),
                 $this->options_page,
                 'groups',
                 array(
                     'name' => 'bcc_site_groups',
                     'value' => join(",", $this->_settings->site_groups),
-                    'description' => 'Provide group uids for groups you\'re going to use (comma delimited).'
+                    'description' => 'Provide group uids for groups you\'re going to use (comma delimited).',
+                    'options' => $all_groups,
+                    'tags' => $this->_settings->site_group_tags
                 )
             );
             add_settings_field(
@@ -331,26 +396,30 @@ class BCC_Login_Settings_Provider {
             add_settings_field(
                 'bcc_full_content_access_groups',
                 'Full Content Access Groups',
-                array( $this, 'render_text_field' ),
+                array( $this, 'render_group_selector_field' ),
                 $this->options_page,
                 'groups',
                 array(
                     'name' => 'bcc_full_content_access_groups',
                     'value' => join(",", $this->_settings->full_content_access_groups),
-                    'description' => 'Groups that always can see published content regardless of group settings on content.'
+                    'description' => 'Groups that always can see published content regardless of group settings on content.',
+                    'options' => $all_groups,
+                    'tags' => $this->_settings->site_group_tags
                 )
             );
         
             add_settings_field(
                 'bcc_filtering_groups',
                 'Filtering Groups',
-                array( $this, 'render_text_field' ),
+                array( $this, 'render_group_selector_field' ),
                 $this->options_page,
                 'groups',
                 array(
                     'name' => 'bcc_filtering_groups',
                     'value' => join(",", $this->_settings->filtering_groups),
-                    'description' => 'Provide group uids for groups that should be displayed in the filter widget (comma delimited).'
+                    'description' => 'Provide group uids for groups that should be displayed in the filter widget (comma delimited).',
+                    'options' => $allowed_filtering_groups,
+                    'tags' => $this->_settings->site_group_tags
                 )
             );
         }
@@ -373,13 +442,15 @@ class BCC_Login_Settings_Provider {
             add_settings_field(
                 'bcc_notification_groups',
                 'Notification Groups',
-                array( $this, 'render_text_field' ),
+                array( $this, 'render_group_selector_field' ),
                 $this->options_page,
                 'notifications',
                 array(
                     'name' => 'bcc_notification_groups',
                     'value' => join(",", $this->_settings->notification_groups),
-                    'description' => 'Provide group uids for groups that may receive notifications (comma delimited).'
+                    'description' => 'Provide group uids for groups that may receive notifications (comma delimited).',
+                    'options' => $allowed_notification_groups,
+                    'tags' => $this->_settings->site_group_tags
                 )
             );
 
@@ -545,6 +616,24 @@ class BCC_Login_Settings_Provider {
                 'success'
             );
         }
+    }
+
+    function render_group_selector_field( $args ) { ?>
+        <div id="<?php echo $args['name']; ?>-container"></div>
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+                window.renderGroupSelector('<?php echo $args['name']; ?>-container', {
+                    tags: <?php echo json_encode($args['tags']); ?>,
+                    options: <?php echo json_encode($args['options']); ?>,
+                    name: '<?php echo $args['name']; ?>',
+                    label: '<?php echo isset($args['label']) ? $args['label'] : ''; ?>',
+                    value: <?php echo json_encode($args['value']); ?>,
+                    readonly: <?php echo isset($args['readonly']) && $args['readonly'] ? 'true' : 'false'; ?>
+                });
+            });
+        </script>
+        <?php
+        $this->render_field_description($args);
     }
 
     /**
