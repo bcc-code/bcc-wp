@@ -79,5 +79,16 @@ class BCC_Login_Widgets {
 
             return $html . PHP_EOL;
         } );
+
+        add_shortcode( 'bcc-widgets-map', function ($attributes) {
+            $attributes = array_change_key_case((array)$attributes, CASE_LOWER);
+
+            $html = '<div id="bcc-map"></div>';
+            $html .= '<script id="script-bcc-map" data-authentication-type="WebApp" data-authentication-location="' . site_url( '?bcc-login=access-token' ) . '" ';
+            $html .= 'data-district="' . $attributes['district'] . '" data-zoom="' . $attributes['zoom'] . '" data-lat="' . $attributes['lat'] . '" data-lng="' . $attributes['lng'] . '" ';
+            $html .= 'src="'.$this->settings->widgets_base_url.'/widgets/MapJs" defer></script>';
+
+            return $html . PHP_EOL;
+        } );
     }
 }
