@@ -585,10 +585,10 @@ class BCC_Login_Visibility {
                 return '';
             }
 
-            // Filter blocks which user should have access to - except when user has full content access
-            if (count(array_intersect($block_groups, $user_groups)) == 0 &&
-                count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0
-            ) {
+            // Filter blocks which user should have access to 
+            //- users with "full access" will still not be able to see blocks they are not in a group for (even if they can see the post)
+            if (count(array_intersect($block_groups, $user_groups)) == 0) //&& count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0
+            {
                 return '';
             }
         }
