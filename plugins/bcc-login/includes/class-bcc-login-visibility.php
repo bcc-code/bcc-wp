@@ -124,7 +124,7 @@ class BCC_Login_Visibility {
         // Initiate new login if session has expired
         if ( is_user_logged_in() && !$session_is_valid ) {
             $this->_client->end_login();
-            wp_redirect( wp_login_url($visited_url) );
+            wp_redirect( $this->wp_login_url_without_language_code($visited_url) );
             return;
         }
 
@@ -156,13 +156,12 @@ class BCC_Login_Visibility {
             if ( is_user_logged_in() ) {
                 return $this->not_allowed_to_view_page($visited_url);
             } else {
-                wp_redirect( wp_login_url($visited_url) );
+                wp_redirect( $this->wp_login_url_without_language_code($visited_url) );
                 return;
             }
         }
 
         if (!$post) {
-
             return;
         }
 
@@ -172,10 +171,8 @@ class BCC_Login_Visibility {
                 return;
             }
 
-
-
             if ( !is_user_logged_in() ) {
-                wp_redirect( wp_login_url($visited_url) );
+                wp_redirect( $this->wp_login_url_without_language_code($visited_url) );
                 return;
             }
 
@@ -190,9 +187,40 @@ class BCC_Login_Visibility {
                 return $this->not_allowed_to_view_page($visited_url);
             }
         }
-
-
     }
+
+    private function wp_login_url_without_language_code($visited_url) {
+        $login_url = wp_login_url($visited_url);
+
+        if (!$this->is_subdirectory_multisite()) {
+            return $login_url;
+        }
+
+        $lang = $this->get_language_param_for_convert_url();
+
+        $url_parts = wpml_parse_url($login_url);
+
+		if ($lang && str_contains($url_parts['path'], '/'.$lang.'/')) {
+			$login_url = str_replace('/'.$lang.'/', '/', $login_url);
+		}
+
+        return $login_url;
+    }
+
+	private function is_subdirectory_multisite() {
+		return is_multisite() && defined( 'SUBDOMAIN_INSTALL' ) && SUBDOMAIN_INSTALL == false;
+	}
+
+    private function get_language_param_for_convert_url() {
+		if ( isset( $_GET['lang'] ) ) {
+			return Sanitize::stringProp( 'lang', $_GET );
+		}
+		if ( is_multisite() && isset( $_POST['lang'] ) ) {
+			return Sanitize::stringProp( 'lang', $_POST );
+		}
+
+		return apply_filters('wpml_current_language', null);
+	}
 
     private function not_allowed_to_view_page($visited_url = "") {
         wp_die(
