@@ -41,6 +41,8 @@ class BCC_Login_Visibility {
         add_action( 'enqueue_block_editor_assets', array( $this, 'on_block_editor_assets' ) );
         add_filter( 'pre_get_posts', array( $this, 'filter_pre_get_posts' ) );
         add_filter( 'pre_get_posts', array( $this, 'filter_by_queried_target_groups' ) );
+        add_filter( 'searchwp\post__not_in', array( $this, 'filter_searchwp_posts' ), 9999, 2 );
+        
         add_filter( 'wp_get_nav_menu_items', array( $this, 'filter_menu_items' ), 20 );
         add_filter( 'render_block', array( $this, 'on_render_block' ), 10, 2 );
 
@@ -190,8 +192,6 @@ class BCC_Login_Visibility {
                 return $this->not_allowed_to_view_page($visited_url);
             }
         }
-
-
     }
 
     private function not_allowed_to_view_page($visited_url = "") {
@@ -447,6 +447,81 @@ class BCC_Login_Visibility {
 
         // Filter by selected target groups
         $query->set('meta_query', $meta_query);
+    }
+
+    /**
+     * Filter out posts for SearchWP that the current user shouldn't see.
+     * This filter applies to searches with SearchWP.
+     */
+    function filter_searchwp_posts($ids) {
+        if ( current_user_can( 'edit_posts' ) ) {
+            return $ids;
+        }
+
+        // Add visibility rules 
+        $rules = array(
+            'key'     => 'bcc_login_visibility',
+            'compare' => '>',
+            'value'   => $this->_client->get_current_user_level()
+        );
+
+        // Include also posts where visibility isn't specified based on the Default Content Access
+        if ( $this->_client->get_current_user_level() >= $this->_settings->default_visibility ) {
+            $rules = array(
+                'relation' => 'AND',
+                $rules,
+                array(
+                    'key'     => 'bcc_login_visibility',
+                    'compare' => 'EXISTS'
+                )
+            );
+        }
+
+        $user_groups = $this->get_current_user_groups();
+
+        // Filter posts which user should have access to - except when user has full content access
+        if (empty($user_groups) || count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0) {
+            $group_rules = array();
+
+            if (empty($user_groups)) {
+                // If user has no groups - just check that no group filters have been set
+                $group_rules = array(
+                    'key' => 'bcc_groups',
+                    'compare' => 'EXISTS',
+                );
+            } else {
+                // If user has groups - check if no group filters have been set OR if user has access to the groups
+                $group_rules = array(
+                    'relation' => 'AND',
+                    array(
+                        'key' => 'bcc_groups',
+                        'compare' => 'EXISTS',
+                    ),
+                    array(
+                        'key' => 'bcc_groups',
+                        'compare' => 'NOT IN',
+                        'value' => $user_groups
+                    )
+                );
+            }    
+
+            $rules = array(
+                'relation' => 'OR',
+                $rules,
+                $group_rules
+            );
+        }
+
+        $excluded_ids = get_posts(array(
+            'fields' => 'ids',
+            'post_type' => 'any',
+            'posts_per_page' => -1,
+            'meta_query' => $rules
+        ));
+
+        return array_unique(
+            array_merge($ids, $excluded_ids)
+        );
     }
 
     /**
