@@ -25,7 +25,7 @@ class BCC_Login_Visibility {
         self::VISIBILITY_MEMBER => 'Members'
     );
 
-    private $visibility_post_types = array( 'post', 'page', 'nav_menu_item' );
+    private $visibility_post_types = array( 'post', 'page', 'attachment', 'nav_menu_item' );
     private $post_types_allowing_filtering = array( 'post', 'page' );
 
     function __construct( BCC_Login_Settings $settings, BCC_Login_Client $client, BCC_Coreapi_Client $groups ) {
@@ -58,6 +58,9 @@ class BCC_Login_Visibility {
         add_shortcode('tags_for_queried_target_groups', array($this, 'tags_for_queried_target_groups'));
         add_shortcode('get_bcc_group_name', array($this, 'get_bcc_group_name_by_id'));
         add_shortcode('get_number_of_user_groups', array($this, 'get_number_of_user_groups'));
+
+        add_action( 'add_meta_boxes', array( $this, 'add_visibility_meta_box_to_attachments' ) );
+        add_action( 'attachment_updated', array( $this, 'save_visibility_to_attachments' ), 10, 3 );
     }
 
     /**
@@ -112,7 +115,6 @@ class BCC_Login_Visibility {
     function on_template_redirect() {
         global $wp;
 
-
         if ($this->should_skip_auth()) {
             return;
         }
@@ -162,7 +164,6 @@ class BCC_Login_Visibility {
         }
 
         if (!$post) {
-
             return;
         }
 
@@ -171,8 +172,6 @@ class BCC_Login_Visibility {
             if (!$post_groups) {
                 return;
             }
-
-
 
             if ( !is_user_logged_in() ) {
                 wp_redirect( wp_login_url($visited_url) );
@@ -885,6 +884,57 @@ class BCC_Login_Visibility {
 
     function supports_target_groups_filtering($query) {
         return array_key_exists('post_type', $query->query) && in_array($query->query['post_type'], $this->post_types_allowing_filtering);
+    }
+
+    /**
+     * Registers visibility meta box for attachment.
+     */
+    function add_visibility_meta_box_to_attachments() {
+        add_meta_box(
+            'meta_box-bcc_login_visibility',
+            __( 'Attachment Content Access', 'bcc-login' ),
+            array( $this, 'render_visibility_meta_box_to_attachments' ),
+            'attachment',
+            'side'
+        );
+    }
+
+    function render_visibility_meta_box_to_attachments( $post ) {
+        $visibility = (int) get_post_meta( $post->ID, 'bcc_login_visibility', true );
+
+        echo '<fieldset class="inline-edit-col-right bcc-quick-edit">
+            <div class="inline-edit-col">
+                <div class="inline-edit-group wp-clearfix">
+                    <label class="post-audience">';
+                        foreach ($this->titles as $level => $title) {
+                            echo '<p class="bcc-login-visibility__choice">
+                                <input type="radio" name="bcc_login_visibility" id="option-'. $level .'" value="'. $level .'"' . ($level == $visibility ? ' checked' : '') . '>
+                                <label for="option-'. $level .'">'. $title .'</label>
+                            </p>';
+                        }
+                    echo '</label>
+                </div>
+            </div>
+        </fieldset>';
+
+        wp_nonce_field( 'bcc_q_edit_nonce', 'bcc_nonce' );
+    }
+
+    /**
+     * Save visibility value to attachments.
+     */
+    function save_visibility_to_attachments( $attach_id ) {
+        if ( !current_user_can( 'edit_post', $attach_id ) ) {
+            return;
+        }
+
+        if ( !isset( $_POST['bcc_nonce'] ) || !wp_verify_nonce( $_POST['bcc_nonce'], 'bcc_q_edit_nonce' ) ) {
+            return;
+        }
+
+        if ( isset( $_POST['bcc_login_visibility'] ) ) {
+            update_post_meta( $attach_id, 'bcc_login_visibility', $_POST['bcc_login_visibility'] );
+        }
     }
 
     /**
