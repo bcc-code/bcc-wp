@@ -59,8 +59,8 @@ class BCC_Login_Visibility {
         add_shortcode('get_bcc_group_name', array($this, 'get_bcc_group_name_by_id'));
         add_shortcode('get_number_of_user_groups', array($this, 'get_number_of_user_groups'));
 
-        add_action( 'add_meta_boxes', array( $this, 'add_visibility_meta_box' ) );
-        add_action( 'attachment_updated', array( $this, 'save_visibility_meta_box' ), 10, 3 );
+        add_action( 'add_meta_boxes', array( $this, 'add_visibility_meta_box_to_attachments' ) );
+        add_action( 'attachment_updated', array( $this, 'save_visibility_to_attachments' ), 10, 3 );
     }
 
     /**
@@ -889,17 +889,17 @@ class BCC_Login_Visibility {
     /**
      * Registers visibility meta box for attachment.
      */
-    function add_visibility_meta_box() {
+    function add_visibility_meta_box_to_attachments() {
         add_meta_box(
             'meta_box-bcc_login_visibility',
             __( 'Attachment Content Access', 'bcc-login' ),
-            array( $this, 'render_visibility_meta_box' ),
+            array( $this, 'render_visibility_meta_box_to_attachments' ),
             'attachment',
             'side'
         );
     }
 
-    function render_visibility_meta_box( $post ) {
+    function render_visibility_meta_box_to_attachments( $post ) {
         $visibility = (int) get_post_meta( $post->ID, 'bcc_login_visibility', true );
 
         echo '<fieldset class="inline-edit-col-right bcc-quick-edit">
@@ -921,10 +921,10 @@ class BCC_Login_Visibility {
     }
 
     /**
-     * Save visibility meta box value.
+     * Save visibility value to attachments.
      */
-    function save_visibility_meta_box( $post_id ) {
-        if ( !current_user_can( 'edit_post', $post_id ) ) {
+    function save_visibility_to_attachments( $attach_id ) {
+        if ( !current_user_can( 'edit_post', $attach_id ) ) {
             return;
         }
 
@@ -933,7 +933,7 @@ class BCC_Login_Visibility {
         }
 
         if ( isset( $_POST['bcc_login_visibility'] ) ) {
-            update_post_meta( $post_id, 'bcc_login_visibility', $_POST['bcc_login_visibility'] );
+            update_post_meta( $attach_id, 'bcc_login_visibility', $_POST['bcc_login_visibility'] );
         }
     }
 
