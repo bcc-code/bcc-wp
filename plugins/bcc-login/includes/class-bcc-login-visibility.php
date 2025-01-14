@@ -450,61 +450,54 @@ class BCC_Login_Visibility {
     }
 
     /**
-     * Filter out posts for SearchWP that the current user shouldn't see.
-     * This filter applies to searches with SearchWP.
+     * The meta query rules is an inversion of the code / filter rules above,
+     * so it returns all the posts which the user shouldn't see.
+     * This filter applies to all searches with SearchWP.
      */
     function filter_searchwp_posts($ids) {
         if ( current_user_can( 'edit_posts' ) ) {
             return $ids;
         }
 
-        // Add visibility rules 
+        // Get posts where the visibility is greater than user's level
         $rules = array(
             'key'     => 'bcc_login_visibility',
             'compare' => '>',
             'value'   => $this->_client->get_current_user_level()
         );
 
-        // Include also posts where visibility isn't specified based on the Default Content Access
-        if ( $this->_client->get_current_user_level() >= $this->_settings->default_visibility ) {
-            $rules = array(
-                'relation' => 'AND',
-                $rules,
-                array(
-                    'key'     => 'bcc_login_visibility',
-                    'compare' => 'EXISTS'
-                )
-            );
-        }
-
         $user_groups = $this->get_current_user_groups();
 
-        // Filter posts which user should have access to - except when user has full content access
+        // Get posts which user shouldn't have access to - except when user has full content access
         if (empty($user_groups) || count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0) {
             $group_rules = array();
 
             if (empty($user_groups)) {
-                // If user has no groups - just check that no group filters have been set
+                // If user has no groups - get all posts which have bcc_groups specified
                 $group_rules = array(
                     'key' => 'bcc_groups',
                     'compare' => 'EXISTS',
                 );
             } else {
-                // If user has groups - check if no group filters have been set OR if user has access to the groups
+                // If user has groups - get all posts which have bcc_groups specified AND the user does not have access to any of them
                 $group_rules = array(
                     'relation' => 'AND',
                     array(
                         'key' => 'bcc_groups',
                         'compare' => 'EXISTS',
-                    ),
-                    array(
-                        'key' => 'bcc_groups',
-                        'compare' => 'NOT IN',
-                        'value' => $user_groups
                     )
                 );
+
+                foreach ($user_groups as $user_group) {
+                    $group_rules[0][] = array(
+                        'key' => 'bcc_groups',
+                        'compare' => 'NOT IN',
+                        'value' => $user_group
+                    )
+                }
             }    
 
+            // If any of the rule is met, get the post
             $rules = array(
                 'relation' => 'OR',
                 $rules,
