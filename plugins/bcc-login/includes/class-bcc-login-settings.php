@@ -295,8 +295,9 @@ class BCC_Login_Settings_Provider {
                 'value' => $this->_settings->default_visibility,
                 'values' => array(
                     1 => __( 'Public', 'bcc-login' ),
-                    2 => __( 'Authenticated Users', 'bcc-login' ),    
-                    3 => __( 'Members', 'bcc-login' ),                   
+                    2 => __( 'Logged In', 'bcc-login' ),    
+                    3 => __( 'Members', 'bcc-login' ),   
+                    -1 => __( 'Not Logged In', 'bcc-login' ),                
                 )
             )
         );

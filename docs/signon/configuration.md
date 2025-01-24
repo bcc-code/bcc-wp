@@ -26,8 +26,9 @@ It is strongly discouraged to enable the *OIDC_CREATE_USERS* setting. This funct
 This setting controls the default visability of new pages and posts.
 
 1. **Public** - visible to all users, without logging in
-2. **Authenticated Users** - only visible to logged in users
+2. **Logged In** - only visible to logged in users
 3. **Members** - only visible to members of the specified *Member Organization* (see below)
+4. **Not Logged In** - only visible to users who are not logged in
 
 ## Feed Key
 
