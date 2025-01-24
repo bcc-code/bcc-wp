@@ -29,11 +29,15 @@ const visibilityOptions = [
   },
   {
     value: levels.subscriber,
-    label: __("Authenticated Users"),
+    label: __("Logged In"),
   },
   {
     value: levels["bcc-login-member"],
     label: sprintf(__("%s Members"), localName),
+  },
+  {
+    value: levels["public-only"],
+    label: __("Not Logged In"),
   },
 ];
 

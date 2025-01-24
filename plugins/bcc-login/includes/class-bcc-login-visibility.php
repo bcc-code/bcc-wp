@@ -6,6 +6,7 @@ class BCC_Login_Visibility {
     private BCC_Login_Client $_client;
     private BCC_Coreapi_Client $_coreapi;
 
+    public const VISIBILITY_PUBLIC_ONLY = -1;
     public const VISIBILITY_DEFAULT = 0;
     public const VISIBILITY_PUBLIC = 1;
     public const VISIBILITY_SUBSCRIBER = 2;
@@ -15,14 +16,16 @@ class BCC_Login_Visibility {
     private $levels = array(
         'bcc-login-member' => self::VISIBILITY_MEMBER,
         'subscriber'       => self::VISIBILITY_SUBSCRIBER,
-        'public'           => self::VISIBILITY_PUBLIC
+        'public'           => self::VISIBILITY_PUBLIC,
+        'public-only'      => self::VISIBILITY_PUBLIC_ONLY
     );
 
     // A mapping of level -> title.
     private $titles = array(
         self::VISIBILITY_PUBLIC => 'Public',
-        self::VISIBILITY_SUBSCRIBER => 'Authenticated Users',
-        self::VISIBILITY_MEMBER => 'Members'
+        self::VISIBILITY_SUBSCRIBER => 'Logged In',
+        self::VISIBILITY_MEMBER => 'Members',
+        self::VISIBILITY_PUBLIC_ONLY => 'Not Logged In',
     );
 
     private $visibility_post_types = array( 'post', 'page', 'attachment', 'nav_menu_item' );
@@ -353,6 +356,19 @@ class BCC_Login_Visibility {
             'value'   => $this->_client->get_current_user_level()
         );
 
+        // If user is logged in, exclude posts where visiblity is set to public-only
+        if ( is_user_logged_in() ) {
+            $rules = array(
+                'relation' => 'AND',
+                $rules,
+                array(
+                    'key'     => 'bcc_login_visibility',
+                    'compare' => '!=',
+                    'value'   => self::VISIBILITY_PUBLIC_ONLY
+                )
+            );
+        }
+
         // Include also posts where visibility isn't specified based on the Default Content Access
         if ( $this->_client->get_current_user_level() >= $this->_settings->default_visibility ) {
             $rules = array(
@@ -455,9 +471,7 @@ class BCC_Login_Visibility {
      * @return WP_Post[]
      */
     function filter_menu_items( $items ) {
-        if ( current_user_can( 'edit_posts' ) || $this->_settings->show_protected_menu_items ) {
-            return $items;
-        }
+
 
         $level   = $this->_client->get_current_user_level();
         $removed = array();
@@ -474,6 +488,18 @@ class BCC_Login_Visibility {
                 $visibility = (int) get_post_meta( $item->object_id, 'bcc_login_visibility', true );
                 if (!$visibility) {
                     $visibility = $this->_settings->default_visibility;
+                }
+
+                // Hide public-only menu items for users who are logged in (including editors)
+                if ( $visibility == self::VISIBILITY_PUBLIC_ONLY && is_user_logged_in() ) {
+                    $removed[] = $item->ID;
+                    unset( $items[ $key ] );
+                    continue;
+                }
+
+                // Otherwise, show everything to editors
+                if ( current_user_can( 'edit_posts' ) || $this->_settings->show_protected_menu_items ) {
+                    continue;
                 }
 
                 if ( $visibility && $visibility > $level ) {
@@ -555,12 +581,24 @@ class BCC_Login_Visibility {
      * @return string
      */
     function on_render_block( $block_content, $block ) {
+
+        $visibility_set = false;
+        if ( isset( $block['attrs']['bccLoginVisibility'] ) ) {
+            $visibility = (int) $block['attrs']['bccLoginVisibility'];
+            $visibility_set = true;
+        }
+
+        // Hide public-only blocks for users who are logged in (including editors)
+        if ( $visibility_set && $visibility == self::VISIBILITY_PUBLIC_ONLY && is_user_logged_in() ) {
+            return '';
+        }
+
+        // Editors can see all other blocks
         if ( current_user_can( 'edit_posts' ) ) {
             return $block_content;
         }
 
-        if ( isset( $block['attrs']['bccLoginVisibility'] ) ) {
-            $visibility = (int) $block['attrs']['bccLoginVisibility'];
+        if ( $visibility_set) {
             if (!$visibility) {
                 $visibility = $this->_settings->default_visibility;
             }
