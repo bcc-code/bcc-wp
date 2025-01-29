@@ -90,5 +90,19 @@ class BCC_Login_Widgets {
 
             return $html . PHP_EOL;
         } );
+
+        add_shortcode( 'bcc-newsfeed-new', function () {
+            $html = '<bcc-newsfeed-new authentication-type="WebApp" authentication-location="' . site_url( '?bcc-login=access-token' ) .'" ';
+            $html .= 'language="' . get_culture() . '"></bcc-newsfeed-new>';
+
+            return $html . PHP_EOL;
+        } );
+
+        add_shortcode( 'bcc-newsfeed-public', function () {
+            $html = '<bcc-newsfeed-public language="' . get_culture() . '"></bcc-newsfeed-public>';
+            $html .= '<script src="https://widgets.bcc.no/scripts/main.js" type="module"></script>';
+        
+            return $html . PHP_EOL;
+        } );
     }
 }
