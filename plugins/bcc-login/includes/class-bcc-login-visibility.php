@@ -460,6 +460,17 @@ class BCC_Login_Visibility {
             'compare' => 'IN'
         );
 
+        if (in_array('all-members', $target_groups)) {
+            $meta_query = array(
+                'relation' => 'OR',
+                $meta_query,
+                array(
+                    'key'     => 'bcc_groups',
+                    'compare' => 'NOT EXISTS'
+                )
+            );
+        }
+
         // Filter by selected target groups
         $query->set('meta_query', $meta_query);
     }
@@ -832,6 +843,10 @@ class BCC_Login_Visibility {
     // end Quick Edit
 
     function get_group_name($group_uid) {
+        if ($group_uid == 'all-members') {
+            return __('Alle medlemmer', 'bcc-login');
+        }
+
         foreach ($this->_coreapi->get_translated_site_groups() as $group) {
             if ($group->uid === $group_uid) {
                 return $group->name;
@@ -852,6 +867,11 @@ class BCC_Login_Visibility {
                 '<a href="javascript:void(0)" id="close-bcc-groups">' . __('Close', 'bcc-login') . '</a>';
         
         $html .= '<ul>';
+            $html .= '<li class="bcc-checkbox-wrapper">' .
+                '<input type="checkbox" class="bcc-checkbox" id="all-members" value="all-members" name="target-groups[]"' . (in_array('all-members', $queried_target_groups) ? 'checked' : '') . '/>' .
+                '<label for="all-members">' . __( 'Alle medlemmer', 'bcc-login' )  . '</label>' .
+            '</li>';
+
         foreach ($user_site_groups as $group) :
             if (in_array($group->uid, $excluded_groups)) continue;
 
