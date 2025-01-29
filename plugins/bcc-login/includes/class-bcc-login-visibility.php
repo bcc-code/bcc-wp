@@ -859,6 +859,7 @@ class BCC_Login_Visibility {
     function target_groups_filter_widget() {
         $user_site_groups = $this->get_user_bcc_filtering_groups_list();
         $queried_target_groups = isset($_GET['target-groups']) ? $_GET['target-groups'] : array();
+        $excluded_groups = apply_filters( 'exclude_target_groups_from_filter_widget', [] );
 
         $html = '<div class="bcc-filter">' .
             '<a href="javascript:void(0)" id="toggle-bcc-filter" class="bcc-button bcc-button-secondary bcc-button-rounded bcc-button-with-icon"> <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM64 256c0-17.7 14.3-32 32-32H352c17.7 0 32 14.3 32 32s-14.3 32-32 32H96c-17.7 0-32-14.3-32-32zM288 416c0 17.7-14.3 32-32 32H192c-17.7 0-32-14.3-32-32s14.3-32 32-32h64c17.7 0 32 14.3 32 32z" fill="currentColor"/></svg> <span>' . __('Filters', 'bcc-login') . '</span></a>' .
@@ -872,6 +873,8 @@ class BCC_Login_Visibility {
             '</li>';
 
         foreach ($user_site_groups as $group) :
+            if (in_array($group->uid, $excluded_groups)) continue;
+
             $html .= '<li class="bcc-checkbox-wrapper">' .
                 '<input type="checkbox" class="bcc-checkbox" id="'. $group->uid .'" value="'. $group->uid .'" name="target-groups[]"' . (in_array($group->uid, $queried_target_groups) ? 'checked' : '') . '/>' .
                 '<label for="' . $group->uid . '">' . __( $group->name, 'bcc-login' )  . '</label>' .
