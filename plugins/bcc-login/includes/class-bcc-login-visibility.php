@@ -350,27 +350,30 @@ class BCC_Login_Visibility {
         }
 
         // Add visibility rules 
-        $rules = array(
-            'key'     => 'bcc_login_visibility',
-            'compare' => '<=',
-            'value'   => $this->_client->get_current_user_level()
-        );
-
-        // If user is logged in, exclude posts where visiblity is set to public-only
+        $user_level = $this->_client->get_current_user_level();
         if ( is_user_logged_in() ) {
+            // If user is logged in, they shouldn't see the public-only posts (-1)
             $rules = array(
-                'relation' => 'AND',
-                $rules,
+                array(
+                    'key'   => 'bcc_login_visibility',
+                    'value' => array( 0, $user_level ),
+                    'type'  => 'numeric',
+                    'compare' => 'BETWEEN',
+                )
+            );
+        } else {
+            $rules = array(
                 array(
                     'key'     => 'bcc_login_visibility',
-                    'compare' => '!=',
-                    'value'   => self::VISIBILITY_PUBLIC_ONLY
+                    'type'    => 'numeric',
+                    'compare' => '<=',
+                    'value'   => $user_level,
                 )
             );
         }
 
         // Include also posts where visibility isn't specified based on the Default Content Access
-        if ( $this->_client->get_current_user_level() >= $this->_settings->default_visibility ) {
+        if ( $user_level >= $this->_settings->default_visibility ) {
             $rules = array(
                 'relation' => 'OR',
                 $rules,
