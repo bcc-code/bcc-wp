@@ -1,7 +1,7 @@
 <?php
 
-$token = ''; 
-$token_id = $_COOKIE['oidc_token_id'];
+$token = '';
+$token_id = $_COOKIE['oidc_token_id'] ?? '';
 
 if ( ! empty( $token_id ) ) {
     setcookie('wordpress_nocache', 'true');

@@ -29,6 +29,9 @@ class BCC_Login_Settings {
     public $coreapi_base_url;
     public $disable_pubsub;
     public $widgets_base_url;
+    public $track_clicks;
+    public $track_page_load;
+    public $track_page_interaction;
 }
 
 /**
@@ -81,6 +84,9 @@ class BCC_Login_Settings_Provider {
         $settings->coreapi_base_url = 'https://api.bcc.no';
         $settings->disable_pubsub = false;
         $settings->widgets_base_url = 'https://widgets.bcc.no';
+        $settings->track_clicks = false;
+        $settings->track_page_load = true;
+        $settings->track_page_interaction = true;
 
         
 
@@ -160,6 +166,22 @@ class BCC_Login_Settings_Provider {
         if ($filtering_groups_option) {
             $settings->filtering_groups = explode(",", $filtering_groups_option);
         }
+
+        $track_clicks_option = get_option('bcc_track_clicks', -1);
+        if ($track_clicks_option != -1) {
+            $settings->track_clicks = $track_clicks_option;
+        }
+
+        $track_page_load_option = get_option('bcc_track_page_load', -1);
+        if ($track_page_load_option != -1) {
+            $settings->track_page_load = $track_page_load_option;
+        }
+
+        $track_page_interaction_option = get_option('bcc_track_page_interaction', -1);
+        if ($track_page_interaction_option != -1) {
+            $settings->track_page_interaction = $track_page_interaction_option;
+        }
+        
 
         // Backwards compatibility with old plugin configuration.
         if ( ! isset( $settings->client_id ) ) {
@@ -250,6 +272,9 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_full_content_access_groups' );
         register_setting( $this->option_name, 'bcc_filtering_groups' );
         register_setting( $this->option_name, 'show_protected_menu_items' );
+        register_setting( $this->option_name, 'bcc_track_clicks' );
+        register_setting( $this->option_name, 'bcc_track_page_load' );
+        register_setting( $this->option_name, 'bcc_track_page_interaction' );
 
         $use_groups_settings = !empty($this->_settings->site_groups) || BCC_Coreapi_Client::check_groups_access(
             $this->_settings->token_endpoint,
@@ -268,6 +293,7 @@ class BCC_Login_Settings_Provider {
         {
             add_settings_section( 'notifications', __( 'Notifications', 'bcc-login' ), null, $this->options_page );
         }
+        add_settings_section( 'analytics', __( 'Analytics', 'bcc-login' ), null, $this->options_page );
 
         add_settings_field(
             'client_id',
@@ -553,6 +579,45 @@ class BCC_Login_Settings_Provider {
                 'name' => 'show_protected_menu_items',
                 'value' => $this->_settings->show_protected_menu_items,
                 'label' => __( 'Show protected menu items to all/public users.', 'bcc-login' )
+            )
+        );
+
+        add_settings_field(
+            'bcc_track_clicks',
+            __( 'Track Clicks', 'bcc-login' ),
+            array( $this, 'render_checkbox_field' ),
+            $this->options_page,
+            'analytics',
+            array(
+                'name' => 'bcc_track_clicks',
+                'value' => $this->_settings->track_clicks,
+                'label' => __( 'Track analytics for buttons and links', 'bcc-login' )
+            )
+        );
+
+        add_settings_field(
+            'bcc_track_page_load',
+            __( 'Track Page Load', 'bcc-login' ),
+            array( $this, 'render_checkbox_field' ),
+            $this->options_page,
+            'analytics',
+            array(
+                'name' => 'bcc_track_page_load',
+                'value' => $this->_settings->track_page_load,
+                'label' => __( 'Track analytics for page url, referrer etc.', 'bcc-login' )
+            )
+        );
+
+        add_settings_field(
+            'bcc_track_page_interaction',
+            __( 'Track Page Interaction', 'bcc-login' ),
+            array( $this, 'render_checkbox_field' ),
+            $this->options_page,
+            'analytics',
+            array(
+                'name' => 'bcc_track_page_interaction',
+                'value' => $this->_settings->track_page_interaction,
+                'label' => __( 'Track analytics for time spent on page', 'bcc-login' )
             )
         );
     }

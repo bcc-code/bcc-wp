@@ -10,7 +10,7 @@ class BCC_Login_Widgets {
         $this->client = $client;
 
         add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
-        add_action( 'wp_head', array( $this, 'render_topbar' ) );
+        add_action( 'wp_head', array( $this, 'render_topbar_and_analytics' ) );
         add_filter( 'body_class', array( $this, 'body_class' ) );
         add_action( 'init', array( $this, 'bcc_widgets_shortcodes' ) );
     }
@@ -23,9 +23,11 @@ class BCC_Login_Widgets {
         }
     }
 
-    function render_topbar() {
+    function render_topbar_and_analytics() {
         if ( $this->should_show_topbar() ) {
-            echo '<script id="script-bcc-topbar" data-authentication-type="WebApp" data-authentication-location="' . site_url( '?bcc-login=access-token' ) . '" src="'.$this->settings->widgets_base_url.'/widgets/TopbarJs" defer></script>' . PHP_EOL;
+            echo '<script id="script-bcc-topbar" '.($this->settings->track_clicks ? "data-click-analytics=true" : "data-click-analytics=false").' '.($this->settings->track_page_interaction ? "data-page-interaction-analytics=true" : "data-page-interaction-analytics=false").' '.($this->settings->track_page_load ? "data-page-load-analytics=true" : "data-page-load-analytics=false").' data-authentication-type="WebApp" data-authentication-location="' . site_url( '?bcc-login=access-token' ) . '" src="'.$this->settings->widgets_base_url.'/widgets/TopbarJs" defer></script>' . PHP_EOL;
+        } else if ( $this->should_load_analytics() ) {
+            echo '<script id="script-bcc-analytics" '.($this->settings->track_clicks ? "data-click-analytics=true" : "data-click-analytics=false").' '.($this->settings->track_page_interaction ? "data-page-interaction-analytics=true" : "data-page-interaction-analytics=false").' '.($this->settings->track_page_load ? "data-page-load-analytics=true" : "data-page-load-analytics=false").' data-authentication-type="WebApp" data-authentication-location="' . site_url( '?bcc-login=access-token' ) . '" src="'.$this->settings->widgets_base_url.'/widgets/AnalyticsJs" defer></script>' . PHP_EOL;
         }
     }
 
@@ -40,6 +42,14 @@ class BCC_Login_Widgets {
         return (
             $this->settings->topbar &&
             wp_get_current_user()->exists() &&
+            ! wp_is_json_request() &&
+            ! is_customize_preview()
+        );
+    }
+
+   function should_load_analytics() {
+        return (
+            ($this->settings->track_clicks || $this->settings->track_page_load || $this->settings->track_page_interaction)  &&
             ! wp_is_json_request() &&
             ! is_customize_preview()
         );
