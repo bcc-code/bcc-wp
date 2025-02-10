@@ -13,6 +13,7 @@ class BCC_Login_Widgets {
         add_action( 'wp_head', array( $this, 'render_topbar_and_analytics' ) );
         add_filter( 'body_class', array( $this, 'body_class' ) );
         add_action( 'init', array( $this, 'bcc_widgets_shortcodes' ) );
+        add_action( 'rest_api_init', array( $this, 'add_fields_for_topbar_search' ) );
     }
 
     function enqueue_styles() {
@@ -114,5 +115,25 @@ class BCC_Login_Widgets {
         
             return $html . PHP_EOL;
         } );
+    }
+
+    function add_fields_for_topbar_search() {
+        register_rest_field( 'search-result', 'link', array (
+            'get_callback' => function ($post_arr) {
+                return get_permalink( $post_arr['id']) ;
+            }
+        ));
+    
+        register_rest_field( 'search-result', 'excerpt', array (
+            'get_callback' => function ($post_arr) {
+                return get_the_excerpt( $post_arr['id'] );
+            }
+        ));
+    
+        register_rest_field( 'search-result', 'image', array (
+            'get_callback' => function ($post_arr) {
+                return get_the_post_thumbnail_url( $post_arr['id'], 'full' );
+            }
+        ));
     }
 }
