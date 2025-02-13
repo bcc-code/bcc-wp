@@ -784,18 +784,20 @@ class BCC_Login_Visibility {
         }
         else if ($this->_settings->site_groups && $column_name == 'post_groups') {
             wp_nonce_field( 'bcc_q_edit_nonce', 'bcc_nonce' );
+            
+            $groups = get_post_meta( get_the_ID(), 'bcc_groups', false );
+
             echo '<fieldset class="inline-edit-col-right bcc-quick-edit">
                 <div class="inline-edit-col">
                     <div class="inline-edit-group wp-clearfix">
                         <label class="post-audience">
                             <span class="title">' . __( 'Groups', 'bcc-login' ) . '</span>
-                            <span>';
-                                foreach ($this->_coreapi->get_translated_site_groups() as $ind => $group) {
-                                    echo '<br><input type="checkbox" name="bcc_groups[]" id="option-'. $group->uid .'" value="'. $group->uid .'">
-                                        <label for="option-'. $group->uid .'">'. $group->name .'</label>';
-                                }
-                            echo '</span>
                         </label>
+                        <select name="bcc_groups[]" id="bcc_groups" multiple>';
+                            foreach ($this->_coreapi->get_translated_site_groups() as $ind => $group) {
+                                echo '<option '. (in_array($group->uid, $groups) ? "selected" : "") .' value="'. $group->uid .'">'. $group->name .'</option>';
+                            }
+                        echo '</select>
                     </div>
                 </div>
             </fieldset>';
