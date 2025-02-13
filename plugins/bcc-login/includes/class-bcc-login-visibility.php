@@ -785,8 +785,6 @@ class BCC_Login_Visibility {
         else if ($this->_settings->site_groups && $column_name == 'post_groups') {
             wp_nonce_field( 'bcc_q_edit_nonce', 'bcc_nonce' );
             
-            $groups = get_post_meta( get_the_ID(), 'bcc_groups', false );
-
             echo '<fieldset class="inline-edit-col-right bcc-quick-edit">
                 <div class="inline-edit-col">
                     <div class="inline-edit-group wp-clearfix">
@@ -795,7 +793,7 @@ class BCC_Login_Visibility {
                         </label>
                         <select name="bcc_groups[]" id="bcc_groups" multiple>';
                             foreach ($this->_coreapi->get_translated_site_groups() as $ind => $group) {
-                                echo '<option '. (in_array($group->uid, $groups) ? "selected" : "") .' value="'. $group->uid .'">'. $group->name .'</option>';
+                                echo '<option value="'. $group->uid .'">'. $group->name .'</option>';
                             }
                         echo '</select>
                     </div>

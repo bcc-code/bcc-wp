@@ -24,13 +24,13 @@ jQuery(function ($) {
       ).attr("checked", true);
 
       // uncheck option from previous opened post
-      $(':input[name="bcc_groups[]"]').attr("checked", false);
+      $(':input[name="bcc_groups[]"] option').attr("selected", false);
       // populate the inputs with column data
+
       for (const post_group of post_groups) {
-        $(':input[name="bcc_groups[]"][id="option-' + post_group + '"]').attr(
-          "checked",
-          true
-        );
+        $(
+          ':input[name="bcc_groups[]"] option[value="' + post_group + '"]'
+        ).attr("selected", true);
       }
     }
   };
