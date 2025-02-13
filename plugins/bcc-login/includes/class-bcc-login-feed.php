@@ -91,7 +91,7 @@ class BCC_Login_Feed {
     function add_image_to_rss($content) {
         global $post;
         if ( has_post_thumbnail( $post->ID ) )
-            $content = '<div>' . get_the_post_thumbnail( $post->ID, 'medium') . '</div>' . $content;
+            $content = '<div>' . get_the_post_thumbnail( $post->ID, 'large') . '</div>' . $content;
         return $content;
     }
 
