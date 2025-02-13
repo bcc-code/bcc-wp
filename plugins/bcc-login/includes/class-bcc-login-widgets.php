@@ -13,6 +13,7 @@ class BCC_Login_Widgets {
         add_action( 'wp_head', array( $this, 'render_topbar_and_analytics' ) );
         add_filter( 'body_class', array( $this, 'body_class' ) );
         add_action( 'init', array( $this, 'bcc_widgets_shortcodes' ) );
+        add_action( 'rest_api_init', array( $this, 'add_fields_for_topbar_search' ) );
     }
 
     function enqueue_styles() {
@@ -95,7 +96,7 @@ class BCC_Login_Widgets {
 
             $html = '<div id="bcc-map"></div>';
             $html .= '<script id="script-bcc-map" data-authentication-type="WebApp" data-authentication-location="' . site_url( '?bcc-login=access-token' ) . '" ';
-            $html .= 'data-district="' . $attributes['district'] . '" data-zoom="' . $attributes['zoom'] . '" data-lat="' . $attributes['lat'] . '" data-lng="' . $attributes['lng'] . '" ';
+            $html .= 'data-district="' . ($attributes['district'] ?? '') . '" data-zoom="' . ($attributes['zoom'] ?? '') . '" data-lat="' . ($attributes['lat'] ?? '') . '" data-lng="' . ($attributes['lng'] ?? '') . '" ';
             $html .= 'src="'.$this->settings->widgets_base_url.'/widgets/MapJs" defer></script>';
 
             return $html . PHP_EOL;
@@ -114,5 +115,25 @@ class BCC_Login_Widgets {
         
             return $html . PHP_EOL;
         } );
+    }
+
+    function add_fields_for_topbar_search() {
+        register_rest_field( 'search-result', 'link', array (
+            'get_callback' => function ($post_arr) {
+                return get_permalink( $post_arr['id']) ;
+            }
+        ));
+    
+        register_rest_field( 'search-result', 'excerpt', array (
+            'get_callback' => function ($post_arr) {
+                return get_the_excerpt( $post_arr['id'] );
+            }
+        ));
+    
+        register_rest_field( 'search-result', 'image', array (
+            'get_callback' => function ($post_arr) {
+                return get_the_post_thumbnail_url( $post_arr['id'], 'full' );
+            }
+        ));
     }
 }
