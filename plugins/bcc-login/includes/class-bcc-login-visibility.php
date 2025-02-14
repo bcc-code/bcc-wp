@@ -39,6 +39,8 @@ class BCC_Login_Visibility {
         add_action( 'init', array( $this, 'on_init' ) );
         add_action( 'wp_loaded', array( $this, 'register_block_attributes' ) );
         add_action( 'template_redirect', array( $this, 'on_template_redirect' ), 0 );
+        add_filter( 'rest_pre_echo_response', array( $this, 'on_rest_pre_echo_response' ), 10, 3 );
+
         add_action( 'added_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
         add_action( 'updated_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
         add_action( 'enqueue_block_editor_assets', array( $this, 'on_block_editor_assets' ) );
@@ -78,7 +80,7 @@ class BCC_Login_Visibility {
             add_action( "manage_{$post_type}_posts_custom_column", array( $this, 'populate_post_audience_column'), 10, 2 );
 
             register_post_meta( $post_type, 'bcc_login_visibility', array(
-                'show_in_rest' => current_user_can( 'edit_posts' ),
+                'show_in_rest' => true,
                 'single'       => true,
                 'type'         => 'number',
                 'default'      => self::VISIBILITY_DEFAULT,
@@ -192,8 +194,62 @@ class BCC_Login_Visibility {
                 return $this->not_allowed_to_view_page($visited_url);
             }
         }
+    }
 
+    /**
+     * Fail json request if the post requires a higher level.
+     *
+     * @return array
+     */
+    function on_rest_pre_echo_response( $response, $object, $request ) {
+        global $current_user;
 
+        $route = $request->get_route();
+
+        if ($route == '/wp/v2/search') {
+            $session_is_valid = $this->_client->is_session_valid();
+            $user_level = (int) $this->_client->get_user_level_based_on_claims();
+
+            $response_arr = [];
+
+            foreach ($response as $item) {
+                $post_visibility = (int) get_post_meta( $item['id'], 'bcc_login_visibility', true );
+
+                if ($session_is_valid) {
+                    // Check login visibility
+                    if ( $post_visibility <= $user_level ) {
+                        $response_arr[] = $item;
+                    }
+        
+                    // Check user groups
+                }
+                else if ($post_visibility <= (int) $this->_settings->default_visibility) {
+                    $response_arr[] = $item;
+                }
+            }
+
+            return $response_arr;
+        }
+
+        else if (preg_match('#^/wp/v2/(' . implode('|', $this->visibility_post_types) . ')/(\d+)$#', $route, $matches) ) {
+            $post_visibility = (int) $response['meta']['bcc_login_visibility'];
+
+            if ($session_is_valid) {
+                // Check login visibility
+                if ( $post_visibility > $user_level ) {
+                    return $this->not_allowed_to_view_page();
+                }
+    
+                // Check user groups
+            }
+            else {
+                if ($post_visibility > (int) $this->_settings->default_visibility) {
+                    return $this->not_allowed_to_view_page();
+                }
+            }
+        }
+
+        return $response;
     }
 
     private function not_allowed_to_view_page($visited_url = "") {
@@ -485,8 +541,6 @@ class BCC_Login_Visibility {
      * @return WP_Post[]
      */
     function filter_menu_items( $items ) {
-
-
         $level   = $this->_client->get_current_user_level();
         $removed = array();
 
@@ -784,7 +838,7 @@ class BCC_Login_Visibility {
         }
         else if ($this->_settings->site_groups && $column_name == 'post_groups') {
             wp_nonce_field( 'bcc_q_edit_nonce', 'bcc_nonce' );
-            
+
             echo '<fieldset class="inline-edit-col-right bcc-quick-edit">
                 <div class="inline-edit-col">
                     <div class="inline-edit-group wp-clearfix">
