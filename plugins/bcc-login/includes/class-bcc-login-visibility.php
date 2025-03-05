@@ -205,11 +205,10 @@ class BCC_Login_Visibility {
         global $current_user;
 
         $route = $request->get_route();
+        $session_is_valid = $this->_client->is_session_valid();
+        $user_level = (int) $this->_client->get_user_level_based_on_claims();
 
         if ($route == '/wp/v2/search') {
-            $session_is_valid = $this->_client->is_session_valid();
-            $user_level = (int) $this->_client->get_user_level_based_on_claims();
-
             $response_arr = [];
 
             foreach ($response as $item) {
