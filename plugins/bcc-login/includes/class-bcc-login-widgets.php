@@ -135,5 +135,11 @@ class BCC_Login_Widgets {
                 return get_the_post_thumbnail_url( $post_arr['id'], 'full' );
             }
         ));
+    
+        register_rest_field( 'search-result', 'post_date', array (
+            'get_callback' => function ($post_arr) {
+                return get_the_date( 'j. F Y', $post_arr['id'] );
+            }
+        ));
     }
 }
