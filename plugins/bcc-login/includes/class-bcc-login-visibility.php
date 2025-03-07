@@ -58,11 +58,11 @@ class BCC_Login_Visibility {
         add_action( 'admin_enqueue_scripts', array( $this, 'bcc_enqueue_visibility_scripts' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'bcc_enqueue_quick_edit_scripts' ) );
 
-        add_shortcode('target_groups_filter_widget', array($this, 'target_groups_filter_widget'));
-        add_shortcode('post_group_tags_widget', array($this, 'post_group_tags_widget'));
-        add_shortcode('tags_for_queried_target_groups', array($this, 'tags_for_queried_target_groups'));
-        add_shortcode('get_bcc_group_name', array($this, 'get_bcc_group_name_by_id'));
-        add_shortcode('get_number_of_user_groups', array($this, 'get_number_of_user_groups'));
+        add_shortcode( 'target_groups_filter_widget', array( $this, 'target_groups_filter_widget' ) );
+        add_shortcode( 'post_group_tags_widget', array( $this, 'post_group_tags_widget' ) );
+        add_shortcode( 'tags_for_queried_target_groups', array( $this, 'tags_for_queried_target_groups' ) );
+        add_shortcode( 'get_bcc_group_name', array( $this, 'get_bcc_group_name_by_id' ) );
+        add_shortcode( 'get_number_of_user_groups', array( $this, 'get_number_of_user_groups' ) );
 
         add_action( 'add_meta_boxes', array( $this, 'add_visibility_meta_box_to_attachments' ) );
         add_action( 'attachment_updated', array( $this, 'save_visibility_to_attachments' ), 10, 3 );
@@ -86,7 +86,7 @@ class BCC_Login_Visibility {
                 'default'      => self::VISIBILITY_DEFAULT,
             ) );
             register_post_meta( $post_type, 'bcc_groups', array(
-                'show_in_rest' => current_user_can( 'edit_posts' ),
+                'show_in_rest' => true,
                 'single'       => false,
                 'type'         => 'string'
             ) );
@@ -255,7 +255,7 @@ class BCC_Login_Visibility {
     
                 // Check user groups
                 if ( !empty($this->_settings->site_groups) ) {
-                    $post_groups = get_post_meta( get_the_ID() , 'bcc_groups', false );
+                    $post_groups = $response['meta']['bcc_groups'];
 
                     // Skip if current_user_can( 'edit_posts' )
 
