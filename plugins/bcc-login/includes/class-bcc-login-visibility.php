@@ -202,11 +202,10 @@ class BCC_Login_Visibility {
      * @return array
      */
     function on_rest_pre_echo_response( $response, $object, $request ) {
-        global $current_user;
-
         $route = $request->get_route();
         $session_is_valid = $this->_client->is_session_valid();
         $user_level = (int) $this->_client->get_user_level_based_on_claims();
+        $user_groups = $this->get_current_user_groups();
 
         if ($route == '/wp/v2/search') {
             $response_arr = [];
@@ -216,11 +215,26 @@ class BCC_Login_Visibility {
 
                 if ($session_is_valid) {
                     // Check login visibility
-                    if ( $post_visibility <= $user_level ) {
-                        $response_arr[] = $item;
+                    if ( $post_visibility > $user_level ) {
+                        continue;
                     }
-        
+
                     // Check user groups
+                    if ( !empty($this->_settings->site_groups) /* and if !current_user_can( 'edit_posts' ) */ ) {
+                        $post_groups = get_post_meta( $item['id'] , 'bcc_groups', false );
+    
+                        if ($post_groups && !$user_groups) {
+                            continue;
+                        }
+            
+                        if (count(array_intersect($post_groups, $user_groups)) == 0 &&
+                            count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0)
+                        {
+                            continue;
+                        }
+                    }
+
+                    $response_arr[] = $item;
                 }
                 else if ($post_visibility <= (int) $this->_settings->default_visibility) {
                     $response_arr[] = $item;
@@ -240,6 +254,21 @@ class BCC_Login_Visibility {
                 }
     
                 // Check user groups
+                if ( !empty($this->_settings->site_groups) ) {
+                    $post_groups = get_post_meta( get_the_ID() , 'bcc_groups', false );
+
+                    // Skip if current_user_can( 'edit_posts' )
+
+                    if ($post_groups && !$user_groups) {
+                        return $this->not_allowed_to_view_page();
+                    }
+        
+                    if (count(array_intersect($post_groups, $user_groups)) == 0 &&
+                        count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0)
+                    {
+                        return $this->not_allowed_to_view_page();
+                    }
+                }
             }
             else {
                 if ($post_visibility > (int) $this->_settings->default_visibility) {
