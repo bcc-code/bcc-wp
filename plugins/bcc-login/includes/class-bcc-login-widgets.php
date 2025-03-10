@@ -9,19 +9,26 @@ class BCC_Login_Widgets {
         $this->settings = $settings;
         $this->client = $client;
 
-        add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
+        add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
         add_action( 'wp_head', array( $this, 'render_topbar_and_analytics' ) );
         add_filter( 'body_class', array( $this, 'body_class' ) );
         add_action( 'init', array( $this, 'bcc_widgets_shortcodes' ) );
         add_action( 'rest_api_init', array( $this, 'add_fields_for_topbar_search' ) );
     }
 
-    function enqueue_styles() {
-        wp_enqueue_style( 'bcc-login-widgets', $this->settings->widgets_base_url.'/styles/widgets.css' );
+    function enqueue_scripts() {
+        $script_handle = 'bcc-login-widgets';
+        $script_url = BCC_LOGIN_URL . 'src/custom-widgets.js';
+
+        wp_enqueue_style( $script_handle, $this->settings->widgets_base_url.'/styles/widgets.css' );
 
         if ( $this->should_show_topbar() ) {
-            wp_add_inline_style( 'bcc-login-widgets', '@media screen and (max-width: 600px){.admin-bar .portal-top-bar{position:absolute;}}@media screen and (min-width: 850px){body{margin-top:48px!important;}.portal-top-bar-spacer{display:none;}.admin-bar .portal-top-bar{top:46px;}}' );
+            wp_add_inline_style( $script_handle, '@media screen and (max-width: 600px){.admin-bar .portal-top-bar{position:absolute;}}@media screen and (min-width: 850px){body{margin-top:48px!important;}.portal-top-bar-spacer{display:none;}.admin-bar .portal-top-bar{top:46px;}}' );
         }
+
+        wp_register_script( $script_handle, '' );
+        wp_enqueue_script( $script_handle );
+        wp_add_inline_script( $script_handle, 'var bccLoginWidgetsVars = {"nonce":"' . wp_create_nonce('wp_rest') . '"};' );
     }
 
     function render_topbar_and_analytics() {
