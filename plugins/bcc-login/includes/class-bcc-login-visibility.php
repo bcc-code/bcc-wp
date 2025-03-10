@@ -220,7 +220,7 @@ class BCC_Login_Visibility {
                     }
 
                     // Check user groups
-                    if ( !empty($this->_settings->site_groups) /* and if !current_user_can( 'edit_posts' ) */ ) {
+                    if ( !empty($this->_settings->site_groups) && !current_user_can( 'edit_posts' ) ) {
                         $post_groups = get_post_meta( $item['id'] , 'bcc_groups', false );
     
                         if ($post_groups && !$user_groups) {
@@ -254,10 +254,8 @@ class BCC_Login_Visibility {
                 }
     
                 // Check user groups
-                if ( !empty($this->_settings->site_groups) ) {
+                if ( !empty($this->_settings->site_groups) && !current_user_can( 'edit_posts' ) ) {
                     $post_groups = $response['meta']['bcc_groups'];
-
-                    // Skip if current_user_can( 'edit_posts' )
 
                     if ($post_groups && !$user_groups) {
                         return $this->not_allowed_to_view_page();

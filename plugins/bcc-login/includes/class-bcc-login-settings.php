@@ -211,7 +211,7 @@ class BCC_Login_Settings_Provider {
         $this->_storage = new BCC_Storage($this->_settings->client_secret );
         $this->_coreapi = new BCC_Coreapi_Client($this->_settings, $this->_storage );
 
-        add_action('admin_enqueue_scripts', array( $this, 'enqueue_bcc_login_config_script' ) );
+        add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_bcc_login_config_script' ) );
         add_action( 'admin_menu', array( $this, 'add_options_page' ) );
         add_action( 'admin_init', array( $this, 'register_settings' ) );
     }
