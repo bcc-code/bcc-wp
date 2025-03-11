@@ -210,6 +210,9 @@ class BCC_Login_Visibility {
         if ($route == '/wp/v2/search') {
             $response_arr = [];
 
+            if (array_key_exists('code', $response) && $response['code'] == 'rest_cookie_invalid_nonce')
+                return $response;
+
             foreach ($response as $item) {
                 $post_visibility = (int) get_post_meta( $item['id'], 'bcc_login_visibility', true );
 
