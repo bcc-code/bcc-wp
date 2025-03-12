@@ -420,9 +420,12 @@ class BCC_Login_Visibility {
         // Don't filter posts for Phrase
         // Check if Phrase (Memsource) is installed
         if ( class_exists('\Memsource\Utils\AuthUtils') ) {
-            // Validate the token in the request
-            if ( \Memsource\Utils\AuthUtils::validateTokenInRequest() ) {
-                return $query;
+            // Check if there's any token in the request
+            if ( \Memsource\Utils\AuthUtils::getTokenFromRequest() != false ) {
+                // Validate the token in the request
+                if ( \Memsource\Utils\AuthUtils::validateTokenInRequest() ) {
+                    return $query;
+                }
             }
         }
 
