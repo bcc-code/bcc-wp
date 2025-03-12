@@ -397,12 +397,16 @@ class BCC_Login_Client {
     }
 
     public function get_current_user_level() {
-        $token = ''; 
-
         // Check if user is logged in to Wordpress
         if (!is_user_logged_in()) {
             return BCC_Login_Visibility::VISIBILITY_PUBLIC;
         }
+
+        return $this->get_user_level_based_on_claims();
+    }
+
+    public function get_user_level_based_on_claims() {
+        $token = '';
 
         // Check if oidc token is available
         if (!isset($_COOKIE['oidc_token_id'])) {
@@ -440,8 +444,6 @@ class BCC_Login_Client {
         } else {
             return BCC_Login_Visibility::VISIBILITY_PUBLIC;
         }
-
-        
     }
 }
 
