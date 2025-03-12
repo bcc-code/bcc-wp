@@ -39,6 +39,8 @@ class BCC_Login_Visibility {
         add_action( 'init', array( $this, 'on_init' ) );
         add_action( 'wp_loaded', array( $this, 'register_block_attributes' ) );
         add_action( 'template_redirect', array( $this, 'on_template_redirect' ), 0 );
+        add_filter( 'rest_pre_echo_response', array( $this, 'on_rest_pre_echo_response' ), 10, 3 );
+
         add_action( 'added_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
         add_action( 'updated_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
         add_action( 'enqueue_block_editor_assets', array( $this, 'on_block_editor_assets' ) );
@@ -56,11 +58,11 @@ class BCC_Login_Visibility {
         add_action( 'admin_enqueue_scripts', array( $this, 'bcc_enqueue_visibility_scripts' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'bcc_enqueue_quick_edit_scripts' ) );
 
-        add_shortcode('target_groups_filter_widget', array($this, 'target_groups_filter_widget'));
-        add_shortcode('post_group_tags_widget', array($this, 'post_group_tags_widget'));
-        add_shortcode('tags_for_queried_target_groups', array($this, 'tags_for_queried_target_groups'));
-        add_shortcode('get_bcc_group_name', array($this, 'get_bcc_group_name_by_id'));
-        add_shortcode('get_number_of_user_groups', array($this, 'get_number_of_user_groups'));
+        add_shortcode( 'target_groups_filter_widget', array( $this, 'target_groups_filter_widget' ) );
+        add_shortcode( 'post_group_tags_widget', array( $this, 'post_group_tags_widget' ) );
+        add_shortcode( 'tags_for_queried_target_groups', array( $this, 'tags_for_queried_target_groups' ) );
+        add_shortcode( 'get_bcc_group_name', array( $this, 'get_bcc_group_name_by_id' ) );
+        add_shortcode( 'get_number_of_user_groups', array( $this, 'get_number_of_user_groups' ) );
 
         add_action( 'add_meta_boxes', array( $this, 'add_visibility_meta_box_to_attachments' ) );
         add_action( 'attachment_updated', array( $this, 'save_visibility_to_attachments' ), 10, 3 );
@@ -78,13 +80,13 @@ class BCC_Login_Visibility {
             add_action( "manage_{$post_type}_posts_custom_column", array( $this, 'populate_post_audience_column'), 10, 2 );
 
             register_post_meta( $post_type, 'bcc_login_visibility', array(
-                'show_in_rest' => current_user_can( 'edit_posts' ),
+                'show_in_rest' => true,
                 'single'       => true,
                 'type'         => 'number',
                 'default'      => self::VISIBILITY_DEFAULT,
             ) );
             register_post_meta( $post_type, 'bcc_groups', array(
-                'show_in_rest' => current_user_can( 'edit_posts' ),
+                'show_in_rest' => true,
                 'single'       => false,
                 'type'         => 'string'
             ) );
@@ -192,8 +194,101 @@ class BCC_Login_Visibility {
                 return $this->not_allowed_to_view_page($visited_url);
             }
         }
+    }
 
+    /**
+     * Fail json request if the post requires a higher level.
+     *
+     * @return array
+     */
+    function on_rest_pre_echo_response( $response, $object, $request ) {
+        $route = $request->get_route();
+        $session_is_valid = $this->_client->is_session_valid();
+        $user_level = (int) $this->_client->get_user_level_based_on_claims();
+        $user_groups = $this->get_current_user_groups();
 
+        if ( array_key_exists('code', $response) && $response['code'] == 'rest_cookie_invalid_nonce' )
+            return $response;
+
+        if ( $route == '/wp/v2/search' ) {
+            $response_arr = [];
+
+            foreach ( $response as $item ) {
+                $visibility = (int) $this->_settings->default_visibility;
+
+                $post_visibility = (int) get_post_meta( $item['id'], 'bcc_login_visibility', true );
+                if ( $post_visibility ) {
+                    $visibility = $post_visibility;
+                }
+
+                if ( $session_is_valid ) {
+                    // Check login visibility
+                    if ( $visibility && $visibility > $user_level ) {
+                        continue;
+                    }
+
+                    // Check user groups
+                    if ( !empty($this->_settings->site_groups) && !current_user_can( 'edit_posts' ) ) {
+                        $post_groups = get_post_meta( $item['id'] , 'bcc_groups', false );
+    
+                        if ($post_groups && !$user_groups) {
+                            continue;
+                        }
+            
+                        if ( count(array_intersect($post_groups, $user_groups)) == 0 &&
+                            count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0 )
+                        {
+                            continue;
+                        }
+                    }
+
+                    $response_arr[] = $item;
+                }
+                else if ( $visibility <= self::VISIBILITY_PUBLIC ) {
+                    $response_arr[] = $item;
+                }
+            }
+
+            return $response_arr;
+        }
+
+        else if ( preg_match('#^/wp/v2/(' . implode('|', $this->visibility_post_types) . ')/(\d+)$#', $route, $matches) ) {
+            $visibility = (int) $this->_settings->default_visibility;
+
+            $post_visibility = (int) $response['meta']['bcc_login_visibility'];
+            if ( $post_visibility ) {
+                $visibility = $post_visibility;
+            }
+
+            if ( $session_is_valid ) {
+                // Check login visibility
+                if ( $visibility > $user_level ) {
+                    return $this->not_allowed_to_view_page();
+                }
+    
+                // Check user groups
+                if ( !empty($this->_settings->site_groups) && !current_user_can( 'edit_posts' ) ) {
+                    $post_groups = $response['meta']['bcc_groups'];
+
+                    if ( $post_groups && !$user_groups ) {
+                        return $this->not_allowed_to_view_page();
+                    }
+        
+                    if ( count(array_intersect($post_groups, $user_groups)) == 0 &&
+                        count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0 )
+                    {
+                        return $this->not_allowed_to_view_page();
+                    }
+                }
+            }
+            else {
+                if ( $visibility > self::VISIBILITY_PUBLIC ) {
+                    return $this->not_allowed_to_view_page();
+                }
+            }
+        }
+
+        return $response;
     }
 
     private function not_allowed_to_view_page($visited_url = "") {
@@ -485,8 +580,6 @@ class BCC_Login_Visibility {
      * @return WP_Post[]
      */
     function filter_menu_items( $items ) {
-
-
         $level   = $this->_client->get_current_user_level();
         $removed = array();
 
@@ -784,7 +877,7 @@ class BCC_Login_Visibility {
         }
         else if ($this->_settings->site_groups && $column_name == 'post_groups') {
             wp_nonce_field( 'bcc_q_edit_nonce', 'bcc_nonce' );
-            
+
             echo '<fieldset class="inline-edit-col-right bcc-quick-edit">
                 <div class="inline-edit-col">
                     <div class="inline-edit-group wp-clearfix">
