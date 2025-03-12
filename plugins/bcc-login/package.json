@@ -1,14 +1,14 @@
 {
 	"private": true,
 	"name": "bcc-login",
-	"version": "1.1.341",
+	"version": "1.1.347",
 	"slug": "bcc-login",
 	"author": "<a href='https://github.com/bcc-code'>BCC Code</a>",
 	"author_profile": "https://github.com/bcc-code",
 	"requires": "3.0",
 	"tested": "5.8",
 	"requires_php": "5.3",
-	"last_updated": "2025-03-06 14:28:54",
+	"last_updated": "2025-03-12 14:41:06",
 	"sections": {
 		"description": "BCC Login",
 		"installation": "Add OIDC_CLIENT_ID and OIDC_CLIENT_SECRET as environment variables or constants in wp-config.php, and active plugin",
