@@ -407,7 +407,6 @@ class BCC_Login_Visibility {
                 'before'
             );
         }
-
     }
 
     /**
@@ -418,13 +417,25 @@ class BCC_Login_Visibility {
      * @return WP_Query
      */
     function filter_pre_get_posts( $query ) {
+        // Don't filter posts for Phrase
+        // Check if Phrase (Memsource) is installed
+        if ( class_exists('\Memsource\Utils\AuthUtils') ) {
+            // Check if there's any token in the request
+            if ( \Memsource\Utils\AuthUtils::getTokenFromRequest() != false ) {
+                // Validate the token in the request
+                if ( \Memsource\Utils\AuthUtils::validateTokenInRequest() ) {
+                    return $query;
+                }
+            }
+        }
+
         if ( current_user_can( 'edit_posts' ) || $query->is_singular ) {
             return $query;
         }
 
-        // Don't filter visibility for not supported post types
+        // Don't filter posts for not supported post types
         // Menu items are e.g. handled in 'filter_menu_items()'
-        if ( !$this->supports_visibility_filter($query))  {
+        if ( !$this->supports_visibility_filter($query) ) {
             return $query;
         }
 
