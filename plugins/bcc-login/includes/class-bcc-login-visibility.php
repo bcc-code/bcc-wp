@@ -207,18 +207,23 @@ class BCC_Login_Visibility {
         $user_level = (int) $this->_client->get_user_level_based_on_claims();
         $user_groups = $this->get_current_user_groups();
 
-        if ($route == '/wp/v2/search') {
+        if ( array_key_exists('code', $response) && $response['code'] == 'rest_cookie_invalid_nonce' )
+            return $response;
+
+        if ( $route == '/wp/v2/search' ) {
             $response_arr = [];
 
-            if (array_key_exists('code', $response) && $response['code'] == 'rest_cookie_invalid_nonce')
-                return $response;
+            foreach ( $response as $item ) {
+                $visibility = (int) $this->_settings->default_visibility;
 
-            foreach ($response as $item) {
                 $post_visibility = (int) get_post_meta( $item['id'], 'bcc_login_visibility', true );
+                if ( $post_visibility ) {
+                    $visibility = $post_visibility;
+                }
 
-                if ($session_is_valid) {
+                if ( $session_is_valid ) {
                     // Check login visibility
-                    if ( $post_visibility > $user_level ) {
+                    if ( $visibility && $visibility > $user_level ) {
                         continue;
                     }
 
@@ -230,8 +235,8 @@ class BCC_Login_Visibility {
                             continue;
                         }
             
-                        if (count(array_intersect($post_groups, $user_groups)) == 0 &&
-                            count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0)
+                        if ( count(array_intersect($post_groups, $user_groups)) == 0 &&
+                            count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0 )
                         {
                             continue;
                         }
@@ -239,7 +244,7 @@ class BCC_Login_Visibility {
 
                     $response_arr[] = $item;
                 }
-                else if ($post_visibility <= (int) $this->_settings->default_visibility) {
+                else if ( $visibility <= self::VISIBILITY_PUBLIC ) {
                     $response_arr[] = $item;
                 }
             }
@@ -247,12 +252,17 @@ class BCC_Login_Visibility {
             return $response_arr;
         }
 
-        else if (preg_match('#^/wp/v2/(' . implode('|', $this->visibility_post_types) . ')/(\d+)$#', $route, $matches) ) {
-            $post_visibility = (int) $response['meta']['bcc_login_visibility'];
+        else if ( preg_match('#^/wp/v2/(' . implode('|', $this->visibility_post_types) . ')/(\d+)$#', $route, $matches) ) {
+            $visibility = (int) $this->_settings->default_visibility;
 
-            if ($session_is_valid) {
+            $post_visibility = (int) $response['meta']['bcc_login_visibility'];
+            if ( $post_visibility ) {
+                $visibility = $post_visibility;
+            }
+
+            if ( $session_is_valid ) {
                 // Check login visibility
-                if ( $post_visibility > $user_level ) {
+                if ( $visibility > $user_level ) {
                     return $this->not_allowed_to_view_page();
                 }
     
@@ -260,19 +270,19 @@ class BCC_Login_Visibility {
                 if ( !empty($this->_settings->site_groups) && !current_user_can( 'edit_posts' ) ) {
                     $post_groups = $response['meta']['bcc_groups'];
 
-                    if ($post_groups && !$user_groups) {
+                    if ( $post_groups && !$user_groups ) {
                         return $this->not_allowed_to_view_page();
                     }
         
-                    if (count(array_intersect($post_groups, $user_groups)) == 0 &&
-                        count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0)
+                    if ( count(array_intersect($post_groups, $user_groups)) == 0 &&
+                        count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0 )
                     {
                         return $this->not_allowed_to_view_page();
                     }
                 }
             }
             else {
-                if ($post_visibility > (int) $this->_settings->default_visibility) {
+                if ( $visibility > self::VISIBILITY_PUBLIC ) {
                     return $this->not_allowed_to_view_page();
                 }
             }
