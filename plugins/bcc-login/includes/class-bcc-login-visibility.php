@@ -930,12 +930,12 @@ class BCC_Login_Visibility {
     }
 
     function bcc_enqueue_filtering_scripts() {
-        wp_enqueue_style( 'filtering-css', BCC_LOGIN_URL . 'src/filtering.css' );
+        wp_enqueue_style( 'filtering-css', BCC_LOGIN_URL . 'src/filtering.css', false, date("ymd-Gis", filemtime(__DIR__ . '/../src/filtering.css')) );
         wp_enqueue_script( 'filtering-js', BCC_LOGIN_URL . 'src/filtering.js', array( 'jquery' ) );
     }
 
     function bcc_enqueue_visibility_scripts() {
-        wp_enqueue_style( 'visibility-css', BCC_LOGIN_URL . 'src/visibility.css' );
+        wp_enqueue_style( 'visibility-css', BCC_LOGIN_URL . 'src/visibility.css', false, date("ymd-Gis", filemtime(__DIR__ . '/../src/visibility.css')) );
     }
 
     function bcc_enqueue_quick_edit_scripts( $pagehook ) {
@@ -944,7 +944,7 @@ class BCC_Login_Visibility {
             return;
         }
 
-        wp_enqueue_style( 'quick-edit-css', BCC_LOGIN_URL . 'src/quick-edit.css' );
+        wp_enqueue_style( 'quick-edit-css', BCC_LOGIN_URL . 'src/quick-edit.css', false, date("ymd-Gis", filemtime(__DIR__ . '/../src/quick-edit.css')) );
         wp_enqueue_script( 'quick-edit-js', BCC_LOGIN_URL . 'src/quick-edit.js', array( 'jquery' ) );
     }
     // end Quick Edit
