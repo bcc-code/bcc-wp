@@ -101,7 +101,18 @@ class BCC_Login_Widgets {
         add_shortcode( 'bcc-widgets-map', function ($attributes) {
             $attributes = array_change_key_case((array)$attributes, CASE_LOWER);
 
-            $html = '<div id="bcc-map"></div>';
+            $html = '<div id="bcc-map" style="height: 650px; background-color: rgb(229, 227, 223); position: relative;">';
+                $html .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" style="width: 75px; position: absolute; margin: auto; left: 0; right: 0; top: 0; bottom: 0;">';
+                    $html .= '<circle fill="#30715E" stroke="#30715E" stroke-width="15" r="15" cx="40" cy="100">';
+                        $html .= '<animate attributeName="opacity" calcMode="spline" dur="2" values="1;0;1;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.4"></animate>';
+                    $html .= '</circle>';
+                    $html .= '<circle fill="#30715E" stroke="#30715E" stroke-width="15" r="15" cx="100" cy="100">';
+                        $html .= '<animate attributeName="opacity" calcMode="spline" dur="2" values="1;0;1;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.2"></animate></circle>';
+                    $html .= '<circle fill="#30715E" stroke="#30715E" stroke-width="15" r="15" cx="160" cy="100">';
+                        $html .= '<animate attributeName="opacity" calcMode="spline" dur="2" values="1;0;1;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="0"></animate>';
+                    $html .= '</circle>';
+                $html .= '</svg>';
+            $html .= '</div>';
             $html .= '<script id="script-bcc-map" data-authentication-type="WebApp" data-authentication-location="' . site_url( '?bcc-login=access-token' ) . '" ';
             $html .= 'data-district="' . ($attributes['district'] ?? '') . '" data-zoom="' . ($attributes['zoom'] ?? '') . '" data-lat="' . ($attributes['lat'] ?? '') . '" data-lng="' . ($attributes['lng'] ?? '') . '" ';
             $html .= 'src="'.$this->settings->widgets_base_url.'/widgets/MapJs" defer></script>';
