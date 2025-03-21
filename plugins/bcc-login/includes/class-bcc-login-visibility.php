@@ -222,6 +222,12 @@ class BCC_Login_Visibility {
                 }
 
                 if ( $session_is_valid ) {
+                    // Simply add the post if the post visibility is default or public
+                    if ( $visibility == self::VISIBILITY_DEFAULT || $visibility == self::VISIBILITY_PUBLIC ) {
+                        $response_arr[] = $item;
+                        continue;
+                    }
+
                     // Check login visibility
                     if ( $visibility && $visibility > $user_level ) {
                         continue;
@@ -245,6 +251,7 @@ class BCC_Login_Visibility {
                     $response_arr[] = $item;
                 }
                 else if ( $visibility <= self::VISIBILITY_PUBLIC ) {
+                    // If the post visibility is public-only, default or public
                     $response_arr[] = $item;
                 }
             }
