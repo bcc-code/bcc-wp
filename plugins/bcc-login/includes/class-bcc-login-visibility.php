@@ -207,7 +207,7 @@ class BCC_Login_Visibility {
         $user_level = (int) $this->_client->get_user_level_based_on_claims();
         $user_groups = $this->get_current_user_groups();
 
-        if ( array_key_exists('code', $response) && $response['code'] == 'rest_cookie_invalid_nonce' )
+        if ( is_array($response) && array_key_exists('code', $response) && $response['code'] == 'rest_cookie_invalid_nonce' )
             return $response;
 
         if ( $route == '/wp/v2/search' ) {
