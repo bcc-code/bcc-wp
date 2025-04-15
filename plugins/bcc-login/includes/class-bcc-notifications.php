@@ -40,10 +40,13 @@ class BCC_Notifications
 
     public function send_notification($post_id)
     {
+        error_log('DEBUG: ' . __METHOD__ . ' - Sending notification for post ID: ' . $post_id);
+
         // Fetch the post object since only the ID is passed through scheduling.
         $post = get_post($post_id);
         $wpml_installed = defined('ICL_SITEPRESS_VERSION');
         if (!$post) {
+            error_log('DEBUG: ' . __METHOD__ . ' - Could not get post: ' . $post_id);
             return; // Exit if the post doesn't exist.
         }
         $post_type = $post->post_type;
@@ -56,6 +59,7 @@ class BCC_Notifications
 
             $notification_groups = array_intersect($post_groups, $this->settings->notification_groups);
             if (empty($notification_groups)) {
+                error_log('DEBUG: ' . __METHOD__ . ' - No notification groups found for post: ' . $post_id);
                 return;
             }
 
@@ -71,10 +75,14 @@ class BCC_Notifications
             // 4. Handle multilingual posts
             if ($wpml_installed) {
                 // WPML is installed and active.
+                error_log('DEBUG: ' . __METHOD__ . ' - WPML is installed. Post ID: ' . $post_id);
 
                 // Check if post has been translated
                 $has_translations = apply_filters('wpml_element_has_translations', '', $post_id, $post_type);
                 if ($has_translations) {
+
+                    error_log('DEBUG: ' . __METHOD__ . ' - Post has translations. Post ID: ' . $post_id);
+
                     $trid = apply_filters('wpml_element_trid', NULL, $post_id, 'post_' . $post_type);
                     $translations = apply_filters('wpml_get_element_translations', NULL, $trid, 'post_' . $post_type);
 
@@ -90,6 +98,9 @@ class BCC_Notifications
                     $is_multilinguage_post = true;
 
                     if ($is_orginal) {
+
+                        error_log('DEBUG: ' . __METHOD__ . ' - Post is original. Post ID: ' . $post_id);
+
                         foreach ($translations as $lang => $details) {
                             $default_local = apply_filters('wpml_current_language', null);
                             $translation = get_post($details->element_id);
@@ -114,6 +125,9 @@ class BCC_Notifications
                             do_action('wpml_switch_language', $default_local);
                         }
                     } else {
+
+                        error_log('DEBUG: ' . __METHOD__ . ' - Post is NOT original. Post ID: ' . $post_id);
+
                         // Don't process non-default languages of posts that have translations
                         // This is to avoid sending duplicate notifications
                         return;
@@ -123,6 +137,9 @@ class BCC_Notifications
             }
 
             if (!$is_multilinguage_post) {
+
+                error_log('DEBUG: ' . __METHOD__ . ' - Post is NOT multilingual. Post ID: ' . $post_id);
+
                 $excerpt = get_the_excerpt($post);
                 $payload[] = [
                     'post' => $post,
@@ -183,9 +200,15 @@ class BCC_Notifications
                     restore_previous_locale();
                 }
 
+                error_log('DEBUG: ' . __METHOD__ . ' - Sending notifications for ' . count($email_payload) . ' languages.  Post ID: ' . $post_id);
+
                 $this->core_api->send_notification($notification_groups, 'email', 'simpleemail', $email_payload);
                 $this->core_api->send_notification($notification_groups, 'inapp', 'simpleinapp', $inapp_payload);
 
+                error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($email_payload) . ' languages.  Post ID: ' . $post_id);
+
+            } else {
+                error_log('DEBUG: ' . __METHOD__ . ' - Notification payload is EMPTY. Post ID: ' . $post_id);
             }
         }
     }
