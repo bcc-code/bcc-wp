@@ -194,8 +194,9 @@ class BCC_Login_Feed {
             // Get groups that are checked on post
             $post_groups = get_post_meta($post->ID, 'bcc_groups', false);
 
-            // Visiblity Groups: Groups that are checked on post + groups with access to all posts
-            if ($visibility != BCC_Login_Visibility::VISIBILITY_PUBLIC)
+            // Visiblity Groups: Groups that are checked on post
+            // + groups with access to all posts (only if there are groups checked on post)
+            if ($visibility != BCC_Login_Visibility::VISIBILITY_PUBLIC && is_array($post_groups) && count($post_groups))
             {
                 $visibility_post_groups = $this->array_union($post_groups, $this->_settings->full_content_access_groups);
                 foreach ($visibility_post_groups as $group){
