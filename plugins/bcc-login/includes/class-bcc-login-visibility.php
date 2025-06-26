@@ -615,8 +615,8 @@ class BCC_Login_Visibility {
                     $visibility = $this->_settings->default_visibility;
                 }
 
-                // Hide public-only menu items for users who are logged in (including editors), but not in the Admin Dashboard
-                if ( $visibility == self::VISIBILITY_PUBLIC_ONLY && is_user_logged_in() && !is_admin() ) {
+                // Hide public-only menu items for users who are logged in (including editors)
+                if ( $visibility == self::VISIBILITY_PUBLIC_ONLY && is_user_logged_in() ) {
                     $removed[] = $item->ID;
                     unset( $items[ $key ] );
                     continue;
@@ -723,7 +723,7 @@ class BCC_Login_Visibility {
             return $block_content;
         }
 
-        if ( $visibility_set) {
+        if ( $visibility_set ) {
             if (!$visibility) {
                 $visibility = $this->_settings->default_visibility;
             }
