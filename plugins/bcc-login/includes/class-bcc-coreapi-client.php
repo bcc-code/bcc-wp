@@ -213,11 +213,16 @@ class BCC_Coreapi_Client
                 wp_die($response->get_error_message());
             }
 
+            $body_str = $response['body'];
+            if ($response['response']['code'] == 404 || str_contains($body_str, "not-found")) {
+                return [];
+            }
+
             if ($response['response']['code'] != 200) {
                 wp_die("cannot fetch groups for user: " . print_r($response['body'], true));
             }
 
-            $body = json_decode($response['body']);
+            $body = json_decode($body_str);
 
             $user_groups = array_merge($user_groups, $body->data->groupUids);
         }
