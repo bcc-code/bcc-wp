@@ -1,3 +1,33 @@
+#my-roles-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.roles-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.my-roles-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.my-roles-tags .bcc-badge-custom {
+  border-color: var(--brand-50);
+  background-color: var(--brand-50);
+  color: var(--brand-500);
+  padding: 0.25rem 0.35rem;
+}
+
+.my-roles-tags .bcc-badge-custom:hover {
+  background-color: var(--brand-500);
+  color: #fff;
+}
+
 .bcc-filter {
   position: relative;
 }
@@ -39,6 +69,14 @@ body.no-scroll {
 }
 
 @media (max-width: 767px) {
+  #my-roles-widget {
+    margin-bottom: 2rem;
+  }
+
+  .roles-list {
+    gap: 0.25rem;
+  }
+
   .bcc-filter #bcc-filter-groups {
     position: fixed;
     inset: 0;

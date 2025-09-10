@@ -63,6 +63,7 @@ class BCC_Login_Visibility {
         add_shortcode( 'tags_for_queried_target_groups', array( $this, 'tags_for_queried_target_groups' ) );
         add_shortcode( 'get_bcc_group_name', array( $this, 'get_bcc_group_name_by_id' ) );
         add_shortcode( 'get_number_of_user_groups', array( $this, 'get_number_of_user_groups' ) );
+        add_shortcode( 'bcc_my_roles', array( $this, 'bcc_my_roles' ) );
 
         add_action( 'add_meta_boxes', array( $this, 'add_visibility_meta_box_to_attachments' ) );
         add_action( 'attachment_updated', array( $this, 'save_visibility_to_attachments' ), 10, 3 );
@@ -386,7 +387,6 @@ class BCC_Login_Visibility {
         );
 
         if (!empty($this->_settings->site_groups) ) {
-
             wp_add_inline_script(
                 $script_handle,
                 'var siteGroups = ' . json_encode($this->_coreapi->get_translated_site_groups()),
@@ -401,7 +401,6 @@ class BCC_Login_Visibility {
         }
 
         if (!empty($this->_settings->site_group_tags) ) {
-
             wp_add_inline_script(
                 $script_handle,
                 'var siteGroupTags = ' . json_encode($this->_settings->site_group_tags),
@@ -695,6 +694,52 @@ class BCC_Login_Visibility {
 
     public function get_number_of_user_groups() {
         return count($this->get_user_bcc_filtering_groups_list());
+    }
+
+    public function bcc_my_roles() {
+        $user_groups = $this->get_current_user_groups();
+        $central_groups = $this->_settings->filtering_groups;
+        $site_groups = $this->_coreapi->get_translated_site_groups();
+        $central_user_groups = array();
+
+        foreach ($site_groups as $site_group) {
+            if (in_array($site_group->uid, $user_groups)
+                && in_array($site_group->uid, $central_groups)
+            ) {
+                $central_user_groups[] = $site_group;
+            }
+        }
+
+        // Sort by name
+        usort($central_user_groups, fn($a, $b) => $a->name <=> $b->name);
+
+        if (empty($central_user_groups)) {
+            return '';
+        }
+
+        $html = '<div id="my-roles-widget">';
+
+            $html .= '<section class="roles-list">';
+                $html .= '<span>' . (count($central_user_groups) == 1 
+                    ? __('Min rolle:', 'bcc-login')
+                    : __('Mine roller:', 'bcc-login')
+                ) . '</span>';
+                $html .= '<div class="my-roles-tags">';
+
+                    foreach ($central_user_groups as $group) {
+                        $html .= '<a class="bcc-badge bcc-badge-sm bcc-badge-custom" href="?target-groups[]=' . $group->uid . '"><i class="material-symbols-rounded">info</i><span>' . $group->name . '</span></a>';
+                    }
+                
+                $html .= '</div>';
+            $html .= '</section>';
+
+            $html .= '<section class="local-church-roles">';
+                $html .= '<a href="https://members.bcc.no/roles" target="_blank">' . __('Roller i min lokalmenighet', 'bcc-login') . '</a>';
+            $html .= '</section>';
+
+        $html .= '</div>';
+
+        return $html;
     }
 
     /**
