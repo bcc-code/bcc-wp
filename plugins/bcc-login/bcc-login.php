@@ -115,7 +115,7 @@ class BCC_Login {
                 !isset( $_GET['code'] ) &&
                 !isset( $_POST['wp-submit'] ) &&
                 !isset( $_GET['login-error'] ) &&
-                !in_array( $action, array( 'logout', 'lostpassword', 'rp', 'resetpass', 'register' ) )
+                !in_array( $action, array( 'logout', 'lostpassword', 'rp', 'resetpass', 'register', 'postpass' ) )
             )
         ) {
             $reauth = isset( $_GET['reauth'] ) && $_GET['reauth'] == "1";
