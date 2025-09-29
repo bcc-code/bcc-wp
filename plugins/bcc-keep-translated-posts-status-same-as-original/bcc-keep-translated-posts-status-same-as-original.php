@@ -3,7 +3,7 @@
  * Plugin Name: BCC – Keep translated posts' status same as original
  * Description: Ensures translated posts imported from Phrase (and any WPML saves) inherit the source post's status (e.g. draft, publish). This is done to avoid the use-case when an email is sent to post groups in e.g. English before Norwegian is ready to go (published). In addition, this plugin creates a settings page where admins can see which translated posts have different post statuses than the original posts.
  * Author: BCC IT
- * Version: 1.5.6
+ * Version: 1.6.0
  */
 
 if (!defined('ABSPATH')) { exit; }
@@ -189,18 +189,18 @@ function bcc_post_status_mismatch_page() {
 
     ?>
     <div class="wrap">
-        <h1><?php esc_html_e( 'WPML Translation Status Mismatch', 'bcc' ); ?></h1>
+        <h1><?php esc_html_e( 'Post Translation - Status mismatch', 'bcc' ); ?></h1>
         <p><?php esc_html_e( 'Showing translated posts where the publish status differs from their original/source post.', 'bcc' ); ?></p>
 
         <table class="widefat fixed striped">
             <thead>
                 <tr>
                     <th style="width:12%"><?php esc_html_e( 'Post Type', 'bcc' ); ?></th>
-                    <th><?php esc_html_e( 'Title (Translated)', 'bcc' ); ?></th>
+                    <th><?php esc_html_e( 'Source Title', 'bcc' ); ?></th>
                     <th style="width:14%"><?php esc_html_e( 'Source Status', 'bcc' ); ?></th>
                     <th style="width:12%"><?php esc_html_e( 'Lang', 'bcc' ); ?></th>
                     <th style="width:16%"><?php esc_html_e( 'Translated Status', 'bcc' ); ?></th>
-                    <th><?php esc_html_e( 'Source Title', 'bcc' ); ?></th>
+                    <th><?php esc_html_e( 'Translated Title', 'bcc' ); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -213,16 +213,16 @@ function bcc_post_status_mismatch_page() {
                         <tr>
                             <td><?php echo esc_html( $r['ptype'] ); ?></td>
                             <td>
-                                <a href="<?php echo esc_url( $r['edit_url'] ); ?>">
-                                    <?php echo esc_html( $r['title'] ); ?>
+                                <a href="<?php echo esc_url( $r['src_edit_url'] ); ?>">
+                                    <?php echo esc_html( $r['src_title'] ); ?>
                                 </a>
                             </td>
                             <td><?php echo $r['src_status']; ?></td>
                             <td><?php echo esc_html( strtoupper( $r['lang_src'] ) . ' → ' . strtoupper( $r['lang_trg'] ) ); ?></td>
                             <td><?php echo $r['tr_status']; ?></td>
                             <td>
-                                <a href="<?php echo esc_url( $r['src_edit_url'] ); ?>">
-                                    <?php echo esc_html( $r['src_title'] ); ?>
+                                <a href="<?php echo esc_url( $r['edit_url'] ); ?>">
+                                    <?php echo esc_html( $r['title'] ); ?>
                                 </a>
                             </td>
                         </tr>
