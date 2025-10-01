@@ -8,7 +8,7 @@
 	"requires": "3.0",
 	"tested": "6.8",
 	"requires_php": "5.3",
-	"last_updated": "2025-10-01 06:55:27",
+	"last_updated": "2025-10-01 10:03:57",
 	"sections": {
 		"description": "BCC – Keep translated posts' status same as original",
 		"installation": "Remember to activate the plugin after installation. Under Settings you'll find a page called Post status mismatch. Use that to find pages which have different post statuses than in the original language.",
