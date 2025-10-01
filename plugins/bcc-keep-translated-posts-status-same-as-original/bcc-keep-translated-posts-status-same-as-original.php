@@ -26,88 +26,90 @@ class BCC_Keep_Translated_Posts_Status_Same_As_Original {
     /**
      * Initialize the plugin.
      */
-    private function __construct(){
-
+    private function __construct() {
         $this->plugin = plugin_basename( __FILE__ );
 		$this->plugin_slug = plugin_basename( __DIR__ );
         
         $this->_updater = new BCC_Keep_Translated_Posts_Status_Same_As_Original_Updater( $this->plugin, $this->plugin_slug, $this->plugin_version, $this->plugin_name );
 
-        /**
-         * 1) Guardrail at save-time: before WordPress writes to DB, make translation status match its source.
-         */
-        add_filter('wp_insert_post_data', function( $data, $postarr ) {
-            // Only operate on posts (incl. CPTs) that already have an ID (updates) — new posts will be handled by the WPML hook below.
-            $maybe_id = isset($postarr['ID']) ? (int) $postarr['ID'] : 0;
-            if ( $maybe_id <= 0 ) {
-                return $data;
-            }
+        add_filter( 'wp_insert_post_data', array( $this, 'bcc_filter_on_wp_insert_post_data' ), 20, 2 );
+        add_action('wpml_pro_translation_completed', array( $this, 'bcc_action_wpml_translation_completed' ), 20);
+        add_action( 'admin_menu', array( $this, 'bcc_post_status_mismatch_settings_page' ) );
+    }
 
-            // Skip autosaves/revisions
-            if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) { return $data; }
-            if ( wp_is_post_revision( $maybe_id ) ) { return $data; }
-
-            $source = bcc_wpml_get_source_post( $maybe_id );
-            if ( ! $source ) {
-                // This is the source itself, or we can't find it — nothing to sync.
-                return $data;
-            }
-
-            $source_status = $source->post_status; // 'draft', 'publish', 'pending', 'private', etc.
-            if ( ! empty($source_status) && $data['post_status'] !== $source_status && $data['post_status'] != 'trash' ) {
-                $data['post_status'] = $source_status;
-            }
-
+    /**
+     * 1) Guardrail at save-time: before WordPress writes to DB, make translation status match its source.
+     */
+    function bcc_filter_on_wp_insert_post_data ( $data, $postarr ) {
+        // Only operate on posts (incl. CPTs) that already have an ID (updates) — new posts will be handled by the WPML hook below.
+        $maybe_id = isset($postarr['ID']) ? (int) $postarr['ID'] : 0;
+        if ( $maybe_id <= 0 ) {
             return $data;
-        }, 20, 2);
+        }
 
-        /**
-         * 2) When WPML TM (Phrase) finishes a translation and creates/updates the translated post,
-         *    force status to match the source.
-         *
-         * Hook signature: do_action( 'wpml_pro_translation_completed', $post_id, $fields, $job );
-         * This fires on imports from translation services like Phrase.
-         */
-        add_action('wpml_pro_translation_completed', function( $translated_post_id ) {
-            static $in_progress = [];
+        // Skip autosaves/revisions
+        if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) { return $data; }
+        if ( wp_is_post_revision( $maybe_id ) ) { return $data; }
 
-            $translated_post_id = (int) $translated_post_id;
-            if ( $translated_post_id <= 0 ) { return; }
+        $source = bcc_wpml_get_source_post( $maybe_id );
+        if ( ! $source ) {
+            // This is the source itself, or we can't find it — nothing to sync.
+            return $data;
+        }
 
-            // Prevent loops if wp_update_post triggers the same hook chain
-            if ( isset($in_progress[$translated_post_id]) ) { return; }
-            $in_progress[$translated_post_id] = true;
+        $source_status = $source->post_status; // 'draft', 'publish', 'pending', 'private', etc.
+        if ( ! empty($source_status) && $data['post_status'] !== $source_status && $data['post_status'] != 'trash' ) {
+            $data['post_status'] = $source_status;
+        }
 
-            $source = bcc_wpml_get_source_post( $translated_post_id );
-            if ( $source ) {
-                $source_status = $source->post_status;
-                $translated    = get_post( $translated_post_id );
+        return $data;
+    }
 
-                if ( $translated && $translated->post_status !== $source_status ) {
-                    // Update translated post to match source status
-                    wp_update_post(array(
-                        'ID'          => $translated_post_id,
-                        'post_status' => $source_status,
-                    ));
-                }
+    /**
+     * 2) When WPML TM (Phrase) finishes a translation and creates/updates the translated post,
+     *    force status to match the source.
+     *
+     * Hook signature: do_action( 'wpml_pro_translation_completed', $post_id, $fields, $job );
+     * This fires on imports from translation services like Phrase.
+     */
+    function bcc_action_wpml_translation_completed ( $translated_post_id ) {
+        static $in_progress = [];
+
+        $translated_post_id = (int) $translated_post_id;
+        if ( $translated_post_id <= 0 ) { return; }
+
+        // Prevent loops if wp_update_post triggers the same hook chain
+        if ( isset($in_progress[$translated_post_id]) ) { return; }
+        $in_progress[$translated_post_id] = true;
+
+        $source = bcc_wpml_get_source_post( $translated_post_id );
+        if ( $source ) {
+            $source_status = $source->post_status;
+            $translated    = get_post( $translated_post_id );
+
+            if ( $translated && $translated->post_status !== $source_status ) {
+                // Update translated post to match source status
+                wp_update_post(array(
+                    'ID'          => $translated_post_id,
+                    'post_status' => $source_status,
+                ));
             }
+        }
 
-            unset($in_progress[$translated_post_id]);
-        }, 20);
+        unset($in_progress[$translated_post_id]);
+    }
 
-        /**
-         * Admin menu.
-         */
-        add_action( 'admin_menu', function () {
-            add_options_page(
-                'Post status mismatch',
-                'Post status mismatch',
-                'manage_options',
-                'bcc-post-status-mismatch',
-                'bcc_post_status_mismatch_page'
-            );
-        } );
-
+    /**
+     * Admin menu.
+     */
+    function bcc_post_status_mismatch_settings_page() {
+        add_options_page(
+            'Post status mismatch',
+            'Post status mismatch',
+            'manage_options',
+            'bcc-post-status-mismatch',
+            array( $this, 'bcc_post_status_mismatch_page' )
+        );
     }
 
     /**
@@ -196,7 +198,7 @@ class BCC_Keep_Translated_Posts_Status_Same_As_Original {
 
                     $translation = get_post($details->element_id);
                     
-                    if ( $translation->post_status !== $source->post_status ) {
+                    if ( $translation && $source && $translation->post_status !== $source->post_status ) {
                         $rows[] = array(
                             'ptype'        => $post_type,
                             'title'        => get_the_title( $translation->ID ),
