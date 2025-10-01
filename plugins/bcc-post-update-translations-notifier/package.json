@@ -1,8 +1,8 @@
 {
 	"private": true,
-	"name": "post-update-translations-notifier",
+	"name": "bcc-post-update-translations-notifier",
 	"version": "1.5.4",
-	"slug": "post-update-translations-notifier",
+	"slug": "bcc-post-update-translations-notifier",
 	"author": "<a href='https://github.com/bcc-code'>BCC Code</a>",
 	"author_profile": "https://github.com/bcc-code",
 	"requires": "3.0",
