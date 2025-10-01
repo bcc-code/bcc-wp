@@ -1,0 +1,95 @@
+# This is a basic workflow to help you get started with Actions
+
+name: bcc-post-update-translations-notifier plugin
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+    paths:
+      - plugins/bcc-post-update-translations-notifier/**
+      - .github/workflows/bcc-post-update-translations-notifier-plugin-release.yml
+    tags-ignore:
+      - '**'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - plugins/bcc-post-update-translations-notifier/**
+      - .github/workflows/bcc-post-update-translations-notifier-plugin-release.yml
+    tags-ignore:
+      - '**'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Get Package Version
+        id: version
+        uses: notiz-dev/github-action-json-property@release
+        with: 
+            path: 'plugins/bcc-post-update-translations-notifier/package.json'
+            prop_path: 'version'
+      
+      - name: Get Previous Updated
+        id: lastupdated
+        uses: notiz-dev/github-action-json-property@release
+        with: 
+            path: 'plugins/bcc-post-update-translations-notifier/package.json'
+            prop_path: 'last_updated'
+
+      # Runs a set of commands using the runners shell
+      - id: build-and-zip
+        name: Build and Zip Plugin
+        run: |
+          # Build javascript
+          yarn install --frozen-lockfile 
+          cd plugins/bcc-post-update-translations-notifier
+          yarn build
+
+          # Get package version
+          package_version=${{steps.version.outputs.prop}}
+          previous_date="${{steps.lastupdated.outputs.prop}}"
+          current_date=$(date -u +'%Y-%m-%d %H:%M:%S')
+      
+          build_version="$(echo $package_version | sed -re 's/([0-9]+\.[0-9]+\.)[0-9]+/\1/')${GITHUB_RUN_NUMBER}"
+
+
+          sed -i "s|$package_version|$build_version|g" package.json
+          sed -i "s|$previous_date|$current_date|g" package.json
+          sed -i "s|<VERSION>|$build_version|g" bcc-post-update-translations-notifier.php
+          sed -i "s|$package_version|$build_version|g" bcc-post-update-translations-notifier.php
+
+
+          git config user.name "bcc-bot"
+          git config user.email "<>"
+          git tag "version-bump-v${build_version}"
+          git commit -am "Released bcc-post-update-translations-notifier plugin v${build_version}"
+          git push
+
+          cd ..
+          zip -r bcc-post-update-translations-notifier.zip bcc-post-update-translations-notifier
+          cd ..
+
+          echo "::set-output name=tag_name::bcc-post-update-translations-notifier-v${build_version}"
+
+
+
+      - uses: ncipollo/release-action@v1
+        name: Create Release
+        with:
+          artifacts: "plugins/bcc-post-update-translations-notifier.zip"
+          tag: ${{steps.build-and-zip.outputs.tag_name}}
+          token: ${{ secrets.GITHUB_TOKEN }}
+

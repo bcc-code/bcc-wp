@@ -10,7 +10,20 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+require_once( 'includes/class-bcc-post-update-translations-notifier-updater.php');
+
 class Post_Update_Translations_Notifier {
+
+    /**
+     * The plugin instance.
+     */
+    private static $instance = null;
+    private $plugin_version = "1.5.3";
+    private $plugin;
+    private $plugin_slug;
+    private $plugin_name = "BCC – Post Update Translations Notifier";
+
+    private BCC_Post_Update_Translations_Notifier_Updater $_updater;
 
     const OPTION_FROM_EMAIL = 'from_email_translations_notifier';
     const OPTION_EMAILS = 'update_notification_emails';
@@ -20,6 +33,12 @@ class Post_Update_Translations_Notifier {
     const LOGS_PER_PAGE = 20;
 
     public function __construct() {
+
+        $this->plugin = plugin_basename( __FILE__ );
+		$this->plugin_slug = plugin_basename( __DIR__ );
+
+        $this->_updater = new BCC_Post_Update_Translations_Notifier_Updater( $this->plugin, $this->plugin_slug, $this->plugin_version, $this->plugin_name );
+
         add_filter( 'acf/update_value/name=translation_stage', array( $this, 'maybe_notify_on_translate' ), 10, 3 );
 
         // Admin settings
@@ -28,6 +47,7 @@ class Post_Update_Translations_Notifier {
 
         // Handle clearing logs
         add_action( 'admin_post_acf_tn_clear_logs', array( $this, 'handle_clear_logs' ) );
+
     }
 
     /**
@@ -220,8 +240,7 @@ class Post_Update_Translations_Notifier {
     public function emails_field_html() {
         $val = get_option( self::OPTION_EMAILS );
         if ( is_array( $val ) ) {
-            $display = implode( ",
-", $val );
+            $display = implode( ",\n", $val );
         } else {
             $display = $val;
         }
@@ -372,8 +391,25 @@ class Post_Update_Translations_Notifier {
         wp_safe_redirect( wp_get_referer() ? wp_get_referer() : admin_url( 'options-general.php?page=post-update-translations-notifier' ) );
         exit;
     }
+
+    /**
+     * Creates and returns a single instance of this class.
+     *
+     * @return Post_Update_Translations_Notifier
+     */
+    static function get_instance() {
+        if ( is_null( self::$instance ) ) {
+            self::$instance = new Post_Update_Translations_Notifier();
+        }
+        return self::$instance;
+    }
+
 }
 
-new Post_Update_Translations_Notifier();
+function bcc_post_update_translations_notifier() {
+    return Post_Update_Translations_Notifier::get_instance();
+}
+
+bcc_post_update_translations_notifier();
 
 // End of file
