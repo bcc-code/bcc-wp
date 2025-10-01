@@ -6,7 +6,7 @@
  * Version: 1.6.1
  */
 
-if (!defined('ABSPATH')) { exit; }
+if ( !defined('ABSPATH') ) { exit; }
 
 require_once( 'includes/class-bcc-keep-translated-posts-status-same-as-original-updater.php' );
 
@@ -33,7 +33,7 @@ class BCC_Keep_Translated_Posts_Status_Same_As_Original {
         $this->_updater = new BCC_Keep_Translated_Posts_Status_Same_As_Original_Updater( $this->plugin, $this->plugin_slug, $this->plugin_version, $this->plugin_name );
 
         add_filter( 'wp_insert_post_data', array( $this, 'bcc_filter_on_wp_insert_post_data' ), 20, 2 );
-        add_action('wpml_pro_translation_completed', array( $this, 'bcc_action_wpml_translation_completed' ), 20);
+        add_action( 'wpml_pro_translation_completed', array( $this, 'bcc_action_wpml_translation_completed' ), 20 );
         add_action( 'admin_menu', array( $this, 'bcc_post_status_mismatch_settings_page' ) );
     }
 
