@@ -33,7 +33,6 @@ class Post_Update_Translations_Notifier {
     const LOGS_PER_PAGE = 20;
 
     public function __construct() {
-
         $this->plugin = plugin_basename( __FILE__ );
 		$this->plugin_slug = plugin_basename( __DIR__ );
 
@@ -47,7 +46,6 @@ class Post_Update_Translations_Notifier {
 
         // Handle clearing logs
         add_action( 'admin_post_acf_tn_clear_logs', array( $this, 'handle_clear_logs' ) );
-
     }
 
     /**
