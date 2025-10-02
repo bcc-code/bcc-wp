@@ -51,7 +51,7 @@ class BCC_Keep_Translated_Posts_Status_Same_As_Original {
         if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) { return $data; }
         if ( wp_is_post_revision( $maybe_id ) ) { return $data; }
 
-        $source = bcc_wpml_get_source_post( $maybe_id );
+        $source = $this->bcc_wpml_get_source_post( $maybe_id );
         if ( ! $source ) {
             // This is the source itself, or we can't find it — nothing to sync.
             return $data;
@@ -82,7 +82,7 @@ class BCC_Keep_Translated_Posts_Status_Same_As_Original {
         if ( isset($in_progress[$translated_post_id]) ) { return; }
         $in_progress[$translated_post_id] = true;
 
-        $source = bcc_wpml_get_source_post( $translated_post_id );
+        $source = $this->bcc_wpml_get_source_post( $translated_post_id );
         if ( $source ) {
             $source_status = $source->post_status;
             $translated    = get_post( $translated_post_id );
