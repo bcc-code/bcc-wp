@@ -3,7 +3,7 @@ name: Build and Deploy to The Documentation Site
 on:
   # Runs on pushes to the docs folder targeting the default branch
   push:
-    branches: ["master","main"]
+    branches: ["master", "main"]
     paths:
       - docs/**
 
@@ -25,10 +25,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Build documentation site
-        uses: bcc-code/bcc-documentation-base@v5
+        uses: bcc-code/bcc-developer-docs-deploy@v1
         with:
           title: BCC WordPress Documentation
           description: Custom Wordpress themes and plugins which can be used in any BCC application
           branch: master
-          authentication: 'portal'
-
+          authentication: "portal"
+          pat: ${{ secrets.DEVELOPER_DOCS_DEPLOY_PAT }}
