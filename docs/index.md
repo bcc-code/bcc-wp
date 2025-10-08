@@ -1,3 +1,7 @@
+---
+groupSection: Products
+---
+
 # Introduction
 
 Documentation for custom WordPress themes and plugins which can be used in any BCC application.
