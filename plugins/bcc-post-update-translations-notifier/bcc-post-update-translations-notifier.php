@@ -2,7 +2,7 @@
 /**
  * Plugin Name: BCC – Post Update Translations Notifier
  * Description: When the ACF field "translation_stage" changes to "translate", email addresses from the option "update_notification_emails" are notified. Includes admin settings page and logging.
- * Version: 1.5.4
+ * Version: 1.5.5
  * Author: BCC IT
  */
 
@@ -18,7 +18,7 @@ class Post_Update_Translations_Notifier {
      * The plugin instance.
      */
     private static $instance = null;
-    private $plugin_version = "1.5.4";
+    private $plugin_version = "1.5.5";
     private $plugin;
     private $plugin_slug;
     private $plugin_name = "BCC – Post Update Translations Notifier";
