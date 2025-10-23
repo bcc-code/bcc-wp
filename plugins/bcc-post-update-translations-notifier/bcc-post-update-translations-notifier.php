@@ -81,9 +81,31 @@ class Post_Update_Translations_Notifier {
         $message_lines[] = "The content of the following post was updated and the editor requested the translation to be reviewed again.";
         $message_lines[] = "";
         $message_lines[] = "Post: " . $title;
+        
+        // Get the last revision author
+        $revisions = wp_get_post_revisions( $post_id, array( 'numberposts' => 1 ) );
+        if ( ! empty( $revisions ) ) {
+            $last_revision = reset( $revisions );
+            $author_name = get_the_author_meta( 'display_name', $last_revision->post_author );
+            if ( $author_name ) {
+                $message_lines[] = "Last edited by: " . $author_name;
+            }
+        }
+        
+        // Get target languages
+        $target_languages = get_field( 'target_languages', $post_id );
+        if ( $target_languages ) {
+            if ( is_array( $target_languages ) ) {
+                $message_lines[] = "Translation languages: " . implode( ', ', $target_languages );
+            } else {
+                $message_lines[] = "Translation languages: " . $target_languages;
+            }
+        }
+
         if ( $permalink ) {
             $message_lines[] = "URL: " . $permalink;
         }
+        
         $message_lines[] = "";
         $message_lines[] = "---";
         $message_lines[] = "This is an automated notification which is triggered whenever \"Translation stage\" is changed to \"Translate\".";
