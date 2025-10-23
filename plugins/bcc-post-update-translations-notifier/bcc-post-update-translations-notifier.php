@@ -104,13 +104,28 @@ class Post_Update_Translations_Notifier {
             }
         }
 
-        // Set $to to admin_email (required) and put recipients in Bcc header
-        $to = get_option( 'admin_email' );
+        // Get email recipients and use first as To, rest as Bcc
         $raw_emails = get_option( self::OPTION_EMAILS );
         $emails = $this->parse_emails( $raw_emails );
-        $bcc = implode( ',', $emails );
+        
+        if ( empty( $emails ) ) {
+            // No valid emails configured, skip sending
+            $this->add_log( array(
+                'time' => current_time( 'mysql' ),
+                'post_id' => $post_id,
+                'title' => $title,
+                'recipients' => array(),
+                'status' => 'failed',
+                'message' => 'No valid email addresses configured',
+            ) );
+            return $value;
+        }
 
-        if ($bcc) {
+        $all_recipients = $emails; // Keep original list for logging
+        $to = array_shift( $emails ); // First email becomes the To recipient
+        
+        if ( ! empty( $emails ) ) {
+            $bcc = implode( ',', $emails );
             $headers[] = 'Bcc: ' . $bcc;
         }
 
@@ -120,7 +135,7 @@ class Post_Update_Translations_Notifier {
             'time' => current_time( 'mysql' ),
             'post_id' => $post_id,
             'title' => $title,
-            'recipients' => $emails,
+            'recipients' => $all_recipients,
             'status' => $sent ? 'sent' : 'failed',
             'message' => $sent ? 'Email queued/sent successfully' : 'wp_mail returned false',
         ) );
