@@ -1,14 +1,14 @@
 {
 	"private": true,
 	"name": "bcc-post-update-translations-notifier",
-	"version": "1.5.6",
+	"version": "1.5.7",
 	"slug": "bcc-post-update-translations-notifier",
 	"author": "<a href='https://github.com/bcc-code'>BCC Code</a>",
 	"author_profile": "https://github.com/bcc-code",
 	"requires": "3.0",
 	"tested": "6.8",
 	"requires_php": "5.3",
-	"last_updated": "2025-10-23 12:58:30",
+	"last_updated": "2025-10-24 07:07:11",
 	"sections": {
 		"description": "BCC – Post Update Translations Notifier",
 		"installation": "Remember to activate the plugin after installation. Under Settings you'll find a page called Translation Notifications where you can set up the emails which should get notifications about post updates. On the same page there is also a notification log.",
