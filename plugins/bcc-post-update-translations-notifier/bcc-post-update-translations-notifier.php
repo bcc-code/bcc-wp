@@ -75,8 +75,7 @@ class Post_Update_Translations_Notifier {
         $title = $post ? $post->post_title : sprintf( 'Post #%d', $post_id );
         $permalink = get_permalink( $post_id );
 
-        $subject = sprintf( '[%s] Translation update requested', get_bloginfo( 'name' ) );
-
+        $subject = "Translation update requested";
         $message_lines = array();
         $message_lines[] = "The content of the following post was updated and the editor requested the translation to be reviewed again.";
         $message_lines[] = "";
