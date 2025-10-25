@@ -8,6 +8,7 @@ class BCC_Login_Client {
     function __construct( BCC_Login_Settings $settings) {
         $this->_settings = $settings;
         add_action( 'parse_request', array( $this, 'on_parse_request' ) );
+        add_shortcode( 'get_person_uid', array( $this, 'get_current_user_person_uid' ) );
     }
 
     function start_login($reauth = false) {
@@ -376,7 +377,6 @@ class BCC_Login_Client {
     }
 
     public function get_current_user_person_uid() {
-
         $token = ''; 
         if (isset($_COOKIE['oidc_token_id'])) {
             $token_id = $_COOKIE['oidc_token_id'];
@@ -393,6 +393,7 @@ class BCC_Login_Client {
 
             return $claims['https://login.bcc.no/claims/personUid'];
         }
+
         return false;
     }
 
