@@ -1048,22 +1048,39 @@ class BCC_Login_Visibility {
         $post_id = get_the_ID();
         if (!$post_id) return false;
 
-        $attributes = shortcode_atts(array('limit' => 1000, 'with_link' => false), $atts);
+        $attributes = shortcode_atts(
+            array(
+                'limit' => 100,
+                'with_link' => true,
+                'only_user_groups' => false
+            ),
+            $atts
+        );
+
+        // Convert to actual booleans
+        $only_user_groups = filter_var($attributes['only_user_groups'], FILTER_VALIDATE_BOOLEAN);
+        $with_link = filter_var($attributes['with_link'], FILTER_VALIDATE_BOOLEAN);
 
         $post_groups = get_post_meta($post_id, 'bcc_groups', false);
         $filtering_groups = $this->_settings->filtering_groups;
-        $shown_groups = array_slice(array_intersect($post_groups, $filtering_groups), 0, $attributes['limit']);
+        $shown_groups = array_intersect($post_groups, $filtering_groups);
+
+        if ($only_user_groups) {
+            $user_groups = $this->get_current_user_groups();
+            $shown_groups = array_intersect($shown_groups, $user_groups);
+        }
+
+        $shown_groups = array_slice($shown_groups, 0, $attributes['limit']);
 
         $html = '';
 
         foreach ($shown_groups as $group) {
-            $link = $attributes['with_link'] == true ? '?target-groups[]='. $group : 'javascript:void(0)';
+            $link = $with_link ? '?target-groups[]='. $group : 'javascript:void(0)';
             $html .= '<a class="bcc-badge bcc-badge-sm bcc-badge-custom" href="'. $link . '"><i class="material-symbols-rounded">info</i><span>' . $this->get_group_name($group) . '</span></a>';
         }
 
         return $html;
     }
-
 
     function tags_for_queried_target_groups() {
         $html = '';
