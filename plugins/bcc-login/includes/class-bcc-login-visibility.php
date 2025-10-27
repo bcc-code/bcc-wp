@@ -1051,15 +1051,14 @@ class BCC_Login_Visibility {
         $attributes = shortcode_atts(
             array(
                 'limit' => 100,
-                'with_link' => true,
+                'link' => '',
                 'only_user_groups' => false
             ),
             $atts
         );
 
-        // Convert to actual booleans
+        // Convert to actual boolean
         $only_user_groups = filter_var($attributes['only_user_groups'], FILTER_VALIDATE_BOOLEAN);
-        $with_link = filter_var($attributes['with_link'], FILTER_VALIDATE_BOOLEAN);
 
         $post_groups = get_post_meta($post_id, 'bcc_groups', false);
         $filtering_groups = $this->_settings->filtering_groups;
@@ -1075,7 +1074,7 @@ class BCC_Login_Visibility {
         $html = '';
 
         foreach ($shown_groups as $group) {
-            $link = $with_link ? '/informasjon/?target-groups[]='. $group : 'javascript:void(0)';
+            $link = $attributes['link'] . '?target-groups[]=' . $group;
             $html .= '<a class="bcc-badge bcc-badge-sm bcc-badge-custom" href="'. $link . '"><i class="material-symbols-rounded">info</i><span>' . $this->get_group_name($group) . '</span></a>';
         }
 
