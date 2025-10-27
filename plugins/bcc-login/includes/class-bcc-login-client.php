@@ -8,7 +8,7 @@ class BCC_Login_Client {
     function __construct( BCC_Login_Settings $settings) {
         $this->_settings = $settings;
         add_action( 'parse_request', array( $this, 'on_parse_request' ) );
-        add_shortcode( 'get_person_uid', array( $this, 'get_current_user_person_uid' ) );
+        add_shortcode( 'bcc_person_uid', array( $this, 'get_current_user_person_uid' ) );
     }
 
     function start_login($reauth = false) {
