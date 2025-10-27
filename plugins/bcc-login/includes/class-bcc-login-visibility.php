@@ -1052,20 +1052,20 @@ class BCC_Login_Visibility {
             array(
                 'limit' => 100,
                 'with_link' => true,
-                'personal' => false
+                'only_user_groups' => false
             ),
             $atts
         );
 
         // Convert to actual booleans
-        $personal = filter_var($attributes['personal'], FILTER_VALIDATE_BOOLEAN);
+        $only_user_groups = filter_var($attributes['only_user_groups'], FILTER_VALIDATE_BOOLEAN);
         $with_link = filter_var($attributes['with_link'], FILTER_VALIDATE_BOOLEAN);
 
         $post_groups = get_post_meta($post_id, 'bcc_groups', false);
         $filtering_groups = $this->_settings->filtering_groups;
         $shown_groups = array_intersect($post_groups, $filtering_groups);
 
-        if ($personal) {
+        if ($only_user_groups) {
             $user_groups = $this->get_current_user_groups();
             $shown_groups = array_intersect($shown_groups, $user_groups);
         }
