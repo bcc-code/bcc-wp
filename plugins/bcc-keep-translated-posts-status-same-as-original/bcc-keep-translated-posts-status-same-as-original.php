@@ -58,7 +58,9 @@ class BCC_Keep_Translated_Posts_Status_Same_As_Original {
         }
 
         $source_status = $source->post_status; // 'draft', 'publish', 'pending', 'private', etc.
-        if ( ! empty($source_status) && $data['post_status'] !== $source_status && $data['post_status'] != 'trash' ) {
+        if ( ! empty($source_status) && $data['post_status'] !== $source_status
+            && $data['post_status'] != 'trash' && $source_status != 'trash' )
+        {
             $data['post_status'] = $source_status;
         }
 
