@@ -183,7 +183,7 @@ class BCC_Notifications
                         $email_title = $this->replace_notification_params($templates["email_title"] ?? "", $item["post"], $wp_lang);
                         $email_body = $this->replace_notification_params($templates["email_body"] ?? "", $item["post"], $wp_lang);
 
-                        $email_payload[] = apply_filters('bcc_notification_email_payload_overwrite', array(
+                        $email_payload[] = apply_filters('bcc_notification_email_payload', array(
                             "language" => $payload_lang,
                             "subject" => $email_subject,
                             "banner" => $item["image_url"] !== false ? $item["image_url"] : null,
