@@ -2,7 +2,6 @@
 
 class BCC_Notifications
 {
-
     private BCC_Login_Settings $settings;
     private BCC_Coreapi_Client $core_api;
 
@@ -13,7 +12,6 @@ class BCC_Notifications
 
         add_action('transition_post_status', array($this, 'on_post_status_transition'), 10, 3);
         add_action('bcc_send_scheduled_notification', array($this, 'send_notification'), 10, 1);
-
     }
 
     // NB: This does not run if a post is published without first being saved as a draft.
@@ -24,7 +22,6 @@ class BCC_Notifications
                 wp_schedule_single_event(time() + $this->settings->notification_delay, 'bcc_send_scheduled_notification', array($post->ID));
             } else {
                 $this->send_notification($post->ID);
-
             }
         }
     }
@@ -35,6 +32,7 @@ class BCC_Notifications
         $text = str_replace('[postExcerpt]', get_the_excerpt($post), $text);
         $text = str_replace('[postUrl]', get_permalink($post) ?? (get_site_url() . '/?p=' . $post->ID . (isset($language) ? '&lang=' . $language : '')), $text);
         $text = str_replace('[postImageUrl]', get_the_post_thumbnail_url($post->ID, 'large'), $text);
+
         return $text;
     }
 
@@ -160,7 +158,7 @@ class BCC_Notifications
                     $default_local = apply_filters('wpml_current_language', null);
                     $wp_lang = str_replace('-', '_', $item["language"]);
                     switch_to_locale($wp_lang);
-                    if ($wpml_installed) {
+                    if ($wpml_installed && isset($item["language_code"])) {
                         do_action('wpml_switch_language', $item["language_code"]);
                     }
 
@@ -185,14 +183,14 @@ class BCC_Notifications
                         $email_title = $this->replace_notification_params($templates["email_title"] ?? "", $item["post"], $wp_lang);
                         $email_body = $this->replace_notification_params($templates["email_body"] ?? "", $item["post"], $wp_lang);
 
-                        $email_payload[] = [
+                        $email_payload[] = apply_filters('bcc_notification_email_payload', array(
                             "language" => $payload_lang,
                             "subject" => $email_subject,
                             "banner" => $item["image_url"] !== false ? $item["image_url"] : null,
                             "title" => $email_title,
                             "content" => $email_body,
                             "body" => $email_body, //obsolete
-                        ];
+                        ), $post_id);
                     }
                     if ($wpml_installed) {
                         do_action('wpml_switch_language', $default_local);
