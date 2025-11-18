@@ -41,6 +41,29 @@ class BCC_Keep_Translated_Posts_Status_Same_As_Original {
      * 1) Guardrail at save-time: before WordPress writes to DB, make translation status match its source.
      */
     function bcc_filter_on_wp_insert_post_data ( $data, $postarr ) {
+        if ( strpos( $_SERVER['REQUEST_URI'], '/wp-json/memsource/v1/connector/translate/' ) !== false ) {
+            // This is a Memsource translation request
+            preg_match( '/\/wp-json\/memsource\/v1\/connector\/translate\/(\d+)\?token=/', $_SERVER['REQUEST_URI'], $matches );
+            
+            if ( ! isset($matches[1]) )
+                return $data;
+
+            $source_post_id = (int) $matches[1];
+            if ( $source_post_id <= 0 )
+                return $data;
+
+            $source_post_status = get_post_status( $source_post_id );
+            if ( ! $source_post_status ) {
+                return $data;
+            }
+
+            error_log( 'bcc_filter_on_wp_insert_post_data called for post ID ' . $source_post_id . '" with current status: ' . $data['post_status'] . ' and new status: ' . $source_post_status );
+
+            $data['post_status'] = $source_post_status;
+
+            return $data;
+        }
+        
         // Only operate on posts (incl. CPTs) that already have an ID (updates) — new posts will be handled by the WPML hook below.
         $maybe_id = isset($postarr['ID']) ? (int) $postarr['ID'] : 0;
         if ( $maybe_id <= 0 ) {
