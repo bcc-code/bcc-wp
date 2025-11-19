@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: BCC – Keep translated posts' status same as original
- * Description: Ensures translated posts imported from Phrase (and any WPML saves) inherit the source post's status (e.g. draft, publish). This is done to avoid the use-case when an email is sent to post groups in e.g. English before Norwegian is ready to go (published). In addition, this plugin creates a settings page where admins can see which translated posts have different post statuses than the original posts.
+ * Description: Ensures translated posts imported from Phrase (and any WPML saves) inherit the source post's status (e.g. draft, publish). This is done to avoid the use-case when an email is sent to post groups in e.g. English before Norwegian is ready to be published. In addition, this plugin creates a settings page where admins can see which translated posts have different post statuses than the original posts.
  * Author: BCC IT
  * Version: 1.6.5
  */
@@ -35,6 +35,7 @@ class BCC_Keep_Translated_Posts_Status_Same_As_Original {
         add_filter( 'wp_insert_post_data', array( $this, 'bcc_filter_on_wp_insert_post_data' ), 20, 2 );
         add_action( 'wpml_pro_translation_completed', array( $this, 'bcc_action_wpml_translation_completed' ), 20 );
         add_action( 'admin_menu', array( $this, 'bcc_post_status_mismatch_settings_page' ) );
+        add_filter( 'plugin_action_links_' . $this->plugin, array( $this, 'add_mismatches_link' ) );
     }
 
     /**
@@ -135,6 +136,15 @@ class BCC_Keep_Translated_Posts_Status_Same_As_Original {
             'bcc-post-status-mismatch',
             array( $this, 'bcc_post_status_mismatch_page' )
         );
+    }
+
+    /**
+     * Add settings link to plugin actions on plugins page.
+     */
+    function add_mismatches_link( $links ) {
+        $settings_link = '<a href="' . admin_url( 'options-general.php?page=bcc-post-status-mismatch' ) . '">' . __( 'Mismatches' ) . '</a>';
+        array_unshift( $links, $settings_link );
+        return $links;
     }
 
     /**
