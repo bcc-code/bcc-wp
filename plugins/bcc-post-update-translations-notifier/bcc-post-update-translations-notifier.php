@@ -46,6 +46,9 @@ class Post_Update_Translations_Notifier {
 
         // Handle clearing logs
         add_action( 'admin_post_acf_tn_clear_logs', array( $this, 'handle_clear_logs' ) );
+
+        // Add settings link to plugins page
+        add_filter( 'plugin_action_links_' . $this->plugin, array( $this, 'add_settings_page_link' ) );
     }
 
     /**
@@ -218,6 +221,15 @@ class Post_Update_Translations_Notifier {
             'post-update-translations-notifier',
             array( $this, 'settings_page' )
         );
+    }
+
+    /**
+     * Add settings link to plugin actions on plugins page.
+     */
+    public function add_settings_page_link( $links ) {
+        $settings_link = '<a href="' . admin_url( 'options-general.php?page=post-update-translations-notifier' ) . '">' . __( 'Settings' ) . '</a>';
+        array_unshift( $links, $settings_link );
+        return $links;
     }
 
     public function admin_init() {
