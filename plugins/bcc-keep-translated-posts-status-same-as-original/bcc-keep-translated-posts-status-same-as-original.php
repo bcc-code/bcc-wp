@@ -58,8 +58,6 @@ class BCC_Keep_Translated_Posts_Status_Same_As_Original {
                 return $data;
             }
 
-            error_log( 'bcc_filter_on_wp_insert_post_data called for post ID ' . $source_post_id . '" with current status: ' . $data['post_status'] . ' and new status: ' . $source_post_status );
-
             $data['post_status'] = $source_post_status;
 
             return $data;
