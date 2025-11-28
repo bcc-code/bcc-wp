@@ -211,7 +211,9 @@ class BCC_Login_Visibility {
 
         if ( !empty($this->_settings->site_groups) ) {
             $post_groups = get_post_meta($post->ID, 'bcc_groups', false);
-            if (!$post_groups) {
+            $visibility_post_groups = get_post_meta($post->ID, 'bcc_visibility_groups', false);
+
+            if (!$post_groups && !$visibility_post_groups) {
                 return;
             }
 
@@ -225,8 +227,10 @@ class BCC_Login_Visibility {
                 return $this->not_allowed_to_view_page($visited_url);
             }
 
-            if (count(array_intersect($post_groups, $user_groups)) == 0 &&
-                count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0)
+            $visibility_groups = $this->_settings->array_union($post_groups, $visibility_post_groups);
+            $visibility_groups = $this->_settings->array_union($visibility_groups, $this->_settings->full_content_access_groups);
+
+            if (count(array_intersect($visibility_groups, $user_groups)) == 0)
             {
                 return $this->not_allowed_to_view_page($visited_url);
             }
@@ -273,13 +277,17 @@ class BCC_Login_Visibility {
                     // Check user groups
                     if ( !empty($this->_settings->site_groups) && !current_user_can( 'edit_posts' ) ) {
                         $post_groups = get_post_meta( $item['id'] , 'bcc_groups', false );
+                        $visibility_post_groups = get_post_meta( $item['id'] , 'bcc_visibility_groups', false );
+
+                        $visibility_groups = $this->_settings->array_union($post_groups, $visibility_post_groups);
     
-                        if ($post_groups && !$user_groups) {
+                        if ($visibility_groups && !$user_groups) {
                             continue;
                         }
+
+                        $visibility_groups = $this->_settings->array_union($visibility_groups, $this->_settings->full_content_access_groups);
             
-                        if ( count(array_intersect($post_groups, $user_groups)) == 0 &&
-                            count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0 )
+                        if ( count(array_intersect($visibility_groups, $user_groups)) == 0 )
                         {
                             continue;
                         }
@@ -313,13 +321,17 @@ class BCC_Login_Visibility {
                 // Check user groups
                 if ( !empty($this->_settings->site_groups) && !current_user_can( 'edit_posts' ) ) {
                     $post_groups = $response['meta']['bcc_groups'];
+                    $visibility_post_groups = $response['meta']['bcc_visibility_groups'];
 
-                    if ( $post_groups && !$user_groups ) {
+                    $visibility_groups = $this->_settings->array_union($post_groups, $visibility_post_groups);
+
+                    if ( $visibility_groups && !$user_groups ) {
                         return $this->not_allowed_to_view_page();
                     }
-        
-                    if ( count(array_intersect($post_groups, $user_groups)) == 0 &&
-                        count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0 )
+
+                    $visibility_groups = $this->_settings->array_union($visibility_groups, $this->_settings->full_content_access_groups);
+
+                    if ( count(array_intersect($visibility_groups, $user_groups)) == 0 )
                     {
                         return $this->not_allowed_to_view_page();
                     }
@@ -541,21 +553,43 @@ class BCC_Login_Visibility {
             if (empty($user_groups)) {
                 // If user has no groups - just check that no group filters have been set
                 $group_rules = array(
-                    'key' => 'bcc_groups',
-                    'compare' => 'NOT EXISTS',
+                    'relation' => 'AND',
+                    array(
+                        'key' => 'bcc_groups',
+                        'compare' => 'NOT EXISTS',
+                    ),
+                    array(
+                        'key' => 'bcc_visibility_groups',
+                        'compare' => 'NOT EXISTS',
+                    )
                 );
             } else {
                 // If user has groups - check if no group filters have been set OR if user has access to the groups
                 $group_rules = array(
                     'relation' => 'OR',
                     array(
-                        'key' => 'bcc_groups',
-                        'compare' => 'NOT EXISTS',
+                        'relation' => 'OR',
+                        array(
+                            'key' => 'bcc_groups',
+                            'compare' => 'NOT EXISTS',
+                        ),
+                        array(
+                            'key' => 'bcc_groups',
+                            'compare' => 'IN',
+                            'value' => $user_groups
+                        )
                     ),
                     array(
-                        'key' => 'bcc_groups',
-                        'compare' => 'IN',
-                        'value' => $user_groups
+                        'relation' => 'OR',
+                        array(
+                            'key' => 'bcc_visibility_groups',
+                            'compare' => 'NOT EXISTS',
+                        ),
+                        array(
+                            'key' => 'bcc_visibility_groups',
+                            'compare' => 'IN',
+                            'value' => $user_groups
+                        )
                     )
                 );
             }    
@@ -606,9 +640,17 @@ class BCC_Login_Visibility {
         // Get original meta query
         $meta_query = (array) $query->get('meta_query');
         $meta_query[] = array(
-            'key'     => 'bcc_groups',
-            'value'   => $target_groups,
-            'compare' => 'IN'
+            'relation' => 'OR',
+            array(
+                'key'     => 'bcc_groups',
+                'value'   => $target_groups,
+                'compare' => 'IN'
+            ),
+            array(
+                'key'     => 'bcc_visibility_groups',
+                'value'   => $target_groups,
+                'compare' => 'IN'
+            )
         );
 
         if (in_array('all-members', $target_groups)) {
@@ -616,8 +658,15 @@ class BCC_Login_Visibility {
                 'relation' => 'OR',
                 $meta_query,
                 array(
-                    'key'     => 'bcc_groups',
-                    'compare' => 'NOT EXISTS'
+                    'relation' => 'AND',
+                    array(
+                        'key'     => 'bcc_groups',
+                        'compare' => 'NOT EXISTS'
+                    ),
+                    array(
+                        'key'     => 'bcc_visibility_groups',
+                        'compare' => 'NOT EXISTS'
+                    )
                 )
             );
         }
@@ -1071,8 +1120,12 @@ class BCC_Login_Visibility {
         $only_user_groups = filter_var($attributes['only_user_groups'], FILTER_VALIDATE_BOOLEAN);
 
         $post_groups = get_post_meta($post_id, 'bcc_groups', false);
+        $visibility_post_groups = get_post_meta($post_id, 'bcc_visibility_groups', false);
+
+        $visibility_groups = $this->_settings->array_union($post_groups, $visibility_post_groups);
+
         $filtering_groups = $this->_settings->filtering_groups;
-        $shown_groups = array_intersect($post_groups, $filtering_groups);
+        $shown_groups = array_intersect($visibility_groups, $filtering_groups);
 
         if ($only_user_groups) {
             $user_groups = $this->get_current_user_groups();

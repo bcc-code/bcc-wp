@@ -50,12 +50,26 @@ class BCC_Notifications
         $post_type = $post->post_type;
 
         // 1. Get groups for post
-        $post_groups = get_post_meta($post->ID, 'bcc_groups', false);
+        $primary_groups = get_post_meta($post->ID, 'bcc_groups', false);
+        $primary_groups_email = get_post_meta($post->ID, 'bcc_groups_email', true);
+
+        $secondary_groups = get_post_meta($post->ID, 'bcc_visibility_groups', false);
+        $secondary_groups_email = get_post_meta($post->ID, 'bcc_visibility_groups_email', true);
+
+        $visibility_groups = array();
+
+        if ($primary_groups_email && $primary_groups_email === 'Yes') {
+            $visibility_groups = $this->settings->array_union($visibility_groups, $primary_groups);
+        }
+
+        if ($secondary_groups_email && $secondary_groups_email === 'Yes') {
+            $visibility_groups = $this->settings->array_union($visibility_groups, $secondary_groups);
+        }
 
         // Notification logic goes here.
-        if (isset($post_groups) && !empty($post_groups)) {
+        if (isset($visibility_groups) && !empty($visibility_groups)) {
 
-            $notification_groups = array_intersect($post_groups, $this->settings->notification_groups);
+            $notification_groups = array_intersect($visibility_groups, $this->settings->notification_groups);
             if (empty($notification_groups)) {
                 error_log('DEBUG: ' . __METHOD__ . ' - No notification groups found for post: ' . $post_id);
                 return;

@@ -114,31 +114,6 @@ class BCC_Login_Feed {
        $this->add_original_language_to_items($the_list);
     }
 
-    function array_union($x, $y)
-    { 
-        if (empty($x) && empty($y)){
-            return [];
-        }
-        if (empty($x)){
-            return $y;
-        }
-        if (empty($y)){
-            return $x;
-        }
-        // Use array_merge to combine three arrays:
-        // 1. Intersection of $x and $y
-        // 2. Elements in $x that are not in $y
-        // 3. Elements in $y that are not in $x
-        $aunion = array_merge(
-            array_intersect($x, $y),   // Intersection of $x and $y
-            array_diff($x, $y),        // Elements in $x but not in $y
-            array_diff($y, $x)         // Elements in $y but not in $x
-        );
-
-        // Return the resulting array representing the union
-        return $aunion;
-    }
-
     function add_visibility_and_groups_to_items($the_list){
         global $post;
         $visibility = $this->_settings->default_visibility;
@@ -192,18 +167,30 @@ class BCC_Login_Feed {
         if ( !empty($this->_settings->site_groups) || !empty($this->_settings->full_content_access_groups) ) {
             // Get groups that are checked on post
             $post_groups = get_post_meta($post->ID, 'bcc_groups', false);
+            $post_visibility_groups = get_post_meta($post->ID, 'bcc_visibility_groups', false);
 
             // Visibility Groups: Groups that are checked on post
             // + groups with access to all posts (only if there are groups checked on post)
-            if ($visibility != BCC_Login_Visibility::VISIBILITY_PUBLIC && is_array($post_groups) && count($post_groups))
+            if ($visibility != BCC_Login_Visibility::VISIBILITY_PUBLIC)
             {
-                $visibility_post_groups = $this->array_union($post_groups, $this->_settings->full_content_access_groups);
-                foreach ($visibility_post_groups as $group){
-                    $result = $result . "\t\t<bcc:visibilityGroup>" . $group . "</bcc:visibilityGroup>\n";
+                $visibility_groups = $this->_settings->full_content_access_groups;
+
+                // Add primary post groups
+                if (is_array($post_groups) && count($post_groups)) {
+                    $visibility_groups = $this->_settings->array_union($post_groups, $visibility_groups);
+                }
+
+                // Add secondary post groups
+                if (is_array($post_visibility_groups) && count($post_visibility_groups)) {
+                    $visibility_groups = $this->_settings->array_union($post_visibility_groups, $visibility_groups);
+                }
+
+                foreach ($visibility_groups as $group){
+                    $result .= "\t\t<bcc:visibilityGroup>" . $group . "</bcc:visibilityGroup>\n";
                 }
             }
 
-            if (in_array($post->post_type, $this->_settings->notification_post_types)){
+            if (in_array($post->post_type, $this->_settings->notification_post_types) && is_array($post_groups) && count($post_groups)) {
                 // Notification Groups: Groups that are checked on posts + are eligable for notification
                 $notification_groups = array_intersect($post_groups, $this->_settings->notification_groups);
 

@@ -33,6 +33,31 @@ class BCC_Login_Settings {
     public $track_clicks;
     public $track_page_load;
     public $track_page_interaction;
+
+    public function array_union($x, $y)
+    { 
+        if (empty($x) && empty($y)){
+            return [];
+        }
+        if (empty($x)){
+            return $y;
+        }
+        if (empty($y)){
+            return $x;
+        }
+        // Use array_merge to combine three arrays:
+        // 1. Intersection of $x and $y
+        // 2. Elements in $x that are not in $y
+        // 3. Elements in $y that are not in $x
+        $aunion = array_merge(
+            array_intersect($x, $y),   // Intersection of $x and $y
+            array_diff($x, $y),        // Elements in $x but not in $y
+            array_diff($y, $x)         // Elements in $y but not in $x
+        );
+
+        // Return the resulting array representing the union
+        return $aunion;
+    }
 }
 
 /**
