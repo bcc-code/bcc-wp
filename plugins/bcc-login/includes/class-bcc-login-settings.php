@@ -329,13 +329,13 @@ class BCC_Login_Settings_Provider {
         add_settings_field(
             'bcc_member_organization_name',
             __( 'Member Organization', 'bcc-login' ),
-            array( $this, 'render_text_field' ),
+            array( $this, 'render_tag_input_field' ),
             $this->options_page,
             'general',
             array(
                 'name' => 'bcc_member_organization_name',
                 'value' => $this->_settings->member_organization_name,
-                'description' => 'Comma delimeted list of locations'
+                'description' => 'List of locations'
             )
         );
 
@@ -382,13 +382,13 @@ class BCC_Login_Settings_Provider {
             add_settings_field(
                 'bcc_site_group_tags',
                 'Group Tags',
-                array( $this, 'render_text_field' ),
+                array( $this, 'render_tag_input_field' ),
                 $this->options_page,
                 'groups',
                 array(
                     'name' => 'bcc_site_group_tags',
                     'value' => join(",", $this->_settings->site_group_tags),
-                    'description' => 'Comma delimited list of tags to retrieve groups for.'
+                    'description' => 'List of tags to retrieve groups for.'
                 )
             );
 
@@ -455,12 +455,13 @@ class BCC_Login_Settings_Provider {
                 'bcc_notification_post_types',
                 'Notification Post Types',
                 array( $this, 'render_text_field' ),
+                array( $this, 'render_tag_input_field' ),
                 $this->options_page,
                 'notifications',
                 array(
                     'name' => 'bcc_notification_post_types',
                     'value' => join(",", $this->_settings->notification_post_types),
-                    'description' => 'Post types that may receive notifications (comma delimited identifiers).'
+                    'description' => 'Post types that may receive notifications.'
                 )
             );
 
@@ -508,13 +509,13 @@ class BCC_Login_Settings_Provider {
             add_settings_field(
                 'bcc_notification_languages',
                 'Notification Languages',
-                array( $this, 'render_text_field' ),
+                array( $this, 'render_tag_input_field' ),
                 $this->options_page,
                 'notifications',
                 array(
                     'name' => 'bcc_notification_languages',
                     'value' => join(",", $this->_settings->notification_languages),
-                    'description' => 'List of languages that are supported for notification templates (comma delimited) E.g. en_US, nb_NO, de_DE etc.'
+                    'description' => 'List of languages that are supported for notification templates. E.g. nb_NO, en_US, de_DE, nl_NL, fr_FR etc.'
                 )
             );
 
@@ -689,6 +690,22 @@ class BCC_Login_Settings_Provider {
                 window.renderGroupSelector('<?php echo $args['name']; ?>-container', {
                     tags: <?php echo json_encode($args['tags']); ?>,
                     options: <?php echo json_encode($args['options']); ?>,
+                    name: '<?php echo $args['name']; ?>',
+                    label: '<?php echo isset($args['label']) ? $args['label'] : ''; ?>',
+                    value: <?php echo json_encode($args['value']); ?>,
+                    readonly: <?php echo isset($args['readonly']) && $args['readonly'] ? 'true' : 'false'; ?>
+                });
+            });
+        </script>
+        <?php
+        $this->render_field_description($args);
+    }
+
+    function render_tag_input_field( $args ) { ?>
+        <div id="<?php echo $args['name']; ?>-container"></div>
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+                window.renderTagInput('<?php echo $args['name']; ?>-container', {
                     name: '<?php echo $args['name']; ?>',
                     label: '<?php echo isset($args['label']) ? $args['label'] : ''; ?>',
                     value: <?php echo json_encode($args['value']); ?>,

@@ -23,6 +23,11 @@
 		"build": "rimraf build && wp-scripts build"
 	},
 	"dependencies": {
-		"rimraf": "^5.0.5"
+		"primeicons": "^7.0.0",
+		"primereact": "^10.9.7",
+		"rimraf": "^5.0.10"
+	},
+	"devDependencies": {
+		"@wordpress/scripts": "^31.0.0"
 	}
 }

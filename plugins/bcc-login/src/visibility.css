@@ -4,3 +4,25 @@
 .bcc-groups__checkbox.components-base-control {
     margin-bottom: 0.5rem !important;
 }
+
+.p-chips-token {
+    margin-bottom: 0;
+}
+
+.p-chips-input-token {
+    padding: 0rem;
+    margin: 0;
+}
+
+.p-chips-token-label {
+    font-size: 0.9rem;
+}
+
+.p-chips input {
+    border: none;
+    padding: 0 !important;
+}
+.p-chips input:focus {
+    box-shadow: none;
+    outline: none;
+}
