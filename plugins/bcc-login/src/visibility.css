@@ -5,6 +5,73 @@
     margin-bottom: 0.5rem !important;
 }
 
+.bcc-group-selector__dialog {
+    width: 100vw;
+}
+
+@media screen and (min-width: 768px) {
+    .bcc-group-selector__dialog {
+        width: 75vw;
+    }
+}
+
+.toggle-keys-buttons {
+    font-size: 0.9rem;
+}
+
+.toggle-keys-buttons .dashicons {
+    font-size: 0.9rem;
+    width: 0.9rem;
+    height: 0.9rem;
+}
+.toggle-keys-buttons .dashicons:before {
+    vertical-align: middle;
+}
+
+#primary-groups-selector {
+    background: aliceblue;
+    padding: 0.05rem 1rem;
+}
+
+#secondary-groups-selector {
+    margin-top: 2rem;
+}
+
+.p-selectbutton .p-button {
+    padding: 0.25rem 0.75rem;
+    border-color: rgba(0,0,0,.15);
+}
+
+.p-selectbutton .p-button.p-highlight {
+    background: #0078d4;
+    color: #fff;
+}
+.p-selectbutton .p-button.p-highlight[aria-label="No"] {
+    background: #6c757d;
+}
+
+.p-selectbutton .p-button-label {
+    font-size: 0.9rem;
+    font-weight: normal;
+}
+
+.p-selectbutton .p-button.p-highlight .p-button-label {
+    font-weight: bold;
+}
+
+.p-tree.p-component {
+    border: none;
+    padding: 0;
+    margin-bottom: 0.5rem;
+    background: transparent;
+}
+
+[role="listbox"] {
+    border: none;
+    width: 100%;
+    padding: 0.5rem;
+}
+
 .p-chips-token {
     margin-bottom: 0;
 }
@@ -25,4 +92,56 @@
 .p-chips input:focus {
     box-shadow: none;
     outline: none;
+}
+
+.post-groups-selector {
+    display: flex;
+    flex-direction: row;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.p-tree-toggler:focus {
+    box-shadow: none;
+}
+
+.p-tree-filter::placeholder {
+    font-style: italic;
+}
+
+.p-tree-empty-message .p-treenode-content {
+    font-size: 0.85rem;
+    font-style: italic;
+    color: rgba(0,0,0,.5);
+}
+
+[role=treeitem] {
+    margin-bottom: 0;
+    padding: 0;
+}
+
+[role=treeitem] .p-treenode-content {
+    padding: 0;
+    box-shadow: none;
+}
+
+ul.p-treenode-children .p-treenode-content {
+    padding-left: 2.25rem;
+}
+
+.p-treenode.p-treenode-leaf[aria-selected=true] .p-treenode-content {
+    background-color: #cce4f7;
+}
+
+.p-treenode-label {
+    font-size: 0.9rem;
+}
+
+.post-groups-count {
+    font-style: italic;
+    margin: 0 !important;
+}
+
+#toplevel_page_bcc-site-groups {
+    display: none !important;
 }

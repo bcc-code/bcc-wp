@@ -17,6 +17,7 @@ class BCC_Login_Settings {
     public $show_protected_menu_items;
     public $site_group_tags = array();
     public $site_groups = array();
+    public $visibility_groups = array();
     public $notification_groups = array();
     public $notification_languages = array();
     public $notification_templates = array();
@@ -112,6 +113,11 @@ class BCC_Login_Settings_Provider {
         $site_groups_option = get_option('bcc_site_groups');
         if ($site_groups_option) {
             $settings->site_groups = explode(",", $site_groups_option);
+        }
+
+        $visibility_groups_option = get_option('bcc_visibility_groups');
+        if ($visibility_groups_option) {
+            $settings->visibility_groups = explode(",", $visibility_groups_option);
         }
 
         $settings->disable_pubsub = get_option('bcc_disable_pubsub');
@@ -261,6 +267,7 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_feed_key' );
         register_setting( $this->option_name, 'bcc_site_group_tags' );
         register_setting( $this->option_name, 'bcc_site_groups' );
+        register_setting( $this->option_name, 'bcc_visibility_groups' );
         register_setting( $this->option_name, 'bcc_disable_pubsub' );
         register_setting( $this->option_name, 'bcc_notification_groups' );
         register_setting( $this->option_name, 'bcc_notification_languages' );
@@ -399,9 +406,11 @@ class BCC_Login_Settings_Provider {
                 $this->options_page,
                 'groups',
                 array(
-                    'name' => 'bcc_site_groups',
-                    'value' => join(",", $this->_settings->site_groups),
-                    'description' => 'Provide group uids for groups you\'re going to use (comma delimited).',
+                    'primaryName' => 'bcc_site_groups',
+                    'primaryValue' => join(",", $this->_settings->site_groups),
+                    'secondaryName' => 'bcc_visibility_groups',
+                    'secondaryValue' => join(",", $this->_settings->visibility_groups),
+                    'description' => 'Provide group uids for groups you\'re going to use.',
                     'options' => $all_groups,
                     'tags' => $this->_settings->site_group_tags
                 )
@@ -425,8 +434,8 @@ class BCC_Login_Settings_Provider {
                 $this->options_page,
                 'groups',
                 array(
-                    'name' => 'bcc_full_content_access_groups',
-                    'value' => join(",", $this->_settings->full_content_access_groups),
+                    'primaryName' => 'bcc_full_content_access_groups',
+                    'primaryValue' => join(",", $this->_settings->full_content_access_groups),
                     'description' => 'Groups that always can see published content regardless of group settings on content.',
                     'options' => $all_groups,
                     'tags' => $this->_settings->site_group_tags
@@ -440,9 +449,9 @@ class BCC_Login_Settings_Provider {
                 $this->options_page,
                 'groups',
                 array(
-                    'name' => 'bcc_filtering_groups',
-                    'value' => join(",", $this->_settings->filtering_groups),
-                    'description' => 'Provide group uids for groups that should be displayed in the filter widget (comma delimited).',
+                    'primaryName' => 'bcc_filtering_groups',
+                    'primaryValue' => join(",", $this->_settings->filtering_groups),
+                    'description' => 'Provide group uids for groups that should be displayed in the filter widget.',
                     'options' => $allowed_filtering_groups,
                     'tags' => $this->_settings->site_group_tags
                 )
@@ -454,7 +463,6 @@ class BCC_Login_Settings_Provider {
             add_settings_field(
                 'bcc_notification_post_types',
                 'Notification Post Types',
-                array( $this, 'render_text_field' ),
                 array( $this, 'render_tag_input_field' ),
                 $this->options_page,
                 'notifications',
@@ -472,9 +480,9 @@ class BCC_Login_Settings_Provider {
                 $this->options_page,
                 'notifications',
                 array(
-                    'name' => 'bcc_notification_groups',
-                    'value' => join(",", $this->_settings->notification_groups),
-                    'description' => 'Provide group uids for groups that may receive notifications (comma delimited).',
+                    'primaryName' => 'bcc_notification_groups',
+                    'primaryValue' => join(",", $this->_settings->notification_groups),
+                    'description' => 'Provide group uids for groups that may receive notifications.',
                     'options' => $allowed_notification_groups,
                     'tags' => $this->_settings->site_group_tags
                 )
@@ -685,16 +693,19 @@ class BCC_Login_Settings_Provider {
     }
 
     function render_group_selector_field( $args ) { ?>
-        <div id="<?php echo $args['name']; ?>-container"></div>
+        <div id="<?php echo $args['primaryName']; ?>-container"></div>
         <script type="text/javascript">
             document.addEventListener('DOMContentLoaded', function() {
-                window.renderGroupSelector('<?php echo $args['name']; ?>-container', {
+                window.renderGroupSelector('<?php echo $args['primaryName']; ?>-container', {
                     tags: <?php echo json_encode($args['tags']); ?>,
                     options: <?php echo json_encode($args['options']); ?>,
-                    name: '<?php echo $args['name']; ?>',
                     label: '<?php echo isset($args['label']) ? $args['label'] : ''; ?>',
-                    value: <?php echo json_encode($args['value']); ?>,
-                    readonly: <?php echo isset($args['readonly']) && $args['readonly'] ? 'true' : 'false'; ?>
+                    primaryName: '<?php echo $args['primaryName']; ?>',
+                    primaryValue: <?php echo json_encode($args['primaryValue']); ?>,
+                    secondaryName: '<?php echo isset($args['secondaryName']) ? $args['secondaryName'] : ''; ?>',
+                    secondaryValue: <?php echo isset($args['secondaryValue']) ? json_encode($args['secondaryValue']) : ''; ?>,
+                    readonly: <?php echo isset($args['readonly']) && $args['readonly'] ? 'true' : 'false'; ?>,
+                    isSettingsPage: true
                 });
             });
         </script>

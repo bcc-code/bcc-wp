@@ -92,6 +92,26 @@ class BCC_Login_Visibility {
                 'single'       => false,
                 'type'         => 'string'
             ) );
+
+            register_post_meta( $post_type, 'bcc_groups_email', array(
+                'show_in_rest' => true,
+                'single'       => true,
+                'type'         => 'string',
+                'default'      => 'Yes',
+            ) );
+
+            register_post_meta( $post_type, 'bcc_visibility_groups', array(
+                'show_in_rest' => true,
+                'single'       => false,
+                'type'         => 'string'
+            ) );
+
+            register_post_meta( $post_type, 'bcc_visibility_groups_email', array(
+                'show_in_rest' => true,
+                'single'       => true,
+                'type'         => 'string',
+                'default'      => 'No',
+            ) );
         }
     }
 
@@ -111,6 +131,20 @@ class BCC_Login_Visibility {
             $block->attributes['bccGroups'] = array(
                 'type'    => 'array',
                 'default' => array(),
+            );
+            $block->attributes['bccGroupsEmail'] = array(
+                'type'    => 'string',
+                'default' => 'Yes',
+            );
+
+            $block->attributes['bccVisibilityGroups'] = array(
+                'type'    => 'array',
+                'default' => array(),
+            );
+
+            $block->attributes['bccVisibilityGroupsEmail'] = array(
+                'type'    => 'string',
+                'default' => 'No',
             );
         }
     }

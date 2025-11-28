@@ -169,8 +169,12 @@ registerPlugin("bcc-groups-2", {
     withSelect((select) => {
       const { getEditedPostAttribute } = select("core/editor");
       const meta = getEditedPostAttribute("meta");
+
       return {
-        value: (meta.bcc_groups ?? []).join(","),
+        primaryValue: (meta.bcc_groups ?? []).join(","),
+        primaryEmailValue: meta.bcc_groups_email,
+        secondaryValue: (meta.bcc_visibility_groups ?? []).join(","),
+        secondaryEmailValue: meta.bcc_visibility_groups_email,
         options: window.siteGroups,
         tags: window.siteGroupTags,
       };
@@ -178,10 +182,13 @@ registerPlugin("bcc-groups-2", {
     withDispatch((dispatch) => {
       const { editPost } = dispatch("core/editor");
       return {
-        onChange(value) {
+        onChange(primaryValue, primaryEmailValue, secondaryValue, secondaryEmailValue) {
           editPost({
             meta: {
-              bcc_groups: value,
+              bcc_groups: primaryValue,
+              bcc_groups_email: primaryEmailValue,
+              bcc_visibility_groups: secondaryValue,
+              bcc_visibility_groups_email: secondaryEmailValue,
             },
           });
         },
@@ -221,10 +228,16 @@ addFilter(
                   label={__("Block Groups")}
                   tags={window.siteGroupTags}
                   options={window.siteGroups}
-                  value={(attributes.bccGroups ?? []).join(",")}
-                  onChange={(value) => {
+                  primaryValue={(attributes.bccGroups ?? []).join(",")}
+                  primaryEmailValue={attributes.bcc_groups_email}
+                  secondaryValue={(attributes.bccVisibilityGroups ?? []).join(",")}
+                  secondaryEmailValue={attributes.bcc_visibility_groups_email}
+                  onChange={(primaryValue, primaryEmailValue, secondaryValue, secondaryEmailValue) => {
                     setAttributes({
-                      bccGroups: value,
+                      bccGroups: primaryValue,
+                      bccGroupsEmail: primaryEmailValue,
+                      bccVisibilityGroups: secondaryValue,
+                      bccVisibilityGroupsEmail: secondaryEmailValue,
                     });
                   }}
                 />
