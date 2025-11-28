@@ -938,24 +938,6 @@ class BCC_Login_Visibility {
                 </div>
             </fieldset>';
         }
-        else if ($this->_settings->site_groups && $column_name == 'post_groups') {
-            wp_nonce_field( 'bcc_q_edit_nonce', 'bcc_nonce' );
-
-            echo '<fieldset class="inline-edit-col-right bcc-quick-edit">
-                <div class="inline-edit-col">
-                    <div class="inline-edit-group wp-clearfix">
-                        <label class="post-audience">
-                            <span class="title">' . __( 'Groups', 'bcc-login' ) . '</span>
-                        </label>
-                        <select name="bcc_groups[]" id="bcc_groups" multiple>';
-                            foreach ($this->_coreapi->get_translated_site_groups() as $ind => $group) {
-                                echo '<option value="'. $group->uid .'">'. $group->name .'</option>';
-                            }
-                        echo '</select>
-                    </div>
-                </div>
-            </fieldset>';
-        }
     }
 
     function bcc_quick_edit_save( $post_id ){
@@ -969,15 +951,6 @@ class BCC_Login_Visibility {
 
         if ( isset( $_POST['bcc_login_visibility'] ) ) {
             update_post_meta( $post_id, 'bcc_login_visibility', $_POST['bcc_login_visibility'] );
-        }
-
-        if ( isset( $_POST['bcc_groups'] ) ) {
-            foreach ($this->_settings->site_groups as $group) {
-                delete_post_meta( $post_id, 'bcc_groups', $group );
-            }
-            foreach($_POST['bcc_groups'] as $group) {
-                add_post_meta( $post_id, 'bcc_groups', $group );
-            }
         }
     }
 
