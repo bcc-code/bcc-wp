@@ -489,7 +489,8 @@ class BCC_Login_Settings_Provider {
                 array(
                     'name' => 'bcc_notification_delay',
                     'value' => $this->_settings->notification_delay,
-                    'description' => 'How long to wait (s) before sending notifications. Delays can be used to allow time for publishing translations etc.'
+                    'description' => 'How long to wait (s) before sending notifications. Delays can be used to allow time for publishing translations etc.',
+                    'numberOnly' => true,
                 )
             );
 
@@ -741,12 +742,13 @@ class BCC_Login_Settings_Provider {
      */
     function render_text_field( $args ) { ?>
         <input
-            type="text"
+            type="<?php echo isset( $args['numberOnly'] ) && $args['numberOnly'] ? 'number' : 'text'; ?>"
             id="<?php echo $args['name']; ?>"
             name="<?php echo $args['name']; ?>"   
             class="large-text"             
             value="<?php echo htmlspecialchars($args['value']); ?>"
             <?php echo isset( $args['readonly'] ) && $args['readonly'] ? 'readonly onclick="return false;"' : ''; ?>
+            <?php echo isset( $args['numberOnly'] ) && $args['numberOnly'] ? 'min="0"' : ''; ?>
         >
         <?php
         $this->render_field_description( $args );
@@ -756,11 +758,12 @@ class BCC_Login_Settings_Provider {
      * Renders a text box in settings page.
      */
     function render_textarea_field( $args ) { ?>
-        <textarea 
+        <textarea
             id="<?php echo $args['name']; ?>"
             name="<?php echo $args['name']; ?>"   
             class="large-text"
             <?php echo isset( $args['readonly'] ) && $args['readonly'] ? 'readonly onclick="return false;"' : ''; ?>
+            rows="10"
          ><?php echo htmlspecialchars($args['value']); ?></textarea>
         <?php
         $this->render_field_description( $args );
