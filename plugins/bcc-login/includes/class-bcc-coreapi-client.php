@@ -60,7 +60,7 @@ class BCC_Coreapi_Client
         // }
     
         $this->_all_groups = array_values($groups);
-        
+
         $expiration_duration = 60 * 60 * 24; // 1 day
         set_transient($cache_key, $this->_all_groups, $expiration_duration);
 
@@ -331,13 +331,9 @@ class BCC_Coreapi_Client
     //     ]
     //   }
 
-
-
-
     // Type = email, sms, inapp
     public function send_notification($group_uids, $type, $workflow, $payload) {
         $token = $this->get_coreapi_token();
-
 
         //$request_url =  $this->_settings->coreapi_base_url . "/notifications/notification?createSubscribers=false&pushNotifications=true";
         $request_url =  str_replace("https://", "https://notifications.", $this->_settings->coreapi_base_url) . "/notifications/notification/". $type ."?createSubscribers=true&pushNotifications=" . ($this->_settings->notification_dry_run ? "false" : "true");

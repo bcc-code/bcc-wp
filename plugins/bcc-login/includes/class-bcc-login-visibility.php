@@ -86,6 +86,7 @@ class BCC_Login_Visibility {
                 'type'         => 'number',
                 'default'      => self::VISIBILITY_DEFAULT,
             ) );
+
             register_post_meta( $post_type, 'bcc_groups', array(
                 'show_in_rest' => true,
                 'single'       => false,
@@ -106,6 +107,7 @@ class BCC_Login_Visibility {
                 'type'    => 'number',
                 'default' => self::VISIBILITY_DEFAULT,
             );
+
             $block->attributes['bccGroups'] = array(
                 'type'    => 'array',
                 'default' => array(),
@@ -875,6 +877,7 @@ class BCC_Login_Visibility {
             echo get_post_meta( $id, 'bcc_login_visibility', true );
             return;
         }
+
         if ($column_name == 'post_audience_name') {
             $visibility = $this->_settings->default_visibility;
             if ( $bcc_login_visibility = (int) get_post_meta( $id, 'bcc_login_visibility', true ) ) {

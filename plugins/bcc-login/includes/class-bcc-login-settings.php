@@ -88,8 +88,6 @@ class BCC_Login_Settings_Provider {
         $settings->track_page_load = true;
         $settings->track_page_interaction = true;
 
-        
-
         // Set settings from environment variables.
         foreach ( $this->environment_variables as $key => $constant ) {
             if ( defined( $constant ) && constant( $constant ) != '' ) {

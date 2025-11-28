@@ -164,37 +164,6 @@ registerPlugin("bcc-login-visibility", {
   )),
 });
 
-// registerPlugin("bcc-groups", {
-//   render: compose([
-//     withSelect((select) => {
-//       const { getEditedPostAttribute } = select("core/editor");
-//       const meta = getEditedPostAttribute("meta");
-//       return {
-//         selectedGroups: meta.bcc_groups ?? [],
-//         siteGroups: window.siteGroups,
-//       };
-//     }),
-//     withDispatch((dispatch) => {
-//       const { editPost } = dispatch("core/editor");
-//       return {
-//         onUpdateGroup(value) {
-//           editPost({
-//             meta: {
-//               bcc_groups: value,
-//             },
-//           });
-//         },
-//       };
-//     }),
-//     withInstanceId,
-//   ])((props) => (
-//     <PluginPostStatusInfo>
-//       <GroupsOptions heading={__("Post Groups")} {...props} />
-//     </PluginPostStatusInfo>
-//   )),
-// });
-
-
 registerPlugin("bcc-groups-2", {
   render: compose([
     withSelect((select) => {
@@ -260,20 +229,6 @@ addFilter(
                   }}
                 />
               </PanelRow>
-
-              {/* <PanelRow>
-                <GroupsOptions
-                  heading={__("Block Groups")}
-                  siteGroups={window.siteGroups}
-                  selectedGroups={attributes.bccGroups ?? []}
-                  onUpdateGroup={(value) => {
-                    setAttributes({
-                      bccGroups: value,
-                    });
-                  }}
-                  {...props}
-                />
-              </PanelRow> */}
             </PanelBody>
           </InspectorControls>
           <BlockEdit {...props} />
