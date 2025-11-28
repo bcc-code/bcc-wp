@@ -946,10 +946,11 @@ class BCC_Login_Visibility {
         $columns['post_audience_name'] = $headingAudience;
 
         if (!empty($this->_settings->site_groups)) {
-            $headingGroups = __( 'Groups', 'bcc-login' );
+            $columns['post_groups'] = __( 'Primary Groups', 'bcc-login' );
+            $columns['post_groups_name'] = __( 'Primary Groups', 'bcc-login' );
 
-            $columns['post_groups'] = $headingGroups;
-            $columns['post_groups_name'] = $headingGroups;
+            $columns['post_visibility_groups'] = __( 'Secondary Groups', 'bcc-login' );
+            $columns['post_visibility_groups_name'] = __( 'Secondary Groups', 'bcc-login' );
         }
 
         return $columns;
@@ -975,32 +976,59 @@ class BCC_Login_Visibility {
         }
 
         if ($column_name == 'post_groups') {
-            $groups = get_post_meta( $id, 'bcc_groups', false );
-            if ($groups) {
-                $groups_string = join(",",$groups );
+            $primary_groups = get_post_meta( $id, 'bcc_groups', false );
+            $visible_primary_groups = array_intersect($primary_groups, $this->_settings->site_groups);
+
+            if (!$visible_primary_groups) {
+                return;
+            }
+
+            echo join(",", $visible_primary_groups);
+        }
+
+        if ($column_name == 'post_visibility_groups') {
+            $secondary_groups = get_post_meta( $id, 'bcc_visibility_groups', false );
+
+            if ($secondary_groups) {
+                $groups_string = join(",", $secondary_groups);
                 echo $groups_string;
             }
+
             return;
         }
 
         if ($column_name == 'post_groups_name') {
-            if (empty($this->_settings->site_groups)) {
-                return;
-            }
+            $primary_groups = get_post_meta( $id, 'bcc_groups', false );
+            $visible_primary_groups = array_intersect($primary_groups, $this->_settings->site_groups);
 
-            $post_groups = get_post_meta( $id, 'bcc_groups', false );
-            if (!$post_groups) {
+            if (!$visible_primary_groups) {
                 return;
             }
 
             $group_names = array();
 
-            foreach ($post_groups as $post_group) {
+            foreach ($visible_primary_groups as $post_group) {
                 array_push($group_names, $this->get_group_name($post_group));
             }
-            
-            $groups_string = join(", ", $group_names);
-            echo $groups_string;
+
+            echo join(", ", $group_names);
+        }
+
+        if ($column_name == 'post_visibility_groups_name') {
+            $secondary_groups = get_post_meta( $id, 'bcc_visibility_groups', false );
+            $visible_secondary_groups = array_intersect($secondary_groups, $this->_settings->site_groups);
+
+            if (!$visible_secondary_groups) {
+                return;
+            }
+
+            $group_names = array();
+
+            foreach ($visible_secondary_groups as $post_group) {
+                array_push($group_names, $this->get_group_name($post_group));
+            }
+
+            echo join(", ", $group_names);
         }
     }
 
