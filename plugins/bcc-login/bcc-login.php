@@ -11,7 +11,7 @@
 define( 'BCC_LOGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'BCC_LOGIN_URL', plugin_dir_url( __FILE__ ) );
 
-require_once( 'includes/class-bcc-login-token-utility.php');
+require_once( 'includes/class-bcc-login-token-utility.php' );
 require_once( 'includes/class-bcc-login-settings.php' );
 require_once( 'includes/class-bcc-login-client.php' );
 require_once( 'includes/class-bcc-login-endpoints.php' );
@@ -19,14 +19,13 @@ require_once( 'includes/class-bcc-login-visibility.php' );
 require_once( 'includes/class-bcc-login-users.php' );
 require_once( 'includes/class-bcc-login-widgets.php' );
 require_once( 'includes/class-bcc-login-feed.php' );
-require_once( 'includes/class-bcc-login-updater.php');
-require_once( 'includes/class-bcc-coreapi-client.php');
-require_once( 'includes/class-bcc-storage.php');
-require_once( 'includes/class-bcc-notifications.php');
-require_once( 'includes/class-exclusive-lock.php');
+require_once( 'includes/class-bcc-login-updater.php' );
+require_once( 'includes/class-bcc-coreapi-client.php' );
+require_once( 'includes/class-bcc-storage.php' );
+require_once( 'includes/class-bcc-notifications.php' );
+require_once( 'includes/class-exclusive-lock.php' );
 
 class BCC_Login {
-
     /**
      * The plugin instance.
      */
@@ -49,8 +48,6 @@ class BCC_Login {
     private BCC_Notifications $_notifications;
     private BCC_Storage $_storage;
     
-
-
     /**
      * Initialize the plugin.
      */
@@ -101,8 +98,6 @@ class BCC_Login {
         return $links;
     }
 
-      
-
     function redirect_login() {
         global $pagenow;
 
@@ -123,14 +118,12 @@ class BCC_Login {
         }        
     }
 
-
     function hide_admin_bar() {
         if (!is_user_logged_in()) {
             echo '<style>#wpadminbar { display: none !important; }</style>';
         }
     }
     
-
     function add_auto_login_script() {
         if ( is_front_page() && !is_user_logged_in() ) {
 
@@ -163,9 +156,7 @@ class BCC_Login {
         }
     }
 
-
     function should_auto_login() {
-
         // Don't log in user if they are already logged in
         if (is_user_logged_in() && $this->_client->is_session_valid()) {
             return false;
@@ -196,7 +187,6 @@ class BCC_Login {
         return false;
     }
 
-
     /**
      * End PHP session (e.g. after logout)
      */
@@ -216,26 +206,41 @@ class BCC_Login {
         return home_url();
     }
 
-
     /**
      * Action hook for bcc_site_groups option update.
      */
     function on_site_groups_option_update($old_value, $value, $option) {
         delete_transient('coreapi_groups');
         delete_transient('coreapi_all_groups');
+
+        $this->register_selected_site_groups($value);
+    }
+
+    /**
+     * Register selected site groups for WPML String translation.
+     */
+    function register_selected_site_groups($selected_groups) {
+        $all_groups = $this->_coreapi->get_all_groups();
+
+        foreach ($all_groups as $group) {
+            if ( !in_array($group->uid, explode(',', $selected_groups)) ) {
+                continue;
+            }
+
+            do_action( 'wpml_register_single_string', 'bcc-login', '', $group->name );
+        }
     }
 
     /**
      * Action hook for bcc_disable_pubsub option update.
      */
     function on_disable_pubsub_option_update($old_value, $value, $option) {
-        if($value == true) {
+        if ( $value == true ) {
             $this->_coreapi->unsubscribe_to_person_updates();
         } else {
             $this->_coreapi->subscribe_to_person_updates();
         }
     }
-
 
     /**
      * Activate plugin hook
