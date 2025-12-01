@@ -728,7 +728,7 @@ class BCC_Login_Settings_Provider {
                     primaryName: '<?php echo $args['primaryName']; ?>',
                     primaryValue: <?php echo json_encode($args['primaryValue']); ?>,
                     secondaryName: '<?php echo isset($args['secondaryName']) ? $args['secondaryName'] : ''; ?>',
-                    secondaryValue: <?php echo isset($args['secondaryValue']) ? json_encode($args['secondaryValue']) : ''; ?>,
+                    secondaryValue: <?php echo isset($args['secondaryValue']) ? json_encode($args['secondaryValue']) : "''"; ?>,
                     readonly: <?php echo isset($args['readonly']) && $args['readonly'] ? 'true' : 'false'; ?>,
                     isSettingsPage: true
                 });
