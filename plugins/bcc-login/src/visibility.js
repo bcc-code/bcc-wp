@@ -171,10 +171,10 @@ registerPlugin("bcc-groups-2", {
       const meta = getEditedPostAttribute("meta");
 
       return {
-        primaryValue: (meta.bcc_groups ?? []).join(","),
-        primaryEmailValue: meta.bcc_groups_email,
-        secondaryValue: (meta.bcc_visibility_groups ?? []).join(","),
-        secondaryEmailValue: meta.bcc_visibility_groups_email,
+        targetGroupsValue: (meta.bcc_groups ?? []).join(","),
+        sendEmailToTargetGroups: meta.bcc_groups_email,
+        visibilityGroupsValue: (meta.bcc_visibility_groups ?? []).join(","),
+        sendEmailToVisibilityGroups: meta.bcc_visibility_groups_email,
         options: window.siteGroups,
         tags: window.siteGroupTags,
       };
@@ -182,13 +182,13 @@ registerPlugin("bcc-groups-2", {
     withDispatch((dispatch) => {
       const { editPost } = dispatch("core/editor");
       return {
-        onChange(primaryValue, primaryEmailValue, secondaryValue, secondaryEmailValue) {
+        onChange(targetGroupsValue, sendEmailToTargetGroups, visibilityGroupsValue, sendEmailToVisibilityGroups) {
           editPost({
             meta: {
-              bcc_groups: primaryValue,
-              bcc_groups_email: primaryEmailValue,
-              bcc_visibility_groups: secondaryValue,
-              bcc_visibility_groups_email: secondaryEmailValue,
+              bcc_groups: targetGroupsValue,
+              bcc_groups_email: sendEmailToTargetGroups,
+              bcc_visibility_groups: visibilityGroupsValue,
+              bcc_visibility_groups_email: sendEmailToVisibilityGroups,
             },
           });
         },
@@ -228,16 +228,16 @@ addFilter(
                   label={__("Block Groups")}
                   tags={window.siteGroupTags}
                   options={window.siteGroups}
-                  primaryValue={(attributes.bccGroups ?? []).join(",")}
-                  primaryEmailValue={attributes.bcc_groups_email}
-                  secondaryValue={(attributes.bccVisibilityGroups ?? []).join(",")}
-                  secondaryEmailValue={attributes.bcc_visibility_groups_email}
-                  onChange={(primaryValue, primaryEmailValue, secondaryValue, secondaryEmailValue) => {
+                  targetGroupsValue={(attributes.bccGroups ?? []).join(",")}
+                  sendEmailToTargetGroups={attributes.bcc_groups_email}
+                  visibilityGroupsValue={(attributes.bccVisibilityGroups ?? []).join(",")}
+                  sendEmailToVisibilityGroups={attributes.bcc_visibility_groups_email}
+                  onChange={(targetGroupsValue, sendEmailToTargetGroups, visibilityGroupsValue, sendEmailToVisibilityGroups) => {
                     setAttributes({
-                      bccGroups: primaryValue,
-                      bccGroupsEmail: primaryEmailValue,
-                      bccVisibilityGroups: secondaryValue,
-                      bccVisibilityGroupsEmail: secondaryEmailValue,
+                      bccGroups: targetGroupsValue,
+                      bccGroupsEmail: sendEmailToTargetGroups,
+                      bccVisibilityGroups: visibilityGroupsValue,
+                      bccSendEmailToVisibilityGroups: sendEmailToVisibilityGroups,
                     });
                   }}
                 />

@@ -142,7 +142,7 @@ class BCC_Login_Visibility {
                 'default' => array(),
             );
 
-            $block->attributes['bccVisibilityGroupsEmail'] = array(
+            $block->attributes['bccSendEmailToVisibilityGroups'] = array(
                 'type'    => 'string',
                 'default' => 'No',
             );
@@ -946,11 +946,11 @@ class BCC_Login_Visibility {
         $columns['post_audience_name'] = $headingAudience;
 
         if (!empty($this->_settings->site_groups)) {
-            $columns['post_groups'] = __( 'Primary Groups', 'bcc-login' );
-            $columns['post_groups_name'] = __( 'Primary Groups', 'bcc-login' );
+            $columns['post_groups'] = __( 'Target Groups', 'bcc-login' );
+            $columns['post_groups_name'] = __( 'Target Groups', 'bcc-login' );
 
-            $columns['post_visibility_groups'] = __( 'Secondary Groups', 'bcc-login' );
-            $columns['post_visibility_groups_name'] = __( 'Secondary Groups', 'bcc-login' );
+            $columns['post_visibility_groups'] = __( 'Visibility Groups', 'bcc-login' );
+            $columns['post_visibility_groups_name'] = __( 'Visibility Groups', 'bcc-login' );
         }
 
         return $columns;
@@ -976,21 +976,21 @@ class BCC_Login_Visibility {
         }
 
         if ($column_name == 'post_groups') {
-            $primary_groups = get_post_meta( $id, 'bcc_groups', false );
-            $visible_primary_groups = array_intersect($primary_groups, $this->_settings->site_groups);
+            $target_groups = get_post_meta( $id, 'bcc_groups', false );
+            $visible_target_groups = array_intersect($target_groups, $this->_settings->site_groups);
 
-            if (!$visible_primary_groups) {
+            if (!$visible_target_groups) {
                 return;
             }
 
-            echo join(",", $visible_primary_groups);
+            echo join(",", $visible_target_groups);
         }
 
         if ($column_name == 'post_visibility_groups') {
-            $secondary_groups = get_post_meta( $id, 'bcc_visibility_groups', false );
+            $visibility_groups = get_post_meta( $id, 'bcc_visibility_groups', false );
 
-            if ($secondary_groups) {
-                $groups_string = join(",", $secondary_groups);
+            if ($visibility_groups) {
+                $groups_string = join(",", $visibility_groups);
                 echo $groups_string;
             }
 
@@ -998,16 +998,16 @@ class BCC_Login_Visibility {
         }
 
         if ($column_name == 'post_groups_name') {
-            $primary_groups = get_post_meta( $id, 'bcc_groups', false );
-            $visible_primary_groups = array_intersect($primary_groups, $this->_settings->site_groups);
+            $target_groups = get_post_meta( $id, 'bcc_groups', false );
+            $visible_target_groups = array_intersect($target_groups, $this->_settings->site_groups);
 
-            if (!$visible_primary_groups) {
+            if (!$visible_target_groups) {
                 return;
             }
 
             $group_names = array();
 
-            foreach ($visible_primary_groups as $post_group) {
+            foreach ($visible_target_groups as $post_group) {
                 array_push($group_names, $this->get_group_name($post_group));
             }
 
@@ -1015,16 +1015,16 @@ class BCC_Login_Visibility {
         }
 
         if ($column_name == 'post_visibility_groups_name') {
-            $secondary_groups = get_post_meta( $id, 'bcc_visibility_groups', false );
-            $visible_secondary_groups = array_intersect($secondary_groups, $this->_settings->site_groups);
+            $visibility_groups = get_post_meta( $id, 'bcc_visibility_groups', false );
+            $visible_visibility_groups = array_intersect($visibility_groups, $this->_settings->site_groups);
 
-            if (!$visible_secondary_groups) {
+            if (!$visible_visibility_groups) {
                 return;
             }
 
             $group_names = array();
 
-            foreach ($visible_secondary_groups as $post_group) {
+            foreach ($visible_visibility_groups as $post_group) {
                 array_push($group_names, $this->get_group_name($post_group));
             }
 

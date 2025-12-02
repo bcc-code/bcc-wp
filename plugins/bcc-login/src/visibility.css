@@ -28,12 +28,12 @@
     vertical-align: middle;
 }
 
-#primary-groups-selector {
+#target-groups-selector {
     background: aliceblue;
     padding: 0.05rem 1rem;
 }
 
-#secondary-groups-selector {
+#visibility-groups-selector {
     margin-top: 2rem;
 }
 

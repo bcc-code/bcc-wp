@@ -5,15 +5,15 @@ import { Button } from 'primereact/button';
 import { SelectButton } from 'primereact/selectbutton';
 import { Tree } from 'primereact/tree';
 
-const GroupSelector = ({ tags, options, label, primaryName, primaryValue, primaryEmailName, primaryEmailValue, secondaryName, secondaryValue, secondaryEmailName, secondaryEmailValue, isSettingsPage, onChange }) => {
+const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsValue, sendEmailToTargetGroupsName, sendEmailToTargetGroupsValue, visibilityGroupsName, visibilityGroupsValue, sendEmailToVisibilityGroupsName, sendEmailToVisibilityGroupsValue, isSettingsPage, onChange }) => {
     const [visible, setVisible] = useState(false);
 
     const sendEmailOptions = ['Yes', 'No'];
-    const [primarySendEmail, setPrimarySendEmail] = useState(() => {
-        return primaryEmailValue ? primaryEmailValue : sendEmailOptions[0]
+    const [sendEmailToTargetGroups, setSendEmailToTargetGroups] = useState(() => {
+        return sendEmailToTargetGroupsValue ? sendEmailToTargetGroupsValue : sendEmailOptions[0]
     });
-    const [secondarySendEmail, setSecondarySendEmail] = useState(() => {
-        return secondaryEmailValue ? secondaryEmailValue : sendEmailOptions[1]
+    const [sendEmailToVisibilityGroups, setSendEmailToVisibilityGroups] = useState(() => {
+        return sendEmailToVisibilityGroupsValue ? sendEmailToVisibilityGroupsValue : sendEmailOptions[1]
     });
 
     const [treeNodes] = useState(() => {
@@ -45,22 +45,22 @@ const GroupSelector = ({ tags, options, label, primaryName, primaryValue, primar
         }));
     });
 
-    const [primaryExpandedKeys, setPrimaryExpandedKeys] = useState({});
-    const [secondaryExpandedKeys, setSecondaryExpandedKeys] = useState({});
+    const [targetGroupsExpandedKeys, setTargetGroupsExpandedKeys] = useState({});
+    const [visibilityGroupsExpandedKeys, setVisibilityGroupsExpandedKeys] = useState({});
 
-    const [primarySelectedGroups, setPrimarySelectedGroups] = useState(() => {
+    const [targetGroupsSelected, setTargetGroupsSelected] = useState(() => {
         // Initialize selected groups from value prop
-        const selectedUids = primaryValue ? primaryValue.split(',') : [];
-        const primarySelectedGroupsKeys = {};
+        const selectedUids = targetGroupsValue ? targetGroupsValue.split(',') : [];
+        const targetGroupsSelectedKeys = {};
 
         selectedUids.forEach(uid => {
-            primarySelectedGroupsKeys[uid] = { checked: true };
+            targetGroupsSelectedKeys[uid] = { checked: true };
 
             // Also mark parent as partially checked (an uid can belong to more than one group)
             treeNodes.forEach((group, groupIndex) => {
                 if (group.children.some(item => item.key === uid)) {
-                    if (!primarySelectedGroupsKeys[groupIndex.toString()]) {
-                        primarySelectedGroupsKeys[groupIndex.toString()] = { checked: false, partialChecked: true };
+                    if (!targetGroupsSelectedKeys[groupIndex.toString()]) {
+                        targetGroupsSelectedKeys[groupIndex.toString()] = { checked: false, partialChecked: true };
                     }
                 }
             });
@@ -69,30 +69,30 @@ const GroupSelector = ({ tags, options, label, primaryName, primaryValue, primar
         // Check if all children of a group are selected to mark parent as checked
         treeNodes.forEach((group, groupIndex) => {
             const allChildrenSelected = group.children.every(item => 
-                Object.keys(primarySelectedGroupsKeys).includes(item.key)
+                Object.keys(targetGroupsSelectedKeys).includes(item.key)
             );
 
             if (allChildrenSelected) {
-                primarySelectedGroupsKeys[groupIndex.toString()] = { checked: true };
+                targetGroupsSelectedKeys[groupIndex.toString()] = { checked: true };
             }
         });
 
-        return primarySelectedGroupsKeys;
+        return targetGroupsSelectedKeys;
     });
 
-    const [secondarySelectedGroups, setSecondarySelectedGroups] = useState(() => {
+    const [visibilityGroupsSelected, setVisibilityGroupsSelected] = useState(() => {
         // Initialize selected groups from value prop
-        const selectedUids = secondaryValue ? secondaryValue.split(',') : [];
-        const secondarySelectedGroupsKeys = {};
+        const selectedUids = visibilityGroupsValue ? visibilityGroupsValue.split(',') : [];
+        const visibilityGroupsSelectedKeys = {};
 
         selectedUids.forEach(uid => {
-            secondarySelectedGroupsKeys[uid] = { checked: true };
+            visibilityGroupsSelectedKeys[uid] = { checked: true };
 
             // Also mark parent as partially checked (an uid can belong to more than one group)
             treeNodes.forEach((group, groupIndex) => {
                 if (group.children.some(item => item.key === uid)) {
-                    if (!secondarySelectedGroupsKeys[groupIndex.toString()]) {
-                        secondarySelectedGroupsKeys[groupIndex.toString()] = { checked: false, partialChecked: true };
+                    if (!visibilityGroupsSelectedKeys[groupIndex.toString()]) {
+                        visibilityGroupsSelectedKeys[groupIndex.toString()] = { checked: false, partialChecked: true };
                     }
                 }
             });
@@ -101,75 +101,75 @@ const GroupSelector = ({ tags, options, label, primaryName, primaryValue, primar
         // Check if all children of a group are selected to mark parent as checked
         treeNodes.forEach((group, groupIndex) => {
             const allChildrenSelected = group.children.every(item => 
-                Object.keys(secondarySelectedGroupsKeys).includes(item.key)
+                Object.keys(visibilityGroupsSelectedKeys).includes(item.key)
             );
 
             if (allChildrenSelected) {
-                secondarySelectedGroupsKeys[groupIndex.toString()] = { checked: true };
+                visibilityGroupsSelectedKeys[groupIndex.toString()] = { checked: true };
             }
         });
 
-        return secondarySelectedGroupsKeys;
+        return visibilityGroupsSelectedKeys;
     });
 
-    const primaryOnSelectionChange = (e) => {
-        setPrimarySelectedGroups(e.value);
+    const targetGroupsOnSelectionChange = (e) => {
+        setTargetGroupsSelected(e.value);
 
         if (!onChange) return;
 
         onChange(
             onlyPostGroups(e.value),
-            primarySendEmail,
-            onlyPostGroups(secondarySelectedGroups),
-            secondarySendEmail
+            sendEmailToTargetGroups,
+            onlyPostGroups(visibilityGroupsSelected),
+            sendEmailToVisibilityGroups
         );
     };
 
-    const primaryEmailOnChange = (e) => {
-        setPrimarySendEmail(e.value)
+    const sendEmailToTargetGroupsOnChange = (e) => {
+        setSendEmailToTargetGroups(e.value)
 
         if (!onChange) return;
 
         onChange(
-            onlyPostGroups(primarySelectedGroups),
+            onlyPostGroups(targetGroupsSelected),
             e.value,
-            onlyPostGroups(secondarySelectedGroups),
-            secondarySendEmail
+            onlyPostGroups(visibilityGroupsSelected),
+            sendEmailToVisibilityGroups
         );
     };
 
-    const secondaryOnSelectionChange = (e) => {
-        setSecondarySelectedGroups(e.value);
+    const visibilityGroupsOnSelectionChange = (e) => {
+        setVisibilityGroupsSelected(e.value);
 
         if (!onChange) return;
 
         onChange(
-            onlyPostGroups(primarySelectedGroups),
-            primarySendEmail,
+            onlyPostGroups(targetGroupsSelected),
+            sendEmailToTargetGroups,
             onlyPostGroups(e.value),
-            secondarySendEmail
+            sendEmailToVisibilityGroups
         );
     };
 
-    const secondaryEmailOnChange = (e) => {
-        setSecondarySendEmail(e.value);
+    const sendEmailToVisibilityGroupsOnChange = (e) => {
+        setSendEmailToVisibilityGroups(e.value);
 
         if (!onChange) return;
 
         onChange(
-            onlyPostGroups(primarySelectedGroups),
-            primarySendEmail,
-            onlyPostGroups(secondarySelectedGroups),
+            onlyPostGroups(targetGroupsSelected),
+            sendEmailToTargetGroups,
+            onlyPostGroups(visibilityGroupsSelected),
             e.value
         );
     };
 
-    const getInitialPrimaryExpandedKeys = () => {
+    const getInitialTargetGroupsExpandedKeys = () => {
         const initialExpandedKeys = {};
 
         treeNodes.forEach((group, groupIndex) => {
             const hasSelectedChild = group.children.some(item =>
-                Object.keys(primarySelectedGroups).includes(item.key)
+                Object.keys(targetGroupsSelected).includes(item.key)
             );
 
             if (hasSelectedChild) {
@@ -180,12 +180,12 @@ const GroupSelector = ({ tags, options, label, primaryName, primaryValue, primar
         return initialExpandedKeys;
     }
 
-    const getInitialSecondaryExpandedKeys = () => {
+    const getInitialVisibilityGroupsExpandedKeys = () => {
         const initialExpandedKeys = {};
 
         treeNodes.forEach((group, groupIndex) => {
             const hasSelectedChild = group.children.some(item =>
-                Object.keys(secondarySelectedGroups).includes(item.key)
+                Object.keys(visibilityGroupsSelected).includes(item.key)
             );
 
             if (hasSelectedChild) {
@@ -206,22 +206,22 @@ const GroupSelector = ({ tags, options, label, primaryName, primaryValue, primar
         return allExpandedKeys;
     };
 
-    const primaryHandleToggle = (e) => {
+    const targetGroupsHandleToggle = (e) => {
         if (e.originalEvent === null && Object.keys(e.value).length === 0) {
-            setPrimaryExpandedKeys(getInitialPrimaryExpandedKeys());
+            setTargetGroupsExpandedKeys(getInitialTargetGroupsExpandedKeys());
             return;
         }
 
-        setPrimaryExpandedKeys(e.value);
+        setTargetGroupsExpandedKeys(e.value);
     };
 
-    const secondaryHandleToggle = (e) => {
+    const visibilityGroupsHandleToggle = (e) => {
         if (e.originalEvent === null && Object.keys(e.value).length === 0) {
-            setSecondaryExpandedKeys(getInitialSecondaryExpandedKeys());
+            setVisibilityGroupsExpandedKeys(getInitialVisibilityGroupsExpandedKeys());
             return;
         }
 
-        setSecondaryExpandedKeys(e.value);
+        setVisibilityGroupsExpandedKeys(e.value);
     };
 
     const onlyPostGroups = (selectedGroups) => {
@@ -231,11 +231,11 @@ const GroupSelector = ({ tags, options, label, primaryName, primaryValue, primar
 
     return (
         <div>
-            {label && <h2 htmlFor={primaryName}>{label}</h2>}
+            {label && <h2 htmlFor={targetGroupsName}>{label}</h2>}
 
             <div class="post-groups-selector">
                 <Button type="button" label="Select" onClick={() => setVisible(true)} />
-                <p class="post-groups-count">{onlyPostGroups(primarySelectedGroups).length + onlyPostGroups(secondarySelectedGroups).length} group(s) selected</p>
+                <p class="post-groups-count">{onlyPostGroups(targetGroupsSelected).length + onlyPostGroups(visibilityGroupsSelected).length} group(s) selected</p>
             </div>
 
             <Dialog 
@@ -245,12 +245,12 @@ const GroupSelector = ({ tags, options, label, primaryName, primaryValue, primar
                 loading={true}
                 className="bcc-group-selector__dialog"
             >
-                <div id="primary-groups-selector">
-                    { !isSettingsPage && ( <h3>Primary</h3> ) }
+                <div id="target-groups-selector">
+                    { !isSettingsPage && ( <h3>Target groups</h3> ) }
 
                     <div className="toggle-keys-buttons flex flex-wrap gap-2 mb-4 items-center">
-                        <Button type="button" icon="dashicons dashicons-plus" label="Expand All" onClick={() => setPrimaryExpandedKeys(getAllKeys())} />
-                        <Button type="button" icon="dashicons dashicons-minus" label="Collapse All" onClick={() => setPrimaryExpandedKeys({})} />
+                        <Button type="button" icon="dashicons dashicons-plus" label="Expand All" onClick={() => setTargetGroupsExpandedKeys(getAllKeys())} />
+                        <Button type="button" icon="dashicons dashicons-minus" label="Collapse All" onClick={() => setTargetGroupsExpandedKeys({})} />
                     </div>
 
                     <Tree 
@@ -260,25 +260,25 @@ const GroupSelector = ({ tags, options, label, primaryName, primaryValue, primar
                         filterDelay={100}
                         filterMode="lenient"
                         selectionMode="checkbox"
-                        selectionKeys={primarySelectedGroups}
-                        onSelectionChange={primaryOnSelectionChange}
-                        expandedKeys={primaryExpandedKeys}
-                        onToggle={primaryHandleToggle}
+                        selectionKeys={targetGroupsSelected}
+                        onSelectionChange={targetGroupsOnSelectionChange}
+                        expandedKeys={targetGroupsExpandedKeys}
+                        onToggle={targetGroupsHandleToggle}
                         emptyMessage="No groups match your search."
                     />
 
                     { !isSettingsPage && ( <div className="flex flex-wrap gap-2 mb-4 items-center">
                         <h4>Send Email:</h4>
-                        <SelectButton value={primarySendEmail} onChange={primaryEmailOnChange} options={sendEmailOptions} />
+                        <SelectButton value={sendEmailToTargetGroups} onChange={sendEmailToTargetGroupsOnChange} options={sendEmailOptions} />
                     </div> ) }
                 </div>
 
                 { !isSettingsPage && (
-                    <div id="secondary-groups-selector">
-                        <h3>Secondary</h3>
+                    <div id="visibility-groups-selector">
+                        <h3>Visibility groups</h3>
                         <div className="toggle-keys-buttons flex flex-wrap gap-2 mb-4 items-center">
-                            <Button type="button" icon="dashicons dashicons-plus" label="Expand All" onClick={() => setSecondaryExpandedKeys(getAllKeys())} />
-                            <Button type="button" icon="dashicons dashicons-minus" label="Collapse All" onClick={() => setSecondaryExpandedKeys({})} />
+                            <Button type="button" icon="dashicons dashicons-plus" label="Expand All" onClick={() => setVisibilityGroupsExpandedKeys(getAllKeys())} />
+                            <Button type="button" icon="dashicons dashicons-minus" label="Collapse All" onClick={() => setVisibilityGroupsExpandedKeys({})} />
                         </div>
 
                         <Tree 
@@ -288,28 +288,28 @@ const GroupSelector = ({ tags, options, label, primaryName, primaryValue, primar
                             filterDelay={100}
                             filterMode="lenient"
                             selectionMode="checkbox"
-                            selectionKeys={secondarySelectedGroups}
-                            onSelectionChange={secondaryOnSelectionChange}
-                            expandedKeys={secondaryExpandedKeys}
-                            onToggle={secondaryHandleToggle}
+                            selectionKeys={visibilityGroupsSelected}
+                            onSelectionChange={visibilityGroupsOnSelectionChange}
+                            expandedKeys={visibilityGroupsExpandedKeys}
+                            onToggle={visibilityGroupsHandleToggle}
                             emptyMessage="No groups match your search."
                         />
 
                         <div className="flex flex-wrap gap-2 mb-4 items-center">
                             <h4>Send Email:</h4>
-                            <SelectButton value={secondarySendEmail} onChange={secondaryEmailOnChange} options={sendEmailOptions} />
+                            <SelectButton value={sendEmailToVisibilityGroups} onChange={sendEmailToVisibilityGroupsOnChange} options={sendEmailOptions} />
                         </div>
                     </div>
                 ) }
             </Dialog>
 
-            <input type="hidden" name={primaryName} value={onlyPostGroups(primarySelectedGroups).join(',')} />
+            <input type="hidden" name={targetGroupsName} value={onlyPostGroups(targetGroupsSelected).join(',')} />
 
             { !isSettingsPage && (
                 <div>
-                    <input type="hidden" name={primaryEmailName} value={primarySendEmail} />
-                    <input type="hidden" name={secondaryName} value={onlyPostGroups(secondarySelectedGroups).join(',')} />
-                    <input type="hidden" name={secondaryEmailName} value={secondarySendEmail} />
+                    <input type="hidden" name={sendEmailToTargetGroupsName} value={sendEmailToTargetGroups} />
+                    <input type="hidden" name={visibilityGroupsName} value={onlyPostGroups(visibilityGroupsSelected).join(',')} />
+                    <input type="hidden" name={sendEmailToVisibilityGroupsName} value={sendEmailToVisibilityGroups} />
                 </div>
             ) }
         </div>

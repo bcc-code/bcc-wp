@@ -175,12 +175,12 @@ class BCC_Login_Feed {
             {
                 $visibility_groups = $this->_settings->full_content_access_groups;
 
-                // Add primary post groups
+                // Add target post groups
                 if (is_array($post_groups) && count($post_groups)) {
                     $visibility_groups = $this->_settings->array_union($post_groups, $visibility_groups);
                 }
 
-                // Add secondary post groups
+                // Add visibility post groups
                 if (is_array($post_visibility_groups) && count($post_visibility_groups)) {
                     $visibility_groups = $this->_settings->array_union($post_visibility_groups, $visibility_groups);
                 }
