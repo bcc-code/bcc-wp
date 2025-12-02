@@ -400,7 +400,6 @@ class BCC_Login_Settings_Provider {
         );
 
         if ($use_groups_settings) {
-
             $all_groups = $this->_coreapi->get_all_groups();
             $allowed_filtering_groups = array_values(array_filter($all_groups, function($group) {
                 return in_array($group->uid, $this->_settings->site_groups) || in_array($group->uid, $this->_settings->filtering_groups);
@@ -408,8 +407,6 @@ class BCC_Login_Settings_Provider {
             $allowed_notification_groups = array_values(array_filter($all_groups, function($group) {
                 return in_array($group->uid, $this->_settings->site_groups) || in_array($group->uid, $this->_settings->notification_groups);
             }));
-
-            
 
             add_settings_field(
                 'bcc_site_group_tags',
@@ -420,7 +417,7 @@ class BCC_Login_Settings_Provider {
                 array(
                     'name' => 'bcc_site_group_tags',
                     'value' => join(",", $this->_settings->site_group_tags),
-                    'description' => 'List of tags to retrieve groups for.'
+                    'description' => 'List of tags to retrieve groups for. When adding tags, remember to first save before being able to select the new groups under Site Groups.'
                 )
             );
 

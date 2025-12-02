@@ -16,12 +16,12 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
         return sendEmailToVisibilityGroupsValue ? sendEmailToVisibilityGroupsValue : sendEmailOptions[1]
     });
 
-    const [treeNodes] = useState(() => {
+    const getGroupsByTag = (selectedTags) => {
         const optionGroups = [];
 
         // Add items to groups based on tags
-        tags.forEach(tag => {
-            const items = options.filter(option => 
+        selectedTags.forEach(tag => {
+            const items = options.filter(option =>
                 option.tags && 
                 option.tags.indexOf(tag) != -1
             ).sort((a, b) => a.name > b.name ? 1 : -1);
@@ -43,12 +43,9 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
                 label: item.name
             }))
         }));
-    });
+    };
 
-    const [targetGroupsExpandedKeys, setTargetGroupsExpandedKeys] = useState({});
-    const [visibilityGroupsExpandedKeys, setVisibilityGroupsExpandedKeys] = useState({});
-
-    const [targetGroupsSelected, setTargetGroupsSelected] = useState(() => {
+    const getInitialTargetGroupsSelected = () => {
         // Initialize selected groups from value prop
         const selectedUids = targetGroupsValue ? targetGroupsValue.split(',') : [];
         const targetGroupsSelectedKeys = {};
@@ -78,9 +75,9 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
         });
 
         return targetGroupsSelectedKeys;
-    });
+    };
 
-    const [visibilityGroupsSelected, setVisibilityGroupsSelected] = useState(() => {
+    const getInitialVisibilityGroupsSelected = () => {
         // Initialize selected groups from value prop
         const selectedUids = visibilityGroupsValue ? visibilityGroupsValue.split(',') : [];
         const visibilityGroupsSelectedKeys = {};
@@ -110,7 +107,60 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
         });
 
         return visibilityGroupsSelectedKeys;
-    });
+    };
+
+    const [treeNodes, setTreeNodes] = useState(getGroupsByTag(tags));
+
+    // Rebuild treeNodes when tags change via external Tag Input component
+    useEffect(() => {
+        const rebuild = (currentTags) => {
+            const groupsByTag = getGroupsByTag(currentTags);
+            setTreeNodes(groupsByTag);
+
+            // Keep selected groups belonging to current tags
+            const currentGroupChildrenKeys = groupsByTag.flatMap(group => group.children.map(child => child.key));
+            
+            const keepSelectedGroups = (selectedGroups) => {
+                const newSelectedGroups = {};
+                Object.keys(selectedGroups).forEach(key => {
+                    if (currentGroupChildrenKeys.includes(key)) {
+                        newSelectedGroups[key] = selectedGroups[key];
+                    }
+                });
+                return newSelectedGroups;
+            };
+
+            setTargetGroupsSelected(keepSelectedGroups(targetGroupsSelected));
+            setVisibilityGroupsSelected(keepSelectedGroups(visibilityGroupsSelected));
+
+            // After tree rebuild, restore expanded keys based on current selections
+            setTargetGroupsExpandedKeys(getInitialTargetGroupsExpandedKeys());
+            setVisibilityGroupsExpandedKeys(getInitialVisibilityGroupsExpandedKeys());
+        };
+
+        const handler = (ev) => {
+            const { value } = ev.detail || {};
+
+            // Accept both array and comma-separated string
+            const nextTags = Array.isArray(value)
+                ? value
+                : (typeof value === 'string'
+                    ? value.split(',').map(t => t.trim()).filter(Boolean) 
+                    : tags
+                );
+
+            rebuild(nextTags);
+        };
+
+        window.addEventListener('bcc:tagsChanged', handler);
+        return () => window.removeEventListener('bcc:tagsChanged', handler);
+    }, [options, tags]);
+
+    const [targetGroupsExpandedKeys, setTargetGroupsExpandedKeys] = useState({});
+    const [visibilityGroupsExpandedKeys, setVisibilityGroupsExpandedKeys] = useState({});
+
+    const [targetGroupsSelected, setTargetGroupsSelected] = useState(getInitialTargetGroupsSelected());
+    const [visibilityGroupsSelected, setVisibilityGroupsSelected] = useState(getInitialVisibilityGroupsSelected());
 
     const targetGroupsOnSelectionChange = (e) => {
         setTargetGroupsSelected(e.value);
@@ -178,7 +228,7 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
         });
 
         return initialExpandedKeys;
-    }
+    };
 
     const getInitialVisibilityGroupsExpandedKeys = () => {
         const initialExpandedKeys = {};
@@ -194,7 +244,7 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
         });
 
         return initialExpandedKeys;
-    }
+    };
 
     const getAllKeys = () => {
         const allExpandedKeys = {};
@@ -227,7 +277,7 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
     const onlyPostGroups = (selectedGroups) => {
         const groupTags = options.map(option => option.uid);
         return Object.keys(selectedGroups).filter(uid => groupTags.includes(uid));
-    }
+    };
 
     return (
         <div>
