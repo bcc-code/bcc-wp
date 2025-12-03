@@ -15,6 +15,22 @@
     }
 }
 
+.group-selector-section {
+    padding: 1.25rem 1rem 0.5rem;
+}
+
+#target-groups-selector {
+    background: aliceblue;
+}
+
+#visibility-groups-selector {
+    margin-top: 2rem;
+}
+
+.group-selector-section h3 {
+    margin-top: 0;
+}
+
 .toggle-keys-buttons {
     font-size: 0.9rem;
 }
@@ -26,15 +42,6 @@
 }
 .toggle-keys-buttons .dashicons:before {
     vertical-align: middle;
-}
-
-#target-groups-selector {
-    background: aliceblue;
-    padding: 0.05rem 1rem;
-}
-
-#visibility-groups-selector {
-    margin-top: 2rem;
 }
 
 .p-selectbutton .p-button {

@@ -295,7 +295,7 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
                 loading={true}
                 className="bcc-group-selector__dialog"
             >
-                <div id="target-groups-selector">
+                <div id="target-groups-selector" class="group-selector-section">
                     { isSettingPostGroups && ( <h3>Target groups</h3> ) }
 
                     <div className="toggle-keys-buttons flex flex-wrap gap-2 mb-4 items-center">
@@ -317,14 +317,14 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
                         emptyMessage="No groups match your search."
                     />
 
-                    { isSettingPostGroups && ( <div className="flex flex-wrap gap-2 mb-4 items-center">
+                    { isSettingPostGroups && ( <div className="flex flex-wrap gap-2 items-center">
                         <h4>Send Email:</h4>
                         <SelectButton value={sendEmailToTargetGroups} onChange={sendEmailToTargetGroupsOnChange} options={sendEmailOptions} />
                     </div> ) }
                 </div>
 
                 { isSettingPostGroups && (
-                    <div id="visibility-groups-selector">
+                    <div id="visibility-groups-selector" class="group-selector-section">
                         <h3>Visibility groups</h3>
                         <div className="toggle-keys-buttons flex flex-wrap gap-2 mb-4 items-center">
                             <Button type="button" icon="dashicons dashicons-plus" label="Expand All" onClick={() => setVisibilityGroupsExpandedKeys(getAllKeys())} />
@@ -345,7 +345,7 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
                             emptyMessage="No groups match your search."
                         />
 
-                        <div className="flex flex-wrap gap-2 mb-4 items-center">
+                        <div className="flex flex-wrap gap-2 items-center">
                             <h4>Send Email:</h4>
                             <SelectButton value={sendEmailToVisibilityGroups} onChange={sendEmailToVisibilityGroupsOnChange} options={sendEmailOptions} />
                         </div>
