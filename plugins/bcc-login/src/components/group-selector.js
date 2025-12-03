@@ -5,7 +5,7 @@ import { Button } from 'primereact/button';
 import { SelectButton } from 'primereact/selectbutton';
 import { Tree } from 'primereact/tree';
 
-const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsValue, sendEmailToTargetGroupsName, sendEmailToTargetGroupsValue, visibilityGroupsName, visibilityGroupsValue, sendEmailToVisibilityGroupsName, sendEmailToVisibilityGroupsValue, isSettingsPage, onChange }) => {
+const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsValue, sendEmailToTargetGroupsName, sendEmailToTargetGroupsValue, visibilityGroupsName, visibilityGroupsValue, sendEmailToVisibilityGroupsName, sendEmailToVisibilityGroupsValue, isSettingPostGroups, onChange }) => {
     const [visible, setVisible] = useState(false);
 
     const sendEmailOptions = ['Yes', 'No'];
@@ -296,7 +296,7 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
                 className="bcc-group-selector__dialog"
             >
                 <div id="target-groups-selector">
-                    { !isSettingsPage && ( <h3>Target groups</h3> ) }
+                    { isSettingPostGroups && ( <h3>Target groups</h3> ) }
 
                     <div className="toggle-keys-buttons flex flex-wrap gap-2 mb-4 items-center">
                         <Button type="button" icon="dashicons dashicons-plus" label="Expand All" onClick={() => setTargetGroupsExpandedKeys(getAllKeys())} />
@@ -317,13 +317,13 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
                         emptyMessage="No groups match your search."
                     />
 
-                    { !isSettingsPage && ( <div className="flex flex-wrap gap-2 mb-4 items-center">
+                    { isSettingPostGroups && ( <div className="flex flex-wrap gap-2 mb-4 items-center">
                         <h4>Send Email:</h4>
                         <SelectButton value={sendEmailToTargetGroups} onChange={sendEmailToTargetGroupsOnChange} options={sendEmailOptions} />
                     </div> ) }
                 </div>
 
-                { !isSettingsPage && (
+                { isSettingPostGroups && (
                     <div id="visibility-groups-selector">
                         <h3>Visibility groups</h3>
                         <div className="toggle-keys-buttons flex flex-wrap gap-2 mb-4 items-center">
@@ -355,7 +355,7 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
 
             <input type="hidden" name={targetGroupsName} value={onlyPostGroups(targetGroupsSelected).join(',')} />
 
-            { !isSettingsPage && (
+            { isSettingPostGroups && (
                 <div>
                     <input type="hidden" name={sendEmailToTargetGroupsName} value={sendEmailToTargetGroups} />
                     <input type="hidden" name={visibilityGroupsName} value={onlyPostGroups(visibilityGroupsSelected).join(',')} />

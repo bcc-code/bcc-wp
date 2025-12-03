@@ -132,20 +132,6 @@ class BCC_Login_Visibility {
                 'type'    => 'array',
                 'default' => array(),
             );
-            $block->attributes['bccSendEmailToTargetGroups'] = array(
-                'type'    => 'string',
-                'default' => 'Yes',
-            );
-
-            $block->attributes['bccVisibilityGroups'] = array(
-                'type'    => 'array',
-                'default' => array(),
-            );
-
-            $block->attributes['bccSendEmailToVisibilityGroups'] = array(
-                'type'    => 'string',
-                'default' => 'No',
-            );
         }
     }
 

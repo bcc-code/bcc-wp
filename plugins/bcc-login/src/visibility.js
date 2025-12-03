@@ -177,6 +177,7 @@ registerPlugin("bcc-groups-2", {
         sendEmailToVisibilityGroups: meta.bcc_visibility_groups_email,
         options: window.siteGroups,
         tags: window.siteGroupTags,
+        isSettingPostGroups: true
       };
     }),
     withDispatch((dispatch) => {
@@ -229,15 +230,9 @@ addFilter(
                   tags={window.siteGroupTags}
                   options={window.siteGroups}
                   targetGroupsValue={(attributes.bccGroups ?? []).join(",")}
-                  sendEmailToTargetGroups={attributes.bcc_groups_email}
-                  visibilityGroupsValue={(attributes.bccVisibilityGroups ?? []).join(",")}
-                  sendEmailToVisibilityGroups={attributes.bcc_visibility_groups_email}
                   onChange={(targetGroupsValue, sendEmailToTargetGroups, visibilityGroupsValue, sendEmailToVisibilityGroups) => {
                     setAttributes({
                       bccGroups: targetGroupsValue,
-                      bccSendEmailToTargetGroups: sendEmailToTargetGroups,
-                      bccVisibilityGroups: visibilityGroupsValue,
-                      bccSendEmailToVisibilityGroups: sendEmailToVisibilityGroups,
                     });
                   }}
                 />

@@ -727,7 +727,6 @@ class BCC_Login_Settings_Provider {
                     visibilityGroupsName: '<?php echo isset($args['visibilityGroupsName']) ? $args['visibilityGroupsName'] : ''; ?>',
                     visibilityGroupsValue: <?php echo isset($args['visibilityGroupsValue']) ? json_encode($args['visibilityGroupsValue']) : "''"; ?>,
                     readonly: <?php echo isset($args['readonly']) && $args['readonly'] ? 'true' : 'false'; ?>,
-                    isSettingsPage: true
                 });
             });
         </script>
