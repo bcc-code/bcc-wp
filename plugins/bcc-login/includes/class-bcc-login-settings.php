@@ -18,7 +18,6 @@ class BCC_Login_Settings {
     public $site_group_tags = array();
     public $site_groups = array();
     public $visibility_groups = array();
-    public $notification_groups = array();
     public $notification_languages = array();
     public $notification_templates = array();
     public $notification_post_types = array();
@@ -149,11 +148,6 @@ class BCC_Login_Settings_Provider {
         $full_content_access_groups_option = get_option('bcc_full_content_access_groups');
         if ($full_content_access_groups_option) {
             $settings->full_content_access_groups = explode(",", $full_content_access_groups_option);
-        }
-
-        $notification_groups_option = get_option('bcc_notification_groups');
-        if ($notification_groups_option) {
-            $settings->notification_groups = explode(",", $notification_groups_option);
         }
 
         $notification_delay_option = get_option('bcc_notification_delay');
@@ -288,7 +282,6 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_site_groups' );
         register_setting( $this->option_name, 'bcc_visibility_groups' );
         register_setting( $this->option_name, 'bcc_disable_pubsub' );
-        register_setting( $this->option_name, 'bcc_notification_groups' );
         register_setting( $this->option_name, 'bcc_notification_languages' );
         register_setting( $this->option_name, 'bcc_notification_post_types' );
         register_setting( $this->option_name, 'bcc_notification_delay' );
@@ -395,10 +388,6 @@ class BCC_Login_Settings_Provider {
         if ($use_groups_settings) {
             $all_groups = $this->_coreapi->get_all_groups();
 
-            $allowed_notification_groups = array_values(array_filter($all_groups, function($group) {
-                return in_array($group->uid, $this->_settings->site_groups) || in_array($group->uid, $this->_settings->notification_groups);
-            }));
-
             add_settings_field(
                 'bcc_site_group_tags',
                 'Group Tags',
@@ -468,21 +457,6 @@ class BCC_Login_Settings_Provider {
                     'name' => 'bcc_notification_post_types',
                     'value' => join(",", $this->_settings->notification_post_types),
                     'description' => 'Post types that may receive notifications.'
-                )
-            );
-
-            add_settings_field(
-                'bcc_notification_groups',
-                'Notification Groups',
-                array( $this, 'render_group_selector_field' ),
-                $this->options_page,
-                'notifications',
-                array(
-                    'targetGroupsName' => 'bcc_notification_groups',
-                    'targetGroupsValue' => join(",", $this->_settings->notification_groups),
-                    'description' => 'Provide group uids for groups that may receive notifications.',
-                    'options' => $allowed_notification_groups,
-                    'tags' => $this->_settings->site_group_tags
                 )
             );
 

@@ -50,30 +50,24 @@ class BCC_Notifications
         $post_type = $post->post_type;
 
         // 1. Get groups for post
-        $target_groups = get_post_meta($post->ID, 'bcc_groups', false);
-        $target_groups_email = get_post_meta($post->ID, 'bcc_groups_email', true);
+        $post_target_groups = get_post_meta($post->ID, 'bcc_groups', false);
+        $send_email_to_target_groups = get_post_meta($post->ID, 'bcc_groups_email', true);
 
-        $visibility_groups = get_post_meta($post->ID, 'bcc_visibility_groups', false);
-        $visibility_groups_email = get_post_meta($post->ID, 'bcc_visibility_groups_email', true);
+        $post_visibility_groups = get_post_meta($post->ID, 'bcc_visibility_groups', false);
+        $send_email_to_visibility_groups = get_post_meta($post->ID, 'bcc_visibility_groups_email', true);
 
-        $visibility_groups = array();
+        $notification_groups = array();
 
-        if ($target_groups_email && $target_groups_email === 'Yes') {
-            $visibility_groups = $this->settings->array_union($visibility_groups, $target_groups);
+        if ($send_email_to_target_groups && $send_email_to_target_groups === 'Yes') {
+            $notification_groups = $post_target_groups;
         }
 
-        if ($visibility_groups_email && $visibility_groups_email === 'Yes') {
-            $visibility_groups = $this->settings->array_union($visibility_groups, $visibility_groups);
+        if ($send_email_to_visibility_groups && $send_email_to_visibility_groups === 'Yes') {
+            $notification_groups = $this->settings->array_union($notification_groups, $post_visibility_groups);
         }
 
-        // Notification logic goes here.
-        if (!empty($visibility_groups)) {
-            $notification_groups = array_intersect($visibility_groups, $this->settings->notification_groups);
-            if (empty($notification_groups)) {
-                error_log('DEBUG: ' . __METHOD__ . ' - No notification groups found for post: ' . $post_id);
-                return;
-            }
-
+        // Notification logic goes here
+        if (!empty($notification_groups)) {
             // 2. Get default language and url for site
             $site_language = get_bloginfo('language'); //E.g. "en-US"
             $site_url = get_site_url();
@@ -222,6 +216,9 @@ class BCC_Notifications
             } else {
                 error_log('DEBUG: ' . __METHOD__ . ' - Notification payload is EMPTY. Post ID: ' . $post_id);
             }
+        }
+        else {
+            error_log('DEBUG: ' . __METHOD__ . ' - No notification groups found for post: ' . $post_id);
         }
     }
 }
