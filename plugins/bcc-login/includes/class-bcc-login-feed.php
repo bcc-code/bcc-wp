@@ -189,9 +189,26 @@ class BCC_Login_Feed {
                 }
             }
 
-            if (in_array($post->post_type, $this->_settings->notification_post_types) && is_array($post_groups) && count($post_groups)) {
-                // Notification Groups: Groups that are checked on posts + are eligable for notification
-                $notification_groups = array_intersect($post_groups, $this->_settings->notification_groups);
+            // Notification Groups: Groups that are checked on posts to receive notification + are eligible for notification
+            if (in_array($post->post_type, $this->_settings->notification_post_types)) {
+                $notification_groups = array();
+                $should_receive_notifications = array();
+
+                // Get post target groups if they are marked to receive notifications
+                $should_post_target_groups_receive_notifications = get_post_meta($post->ID, 'bcc_groups_email', false);
+                if (is_array($post_target_groups) && $should_post_target_groups_receive_notifications) {
+                    $should_receive_notifications = $post_target_groups;
+                }
+
+                // Get post visibility groups if they are marked to receive notifications
+                $should_post_visibility_groups_receive_notifications = get_post_meta($post->ID, 'bcc_visibility_groups_email', false);
+                if (is_array($post_visibility_groups) && $should_post_visibility_groups_receive_notifications) {
+                    $should_receive_notifications = $this->_settings->array_union($should_receive_notifications, $post_visibility_groups);
+                }
+
+                // Intersect groups that should receive notifications with notification groups
+                // - that are eligible for notifications (based on settings)
+                $notification_groups = array_intersect($should_receive_notifications, $this->_settings->notification_groups);
 
                 foreach ($notification_groups as $group){
                     $result = $result . "\t\t<bcc:notificationGroup>" . $group . "</bcc:notificationGroup>\n";
