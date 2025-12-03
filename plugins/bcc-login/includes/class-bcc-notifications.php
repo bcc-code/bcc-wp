@@ -67,8 +67,7 @@ class BCC_Notifications
         }
 
         // Notification logic goes here.
-        if (isset($visibility_groups) && !empty($visibility_groups)) {
-
+        if (!empty($visibility_groups)) {
             $notification_groups = array_intersect($visibility_groups, $this->settings->notification_groups);
             if (empty($notification_groups)) {
                 error_log('DEBUG: ' . __METHOD__ . ' - No notification groups found for post: ' . $post_id);
@@ -91,26 +90,26 @@ class BCC_Notifications
 
                 // Check if post has been translated
                 $has_translations = apply_filters('wpml_element_has_translations', '', $post_id, $post_type);
+                
                 if ($has_translations) {
-
                     error_log('DEBUG: ' . __METHOD__ . ' - Post has translations. Post ID: ' . $post_id);
 
                     $trid = apply_filters('wpml_element_trid', NULL, $post_id, 'post_' . $post_type);
                     $translations = apply_filters('wpml_get_element_translations', NULL, $trid, 'post_' . $post_type);
 
                     // Determine if current post is the original
-                    $is_orginal = false;
+                    $is_original = false;
+
                     foreach ($translations as $lang_code => $details) {
                         if ($details->element_id == $post_id) {
-                            $is_orginal = $details->original == "1";
+                            $is_original = $details->original == "1";
                             break;
                         }
                     }
 
                     $is_multilinguage_post = true;
 
-                    if ($is_orginal) {
-
+                    if ($is_original) {
                         error_log('DEBUG: ' . __METHOD__ . ' - Post is original. Post ID: ' . $post_id);
 
                         foreach ($translations as $lang => $details) {
@@ -121,7 +120,9 @@ class BCC_Notifications
                             $language = str_replace('_', '-', $locale);
                             $language_code = $language_details["language_code"];
                             $excerpt = get_the_excerpt($translation);
+
                             do_action('wpml_switch_language', $language_code);
+
                             if ($translation->post_status == 'publish') {
                                 $payload[] = [
                                     'post' => $translation,
@@ -137,19 +138,16 @@ class BCC_Notifications
                             do_action('wpml_switch_language', $default_local);
                         }
                     } else {
-
                         error_log('DEBUG: ' . __METHOD__ . ' - Post is NOT original. Post ID: ' . $post_id);
 
                         // Don't process non-default languages of posts that have translations
                         // This is to avoid sending duplicate notifications
                         return;
                     }
-
                 }
             }
 
             if (!$is_multilinguage_post) {
-
                 error_log('DEBUG: ' . __METHOD__ . ' - Post is NOT multilingual. Post ID: ' . $post_id);
 
                 $excerpt = get_the_excerpt($post);
@@ -165,13 +163,14 @@ class BCC_Notifications
             }
 
             if (!empty($payload)) {
-
                 $inapp_payload = [];
                 $email_payload = [];
+
                 foreach ($payload as $item) {
                     $default_local = apply_filters('wpml_current_language', null);
                     $wp_lang = str_replace('-', '_', $item["language"]);
                     switch_to_locale($wp_lang);
+
                     if ($wpml_installed && isset($item["language_code"])) {
                         do_action('wpml_switch_language', $item["language_code"]);
                     }
@@ -183,7 +182,6 @@ class BCC_Notifications
                             : null);
 
                     if ($templates) {
-
                         $payload_lang = str_replace('nb-NO', 'no-NO', $item["language"]);
 
                         $inapp_payload[] = [
@@ -206,9 +204,11 @@ class BCC_Notifications
                             "body" => $email_body, //obsolete
                         ), $post_id);
                     }
+
                     if ($wpml_installed) {
                         do_action('wpml_switch_language', $default_local);
                     }
+
                     restore_previous_locale();
                 }
 

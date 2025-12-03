@@ -196,13 +196,13 @@ class BCC_Login_Feed {
 
                 // Get post target groups if they are marked to receive notifications
                 $should_post_target_groups_receive_notifications = get_post_meta($post->ID, 'bcc_groups_email', false);
-                if (is_array($post_target_groups) && $should_post_target_groups_receive_notifications) {
+                if (is_array($post_target_groups) && $should_post_target_groups_receive_notifications === 'Yes') {
                     $should_receive_notifications = $post_target_groups;
                 }
 
                 // Get post visibility groups if they are marked to receive notifications
                 $should_post_visibility_groups_receive_notifications = get_post_meta($post->ID, 'bcc_visibility_groups_email', false);
-                if (is_array($post_visibility_groups) && $should_post_visibility_groups_receive_notifications) {
+                if (is_array($post_visibility_groups) && $should_post_visibility_groups_receive_notifications === 'Yes') {
                     $should_receive_notifications = $this->_settings->array_union($should_receive_notifications, $post_visibility_groups);
                 }
 

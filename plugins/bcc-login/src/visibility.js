@@ -172,9 +172,9 @@ registerPlugin("bcc-groups-2", {
 
       return {
         targetGroupsValue: (meta.bcc_groups ?? []).join(","),
-        sendEmailToTargetGroups: meta.bcc_groups_email,
+        sendEmailToTargetGroups: meta.bcc_groups_email ?? 'Yes',
         visibilityGroupsValue: (meta.bcc_visibility_groups ?? []).join(","),
-        sendEmailToVisibilityGroups: meta.bcc_visibility_groups_email,
+        sendEmailToVisibilityGroups: meta.bcc_visibility_groups_email ?? 'No',
         options: window.siteGroups,
         tags: window.siteGroupTags,
         isSettingPostGroups: true
