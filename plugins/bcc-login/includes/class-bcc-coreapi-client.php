@@ -46,18 +46,6 @@ class BCC_Coreapi_Client
         foreach ($result as $group) {
             $groups[$group->uid] = $group;
         }
-
-        // $group_uids = $this->_settings->filtering_groups;
-        // $result = $this->fetch_groups($group_uids);
-        // foreach ($result as $group) {
-        //     $groups[$group->uid] = $group;
-        // }
-
-        // $group_uids = $this->_settings->notification_groups;
-        // $result = $this->fetch_groups($group_uids);
-        // foreach ($result as $group) {
-        //     $groups[$group->uid] = $group;
-        // }
     
         $this->_all_groups = array_values($groups);
 
@@ -98,8 +86,7 @@ class BCC_Coreapi_Client
         return $site_groups;
     }
 
-    function fetch_groups($group_uids)
-    {
+    function fetch_groups($group_uids) {
         $token = $this->get_coreapi_token();
 
         $qry = array(
@@ -138,11 +125,11 @@ class BCC_Coreapi_Client
                 $all_groups[$group->uid] = $group;
             }
         }
+
         return array_values($all_groups);
     }
 
-    function fetch_groups_by_tag($tag)
-    {
+    function fetch_groups_by_tag($tag) {
         $token = $this->get_coreapi_token();
 
         $qry = array(
@@ -168,7 +155,6 @@ class BCC_Coreapi_Client
         return $body->data;
     }
     
-
     function get_groups_for_user($user_uid) {
         $cache_key = 'coreapi_user_groups_'.$user_uid;
 
@@ -241,9 +227,9 @@ class BCC_Coreapi_Client
             return;
         }
 
-        $lock = new ExclusiveLock( "subscribe_person_updates" );
+        $lock = new ExclusiveLock("subscribe_person_updates");
 
-        if( $lock->lock( ) == FALSE ){
+        if ($lock->lock() == FALSE) {
             return;
         }
 

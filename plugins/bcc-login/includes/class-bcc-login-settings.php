@@ -25,7 +25,6 @@ class BCC_Login_Settings {
     public $notification_dry_run = 0;
     public $notification_delay = 0;
     public $full_content_access_groups = array();
-    public $filtering_groups = array();
     public $coreapi_audience;
     public $coreapi_base_url;
     public $disable_pubsub;
@@ -191,11 +190,6 @@ class BCC_Login_Settings_Provider {
             $settings->notification_templates[ $language ]['email_title'] = $email_title_option ? $email_title_option : ''; 
         }
 
-        $filtering_groups_option = get_option('bcc_filtering_groups');
-        if ($filtering_groups_option) {
-            $settings->filtering_groups = explode(",", $filtering_groups_option);
-        }
-
         $track_clicks_option = get_option('bcc_track_clicks', -1);
         if ($track_clicks_option != -1) {
             $settings->track_clicks = $track_clicks_option;
@@ -300,7 +294,6 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_notification_delay' );
         register_setting( $this->option_name, 'bcc_notification_dry_run' );
         register_setting( $this->option_name, 'bcc_full_content_access_groups' );
-        register_setting( $this->option_name, 'bcc_filtering_groups' );
         register_setting( $this->option_name, 'show_protected_menu_items' );
         register_setting( $this->option_name, 'bcc_track_clicks' );
         register_setting( $this->option_name, 'bcc_track_page_load' );
@@ -401,9 +394,7 @@ class BCC_Login_Settings_Provider {
 
         if ($use_groups_settings) {
             $all_groups = $this->_coreapi->get_all_groups();
-            $allowed_filtering_groups = array_values(array_filter($all_groups, function($group) {
-                return in_array($group->uid, $this->_settings->site_groups) || in_array($group->uid, $this->_settings->filtering_groups);
-            }));
+
             $allowed_notification_groups = array_values(array_filter($all_groups, function($group) {
                 return in_array($group->uid, $this->_settings->site_groups) || in_array($group->uid, $this->_settings->notification_groups);
             }));
@@ -460,21 +451,6 @@ class BCC_Login_Settings_Provider {
                     'targetGroupsValue' => join(",", $this->_settings->full_content_access_groups),
                     'description' => 'Groups that always can see published content regardless of group settings on content.',
                     'options' => $all_groups,
-                    'tags' => $this->_settings->site_group_tags
-                )
-            );
-        
-            add_settings_field(
-                'bcc_filtering_groups',
-                'Filtering Groups',
-                array( $this, 'render_group_selector_field' ),
-                $this->options_page,
-                'groups',
-                array(
-                    'targetGroupsName' => 'bcc_filtering_groups',
-                    'targetGroupsValue' => join(",", $this->_settings->filtering_groups),
-                    'description' => 'Provide group uids for groups that should be displayed in the filter widget.',
-                    'options' => $allowed_filtering_groups,
                     'tags' => $this->_settings->site_group_tags
                 )
             );

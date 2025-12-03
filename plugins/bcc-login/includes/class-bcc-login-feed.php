@@ -189,7 +189,7 @@ class BCC_Login_Feed {
                 }
             }
 
-            // Notification Groups: Groups that are checked on posts to receive notification + are eligible for notification
+            // Notification Groups: groups that are checked on posts to receive notification + are eligible for notification
             if (in_array($post->post_type, $this->_settings->notification_post_types)) {
                 $notification_groups = array();
                 $should_receive_notifications = array();
@@ -210,7 +210,7 @@ class BCC_Login_Feed {
                 // - that are eligible for notifications (based on settings)
                 $notification_groups = array_intersect($should_receive_notifications, $this->_settings->notification_groups);
 
-                foreach ($notification_groups as $group){
+                foreach ($notification_groups as $group) {
                     $result = $result . "\t\t<bcc:notificationGroup>" . $group . "</bcc:notificationGroup>\n";
                 }
             }

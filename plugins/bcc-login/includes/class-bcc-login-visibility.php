@@ -576,7 +576,7 @@ class BCC_Login_Visibility {
                         )
                     )
                 );
-            }    
+            }
 
             $rules = array(
                 'relation' => 'AND',
@@ -720,82 +720,88 @@ class BCC_Login_Visibility {
         return $this->_coreapi->get_groups_for_user($person_uid);
     }
 
-    private function get_user_bcc_filtering_groups_list() {
+    private function get_roles_tag_groups() {
         $site_groups = $this->_coreapi->get_translated_site_groups();
-        $filtering_groups = array();
+        $roles_tag_groups = array();
 
-        // Take only filtering groups from site groups 
-        if (!empty($this->_settings->filtering_groups)) {
-            foreach ($site_groups as $site_group) {
-                if (in_array($site_group->uid, $this->_settings->filtering_groups)) {
-                    $filtering_groups[] = $site_group;
-                }
+        // Take only site groups belonging to "Roles" group tag
+        foreach ($site_groups as $site_group) {
+            if (in_array('Roles', $site_group->tags)) {
+                $roles_tag_groups[] = $site_group;
             }
+        }
+
+        // Sort by name
+        usort($roles_tag_groups, fn($a, $b) => $a->name <=> $b->name);
+
+        return $roles_tag_groups;
+    }
+
+    private function get_filtering_groups_list() {
+        $roles_tag_groups = $this->get_roles_tag_groups();
+
+        if ( current_user_can( 'edit_posts' ) ) {
+            // Show all site groups for admins
+            return $roles_tag_groups;
+        }
+
+        $user_groups = $this->get_current_user_groups();
+
+        if (!$user_groups) {
+            return array();
         }
 
         $user_site_groups = array();
 
-        if ( current_user_can( 'edit_posts' ) ) {
-            // Show all site groups for admins
-            $user_site_groups = $filtering_groups;
-        }
-        else {
-            $user_groups = $this->get_current_user_groups();
-            if (!$user_groups) {
-                return array();
-            }
-            
-            foreach ($filtering_groups as $site_group) {
-                if (in_array($site_group->uid, $user_groups)) {
-                    $user_site_groups[] = $site_group;
-                }
+        foreach ($roles_tag_groups as $group) {
+            if (in_array($group->uid, $user_groups)) {
+                $user_site_groups[] = $group;
             }
         }
 
-        if (!is_array($user_site_groups))
+        return $user_site_groups;
+    }
+
+    private function get_user_groups_list() {
+        $roles_tag_groups = $this->get_roles_tag_groups();
+        $user_groups = $this->get_current_user_groups();
+
+        if (!$user_groups) {
             return array();
+        }
 
-        // Sort by name
-        usort($user_site_groups, fn($a, $b) => $a->name <=> $b->name);
+        $user_site_groups = array();
+
+        foreach ($roles_tag_groups as $group) {
+            if (in_array($group->uid, $user_groups)) {
+                $user_site_groups[] = $group;
+            }
+        }
 
         return $user_site_groups;
     }
 
     public function get_number_of_user_groups() {
-        return count($this->get_user_bcc_filtering_groups_list());
+        return count($this->get_user_groups_list());
     }
 
     public function bcc_my_roles() {
-        $user_groups = $this->get_current_user_groups();
-        $central_groups = $this->_settings->filtering_groups;
-        $site_groups = $this->_coreapi->get_translated_site_groups();
-        $central_user_groups = array();
+        $user_site_groups = $this->get_user_groups_list();
 
-        foreach ($site_groups as $site_group) {
-            if (in_array($site_group->uid, $user_groups)
-                && in_array($site_group->uid, $central_groups)
-            ) {
-                $central_user_groups[] = $site_group;
-            }
-        }
-
-        // Sort by name
-        usort($central_user_groups, fn($a, $b) => $a->name <=> $b->name);
-
-        if (empty($central_user_groups)) {
+        if (empty($user_site_groups)) {
             return '';
         }
 
         $html = '<div id="my-roles-widget">';
 
             $html .= '<section class="roles-list">';
-                $html .= '<span>' . (count($central_user_groups) == 1 
+                $html .= '<span>' . (count($user_site_groups) == 1 
                     ? __('Min rolle:', 'bcc-login')
                     : __('Mine roller:', 'bcc-login')
                 ) . '</span>';
                 $html .= '<div class="my-roles-tags">';
 
-                    foreach ($central_user_groups as $group) {
+                    foreach ($user_site_groups as $group) {
                         $html .= '<a class="bcc-badge bcc-badge-sm bcc-badge-custom" href="?target-groups[]=' . $group->uid . '"><i class="material-symbols-rounded">info</i><span>' . $group->name . '</span></a>';
                     }
                 
@@ -1087,7 +1093,7 @@ class BCC_Login_Visibility {
     }
 
     function target_groups_filter_widget() {
-        $user_site_groups = $this->get_user_bcc_filtering_groups_list();
+        $filtering_groups = $this->get_filtering_groups_list();
         $queried_target_groups = isset($_GET['target-groups']) ? $_GET['target-groups'] : array();
 
         $html = '<div class="bcc-filter">' .
@@ -1101,10 +1107,10 @@ class BCC_Login_Visibility {
                 '<label for="all-members">' . __( 'Alle medlemmer', 'bcc-login' )  . '</label>' .
             '</li>';
 
-        foreach ($user_site_groups as $group) :
+        foreach ($filtering_groups as $group) :
             $html .= '<li class="bcc-checkbox-wrapper">' .
                 '<input type="checkbox" class="bcc-checkbox" id="'. $group->uid .'" value="'. $group->uid .'" name="target-groups[]"' . (in_array($group->uid, $queried_target_groups) ? 'checked' : '') . '/>' .
-                '<label for="' . $group->uid . '">' . __( $group->name, 'bcc-login' )  . '</label>' .
+                '<label for="' . $group->uid . '">' . $group->name . '</label>' .
             '</li>';
         endforeach;
         $html .= '</ul>';
@@ -1136,21 +1142,31 @@ class BCC_Login_Visibility {
 
         $visibility_groups = $this->_settings->array_union($post_target_groups, $post_visibility_groups);
 
-        $filtering_groups = $this->_settings->filtering_groups;
-        $shown_groups = array_intersect($visibility_groups, $filtering_groups);
+        $roles_tag_groups = $this->get_roles_tag_groups();
+
+        foreach ($roles_tag_groups as $key => $group) {
+            if (!in_array($group->uid, $visibility_groups)) {
+                unset($roles_tag_groups[$key]);
+            }
+        }
 
         if ($only_user_groups) {
             $user_groups = $this->get_current_user_groups();
-            $shown_groups = array_intersect($shown_groups, $user_groups);
+
+            foreach ($roles_tag_groups as $key => $group) {
+                if (!in_array($group->uid, $user_groups)) {
+                    unset($roles_tag_groups[$key]);
+                }
+            }
         }
 
-        $shown_groups = array_slice($shown_groups, 0, $attributes['limit']);
+        $roles_tag_groups = array_slice($roles_tag_groups, 0, $attributes['limit']);
 
         $html = '';
 
-        foreach ($shown_groups as $group) {
-            $link = $attributes['link'] . '?target-groups[]=' . $group;
-            $html .= '<a class="bcc-badge bcc-badge-sm bcc-badge-custom" href="'. $link . '"><i class="material-symbols-rounded">info</i><span>' . $this->get_group_name($group) . '</span></a>';
+        foreach ($roles_tag_groups as $group) {
+            $link = $attributes['link'] . '?target-groups[]=' . $group->uid;
+            $html .= '<a class="bcc-badge bcc-badge-sm bcc-badge-custom" href="'. $link . '"><i class="material-symbols-rounded">info</i><span>' . $group->name . '</span></a>';
         }
 
         return $html;
