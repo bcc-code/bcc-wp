@@ -108,13 +108,13 @@ class BCC_Login_Feed {
         return $result;
     }
 
-    function add_custom_elements_to_items($the_list){
+    function add_custom_elements_to_items($the_list) {
        $this->add_visibility_and_groups_to_items($the_list); 
        $this->add_post_type_to_items($the_list);
        $this->add_original_language_to_items($the_list);
     }
 
-    function add_visibility_and_groups_to_items($the_list){
+    function add_visibility_and_groups_to_items($the_list) {
         global $post;
         $visibility = $this->_settings->default_visibility;
 
@@ -124,10 +124,11 @@ class BCC_Login_Feed {
 
         if ( !empty($this->_settings->site_groups)) {
             // Get groups that are checked on post
-            $post_groups = get_post_meta($post->ID, 'bcc_groups', false);
+            $post_target_groups = get_post_meta($post->ID, 'bcc_groups', false);
+            $post_visibility_groups = get_post_meta($post->ID, 'bcc_visibility_groups', false);
 
             // Make sure posts with a group set don't have public visibility
-            if (!empty($post_groups))
+            if ( !empty($post_target_groups) || !empty($post_visibility_groups) )
             {
                 if ($visibility == BCC_Login_Visibility::VISIBILITY_PUBLIC) {
                     $visibility = BCC_Login_Visibility::VISIBILITY_SUBSCRIBER;
@@ -135,7 +136,7 @@ class BCC_Login_Feed {
             }
         }
 
-        $this->add_visibility_to_items($the_list,$visibility);
+        $this->add_visibility_to_items($the_list, $visibility);
         $this->add_groups_to_items($the_list, $visibility);
     }
 
@@ -143,17 +144,15 @@ class BCC_Login_Feed {
     // - public (no authentication required)
     // - user (requires authentication)
     // - internal:{district name} (requires affiliation with organization in specified district)
-    function add_visibility_to_items ($the_list, $visibility) {
+    function add_visibility_to_items($the_list, $visibility) {
         if ($visibility == BCC_Login_Visibility::VISIBILITY_PUBLIC){
             echo "<bcc:visibility>public</bcc:visibility>\n"; 
-
         } else if ($visibility == BCC_Login_Visibility::VISIBILITY_SUBSCRIBER){
             echo "<bcc:visibility>user</bcc:visibility>\n"; 
         } else if ($visibility == BCC_Login_Visibility::VISIBILITY_MEMBER){
             echo "<bcc:visibility>internal:" . $this->_settings->member_organization_name . "</bcc:visibility>\n"; 
         }
     }
-
     
     // Include group uid for each group that the post is visible for or targetted at (notification group)
     // E.g. 
@@ -166,21 +165,21 @@ class BCC_Login_Feed {
 
         if ( !empty($this->_settings->site_groups) || !empty($this->_settings->full_content_access_groups) ) {
             // Get groups that are checked on post
-            $post_groups = get_post_meta($post->ID, 'bcc_groups', false);
+            $post_target_groups = get_post_meta($post->ID, 'bcc_groups', false);
             $post_visibility_groups = get_post_meta($post->ID, 'bcc_visibility_groups', false);
 
-            // Visibility Groups: Groups that are checked on post
-            // + groups with access to all posts (only if there are groups checked on post)
+            // Visibility Groups: groups with access to all posts + target groups + visibility groups that are checked on post
             if ($visibility != BCC_Login_Visibility::VISIBILITY_PUBLIC)
             {
+                // Start with groups that have full content access
                 $visibility_groups = $this->_settings->full_content_access_groups;
 
-                // Add target post groups
-                if (is_array($post_groups) && count($post_groups)) {
-                    $visibility_groups = $this->_settings->array_union($post_groups, $visibility_groups);
+                // Add post target groups
+                if (is_array($post_target_groups) && count($post_target_groups)) {
+                    $visibility_groups = $this->_settings->array_union($post_target_groups, $visibility_groups);
                 }
 
-                // Add visibility post groups
+                // Add post visibility groups
                 if (is_array($post_visibility_groups) && count($post_visibility_groups)) {
                     $visibility_groups = $this->_settings->array_union($post_visibility_groups, $visibility_groups);
                 }
