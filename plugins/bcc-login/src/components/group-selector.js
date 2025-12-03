@@ -296,7 +296,7 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
                 className="bcc-group-selector__dialog"
             >
                 <div id="target-groups-selector" class="group-selector-section">
-                    { isSettingPostGroups && ( <h3>Target groups</h3> ) }
+                    { isSettingPostGroups && ( <h3>Krever handling</h3> ) }
 
                     <div className="toggle-keys-buttons flex flex-wrap gap-2 mb-4 items-center">
                         <Button type="button" icon="dashicons dashicons-plus" label="Expand All" onClick={() => setTargetGroupsExpandedKeys(getAllKeys())} />
@@ -325,7 +325,7 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
 
                 { isSettingPostGroups && (
                     <div id="visibility-groups-selector" class="group-selector-section">
-                        <h3>Visibility groups</h3>
+                        <h3>Til informasjon</h3>
                         <div className="toggle-keys-buttons flex flex-wrap gap-2 mb-4 items-center">
                             <Button type="button" icon="dashicons dashicons-plus" label="Expand All" onClick={() => setVisibilityGroupsExpandedKeys(getAllKeys())} />
                             <Button type="button" icon="dashicons dashicons-minus" label="Collapse All" onClick={() => setVisibilityGroupsExpandedKeys({})} />

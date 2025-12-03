@@ -931,11 +931,11 @@ class BCC_Login_Visibility {
             return $columns;
         }
 
-        $columns['post_groups'] = __( 'Target Groups', 'bcc-login' );
-        $columns['post_groups_name'] = __( 'Target Groups', 'bcc-login' );
+        $columns['post_groups'] = __( 'Krever handling', 'bcc-login' );
+        $columns['post_groups_name'] = __( 'Krever handling', 'bcc-login' );
 
-        $columns['post_visibility_groups'] = __( 'Visibility Groups', 'bcc-login' );
-        $columns['post_visibility_groups_name'] = __( 'Visibility Groups', 'bcc-login' );
+        $columns['post_visibility_groups'] = __( 'Til informasjon', 'bcc-login' );
+        $columns['post_visibility_groups_name'] = __( 'Til informasjon', 'bcc-login' );
 
         return $columns;
     }
