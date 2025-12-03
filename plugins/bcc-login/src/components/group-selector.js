@@ -5,7 +5,7 @@ import { Button } from 'primereact/button';
 import { SelectButton } from 'primereact/selectbutton';
 import { Tree } from 'primereact/tree';
 
-const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsValue, sendEmailToTargetGroupsName, sendEmailToTargetGroupsValue, visibilityGroupsName, visibilityGroupsValue, sendEmailToVisibilityGroupsName, sendEmailToVisibilityGroupsValue, isSettingPostGroups, onChange }) => {
+const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsValue, sendEmailToTargetGroupsValue, visibilityGroupsName, visibilityGroupsValue, sendEmailToVisibilityGroupsValue, isSettingPostGroups, onChange }) => {
     const [visible, setVisible] = useState(false);
 
     const sendEmailOptions = ['Yes', 'No'];
@@ -357,9 +357,9 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
 
             { isSettingPostGroups && (
                 <div>
-                    <input type="hidden" name={sendEmailToTargetGroupsName} value={sendEmailToTargetGroups} />
+                    <input type="hidden" value={sendEmailToTargetGroups} />
                     <input type="hidden" name={visibilityGroupsName} value={onlyPostGroups(visibilityGroupsSelected).join(',')} />
-                    <input type="hidden" name={sendEmailToVisibilityGroupsName} value={sendEmailToVisibilityGroups} />
+                    <input type="hidden" value={sendEmailToVisibilityGroups} />
                 </div>
             ) }
         </div>

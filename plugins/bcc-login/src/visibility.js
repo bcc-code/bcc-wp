@@ -113,9 +113,9 @@ registerPlugin("bcc-groups-2", {
 
       return {
         targetGroupsValue: (meta.bcc_groups ?? []).join(","),
-        sendEmailToTargetGroups: meta.bcc_groups_email ?? 'Yes',
+        sendEmailToTargetGroupsValue: meta.bcc_groups_email ?? 'Yes',
         visibilityGroupsValue: (meta.bcc_visibility_groups ?? []).join(","),
-        sendEmailToVisibilityGroups: meta.bcc_visibility_groups_email ?? 'No',
+        sendEmailToVisibilityGroupsValue: meta.bcc_visibility_groups_email ?? 'No',
         options: window.siteGroups,
         tags: window.siteGroupTags,
         isSettingPostGroups: true
@@ -124,13 +124,13 @@ registerPlugin("bcc-groups-2", {
     withDispatch((dispatch) => {
       const { editPost } = dispatch("core/editor");
       return {
-        onChange(targetGroupsValue, sendEmailToTargetGroups, visibilityGroupsValue, sendEmailToVisibilityGroups) {
+        onChange(targetGroupsValue, sendEmailToTargetGroupsValue, visibilityGroupsValue, sendEmailToVisibilityGroupsValue) {
           editPost({
             meta: {
               bcc_groups: targetGroupsValue,
-              bcc_groups_email: sendEmailToTargetGroups,
+              bcc_groups_email: sendEmailToTargetGroupsValue,
               bcc_visibility_groups: visibilityGroupsValue,
-              bcc_visibility_groups_email: sendEmailToVisibilityGroups,
+              bcc_visibility_groups_email: sendEmailToVisibilityGroupsValue,
             },
           });
         },
