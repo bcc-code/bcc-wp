@@ -132,7 +132,7 @@ class BCC_Login_Visibility {
                 'type'    => 'array',
                 'default' => array(),
             );
-            $block->attributes['bccGroupsEmail'] = array(
+            $block->attributes['bccSendEmailToTargetGroups'] = array(
                 'type'    => 'string',
                 'default' => 'Yes',
             );
@@ -210,10 +210,10 @@ class BCC_Login_Visibility {
         }
 
         if ( !empty($this->_settings->site_groups) ) {
-            $post_groups = get_post_meta($post->ID, 'bcc_groups', false);
-            $visibility_post_groups = get_post_meta($post->ID, 'bcc_visibility_groups', false);
+            $post_target_groups = get_post_meta($post->ID, 'bcc_groups', false);
+            $post_visibility_groups = get_post_meta($post->ID, 'bcc_visibility_groups', false);
 
-            if (!$post_groups && !$visibility_post_groups) {
+            if (!$post_target_groups && !$post_visibility_groups) {
                 return;
             }
 
@@ -227,7 +227,7 @@ class BCC_Login_Visibility {
                 return $this->not_allowed_to_view_page($visited_url);
             }
 
-            $visibility_groups = $this->_settings->array_union($post_groups, $visibility_post_groups);
+            $visibility_groups = $this->_settings->array_union($post_target_groups, $post_visibility_groups);
             $visibility_groups = $this->_settings->array_union($visibility_groups, $this->_settings->full_content_access_groups);
 
             if (count(array_intersect($visibility_groups, $user_groups)) == 0)
@@ -276,19 +276,18 @@ class BCC_Login_Visibility {
 
                     // Check user groups
                     if ( !empty($this->_settings->site_groups) && !current_user_can( 'edit_posts' ) ) {
-                        $post_groups = get_post_meta( $item['id'] , 'bcc_groups', false );
-                        $visibility_post_groups = get_post_meta( $item['id'] , 'bcc_visibility_groups', false );
+                        $post_target_groups = get_post_meta( $item['id'] , 'bcc_groups', false );
+                        $post_visibility_groups = get_post_meta( $item['id'] , 'bcc_visibility_groups', false );
 
-                        $visibility_groups = $this->_settings->array_union($post_groups, $visibility_post_groups);
-    
+                        $visibility_groups = $this->_settings->array_union($post_target_groups, $post_visibility_groups);
+
                         if ($visibility_groups && !$user_groups) {
                             continue;
                         }
 
                         $visibility_groups = $this->_settings->array_union($visibility_groups, $this->_settings->full_content_access_groups);
-            
-                        if ( count(array_intersect($visibility_groups, $user_groups)) == 0 )
-                        {
+
+                        if ( count(array_intersect($visibility_groups, $user_groups)) == 0 ) {
                             continue;
                         }
                     }
@@ -320,10 +319,10 @@ class BCC_Login_Visibility {
     
                 // Check user groups
                 if ( !empty($this->_settings->site_groups) && !current_user_can( 'edit_posts' ) ) {
-                    $post_groups = $response['meta']['bcc_groups'];
-                    $visibility_post_groups = $response['meta']['bcc_visibility_groups'];
+                    $post_target_groups = $response['meta']['bcc_groups'];
+                    $post_visibility_groups = $response['meta']['bcc_visibility_groups'];
 
-                    $visibility_groups = $this->_settings->array_union($post_groups, $visibility_post_groups);
+                    $visibility_groups = $this->_settings->array_union($post_target_groups, $post_visibility_groups);
 
                     if ( $visibility_groups && !$user_groups ) {
                         return $this->not_allowed_to_view_page();
@@ -331,8 +330,7 @@ class BCC_Login_Visibility {
 
                     $visibility_groups = $this->_settings->array_union($visibility_groups, $this->_settings->full_content_access_groups);
 
-                    if ( count(array_intersect($visibility_groups, $user_groups)) == 0 )
-                    {
+                    if ( count(array_intersect($visibility_groups, $user_groups)) == 0 ) {
                         return $this->not_allowed_to_view_page();
                     }
                 }
@@ -619,11 +617,11 @@ class BCC_Login_Visibility {
      * @return WP_Query
      */
     function filter_by_queried_target_groups($query) {
-        $target_groups = wp_doing_ajax()
+        $post_target_groups = wp_doing_ajax()
             ? (isset($_POST['target_groups']) ? $_POST['target_groups'] : null)
             : (isset($_GET['target-groups']) ? $_GET['target-groups'] : null);
 
-        if (!$target_groups)
+        if (!$post_target_groups)
             return;
 
         if (wp_doing_ajax()) {
@@ -643,17 +641,17 @@ class BCC_Login_Visibility {
             'relation' => 'OR',
             array(
                 'key'     => 'bcc_groups',
-                'value'   => $target_groups,
+                'value'   => $post_target_groups,
                 'compare' => 'IN'
             ),
             array(
                 'key'     => 'bcc_visibility_groups',
-                'value'   => $target_groups,
+                'value'   => $post_target_groups,
                 'compare' => 'IN'
             )
         );
 
-        if (in_array('all-members', $target_groups)) {
+        if (in_array('all-members', $post_target_groups)) {
             $meta_query = array(
                 'relation' => 'OR',
                 $meta_query,
@@ -940,18 +938,18 @@ class BCC_Login_Visibility {
 
     // Quick Edit
     function add_post_audience_column( $columns ) {
-        $headingAudience = __( 'Post Audience', 'bcc-login' );
+        $columns['post_audience'] = __( 'Post Audience', 'bcc-login' );
+        $columns['post_audience_name'] = __( 'Post Audience', 'bcc-login' );
 
-        $columns['post_audience'] = $headingAudience;
-        $columns['post_audience_name'] = $headingAudience;
-
-        if (!empty($this->_settings->site_groups)) {
-            $columns['post_groups'] = __( 'Target Groups', 'bcc-login' );
-            $columns['post_groups_name'] = __( 'Target Groups', 'bcc-login' );
-
-            $columns['post_visibility_groups'] = __( 'Visibility Groups', 'bcc-login' );
-            $columns['post_visibility_groups_name'] = __( 'Visibility Groups', 'bcc-login' );
+        if (empty($this->_settings->site_groups)) {
+            return $columns;
         }
+
+        $columns['post_groups'] = __( 'Target Groups', 'bcc-login' );
+        $columns['post_groups_name'] = __( 'Target Groups', 'bcc-login' );
+
+        $columns['post_visibility_groups'] = __( 'Visibility Groups', 'bcc-login' );
+        $columns['post_visibility_groups_name'] = __( 'Visibility Groups', 'bcc-login' );
 
         return $columns;
     }
@@ -976,21 +974,21 @@ class BCC_Login_Visibility {
         }
 
         if ($column_name == 'post_groups') {
-            $target_groups = get_post_meta( $id, 'bcc_groups', false );
-            $visible_target_groups = array_intersect($target_groups, $this->_settings->site_groups);
+            $post_target_groups = get_post_meta( $id, 'bcc_groups', false );
+            $active_target_groups = array_intersect($post_target_groups, $this->_settings->site_groups);
 
-            if (!$visible_target_groups) {
+            if (!$active_target_groups) {
                 return;
             }
 
-            echo join(",", $visible_target_groups);
+            echo join(",", $active_target_groups);
         }
 
         if ($column_name == 'post_visibility_groups') {
-            $visibility_groups = get_post_meta( $id, 'bcc_visibility_groups', false );
+            $post_visibility_groups = get_post_meta( $id, 'bcc_visibility_groups', false );
 
-            if ($visibility_groups) {
-                $groups_string = join(",", $visibility_groups);
+            if ($post_visibility_groups) {
+                $groups_string = join(",", $post_visibility_groups);
                 echo $groups_string;
             }
 
@@ -998,16 +996,16 @@ class BCC_Login_Visibility {
         }
 
         if ($column_name == 'post_groups_name') {
-            $target_groups = get_post_meta( $id, 'bcc_groups', false );
-            $visible_target_groups = array_intersect($target_groups, $this->_settings->site_groups);
+            $post_target_groups = get_post_meta( $id, 'bcc_groups', false );
+            $active_target_groups = array_intersect($post_target_groups, $this->_settings->site_groups);
 
-            if (!$visible_target_groups) {
+            if (!$active_target_groups) {
                 return;
             }
 
             $group_names = array();
 
-            foreach ($visible_target_groups as $post_group) {
+            foreach ($active_target_groups as $post_group) {
                 array_push($group_names, $this->get_group_name($post_group));
             }
 
@@ -1015,16 +1013,16 @@ class BCC_Login_Visibility {
         }
 
         if ($column_name == 'post_visibility_groups_name') {
-            $visibility_groups = get_post_meta( $id, 'bcc_visibility_groups', false );
-            $visible_visibility_groups = array_intersect($visibility_groups, $this->_settings->site_groups);
+            $post_visibility_groups = get_post_meta( $id, 'bcc_visibility_groups', false );
+            $active_visibility_groups = array_intersect($post_visibility_groups, $this->_settings->site_groups);
 
-            if (!$visible_visibility_groups) {
+            if (!$active_visibility_groups) {
                 return;
             }
 
             $group_names = array();
 
-            foreach ($visible_visibility_groups as $post_group) {
+            foreach ($active_visibility_groups as $post_group) {
                 array_push($group_names, $this->get_group_name($post_group));
             }
 
@@ -1147,10 +1145,10 @@ class BCC_Login_Visibility {
         // Convert to actual boolean
         $only_user_groups = filter_var($attributes['only_user_groups'], FILTER_VALIDATE_BOOLEAN);
 
-        $post_groups = get_post_meta($post_id, 'bcc_groups', false);
-        $visibility_post_groups = get_post_meta($post_id, 'bcc_visibility_groups', false);
+        $post_target_groups = get_post_meta($post_id, 'bcc_groups', false);
+        $post_visibility_groups = get_post_meta($post_id, 'bcc_visibility_groups', false);
 
-        $visibility_groups = $this->_settings->array_union($post_groups, $visibility_post_groups);
+        $visibility_groups = $this->_settings->array_union($post_target_groups, $post_visibility_groups);
 
         $filtering_groups = $this->_settings->filtering_groups;
         $shown_groups = array_intersect($visibility_groups, $filtering_groups);

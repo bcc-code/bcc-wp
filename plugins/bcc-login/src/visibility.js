@@ -235,7 +235,7 @@ addFilter(
                   onChange={(targetGroupsValue, sendEmailToTargetGroups, visibilityGroupsValue, sendEmailToVisibilityGroups) => {
                     setAttributes({
                       bccGroups: targetGroupsValue,
-                      bccGroupsEmail: sendEmailToTargetGroups,
+                      bccSendEmailToTargetGroups: sendEmailToTargetGroups,
                       bccVisibilityGroups: visibilityGroupsValue,
                       bccSendEmailToVisibilityGroups: sendEmailToVisibilityGroups,
                     });
