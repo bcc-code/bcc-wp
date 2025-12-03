@@ -76,65 +76,6 @@ function VisibilityOptions({
   );
 }
 
-function GroupsOptions({
-  heading,
-  siteGroups,
-  selectedGroups,
-  instanceId,
-  onUpdateGroup,
-}) {
-  const [searchInput, setSearchInput] = useState("");
-
-  if (!siteGroups || siteGroups.length === 0) {
-    return;
-  }
-
-  // Sort by name
-  siteGroups.sort((a, b) => {
-    return a.name.localeCompare(b.name);
-  });
-
-  return (
-    <div>
-      {heading && <h2>{heading}</h2>}
-      <SearchControl
-        className="bcc-groups__search"
-        value={searchInput}
-        onChange={(e) => {
-          setSearchInput(e);
-
-          if (e == "") {
-            filteredSiteGroups = siteGroups;
-          } else {
-            filteredSiteGroups = siteGroups.filter((group) =>
-              group.name.toLowerCase().includes(e.toLowerCase())
-            );
-          }
-        }}
-      />
-      {filteredSiteGroups.map((group) => (
-        <CheckboxControl
-          className="bcc-groups__checkbox"
-          label={group.name}
-          onChange={(event) => {
-            const index = selectedGroups
-              ? selectedGroups.indexOf(group.uid)
-              : -1;
-            const newGroups = JSON.parse(JSON.stringify(selectedGroups));
-            if (index === -1) {
-              newGroups.push(group.uid);
-            } else {
-              newGroups.splice(index, 1);
-            }
-            onUpdateGroup(newGroups);
-          }}
-          checked={selectedGroups ? selectedGroups.includes(group.uid) : false}
-        />
-      ))}
-    </div>
-  );
-}
-
 registerPlugin("bcc-login-visibility", {
   render: compose([
     withSelect((select) => {
@@ -230,7 +171,7 @@ addFilter(
                   tags={window.siteGroupTags}
                   options={window.siteGroups}
                   targetGroupsValue={(attributes.bccGroups ?? []).join(",")}
-                  onChange={(targetGroupsValue, sendEmailToTargetGroups, visibilityGroupsValue, sendEmailToVisibilityGroups) => {
+                  onChange={(targetGroupsValue) => {
                     setAttributes({
                       bccGroups: targetGroupsValue,
                     });
