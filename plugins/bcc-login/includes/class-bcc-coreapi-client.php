@@ -7,8 +7,7 @@ class BCC_Coreapi_Client
     private $_site_groups;
     private $_all_groups;
 
-    function __construct(BCC_Login_Settings $login_settings, BCC_Storage $storage)
-    {
+    function __construct(BCC_Login_Settings $login_settings, BCC_Storage $storage) {
         $this->_settings = $login_settings;
         $this->_storage = $storage;
         add_filter( 'http_request_timeout', array( $this, 'extend_http_request_timeout' ) );
@@ -154,7 +153,7 @@ class BCC_Coreapi_Client
 
         return $body->data;
     }
-    
+
     function get_groups_for_user($user_uid) {
         $cache_key = 'coreapi_user_groups_'.$user_uid;
 
@@ -214,8 +213,6 @@ class BCC_Coreapi_Client
         }
         return $user_groups;
     }
-
-
 
     public function ensure_subscription_to_person_updates() {
         if ($this->_settings->disable_pubsub) {

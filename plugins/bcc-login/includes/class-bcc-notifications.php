@@ -10,20 +10,25 @@ class BCC_Notifications
         $this->settings = $settings;
         $this->core_api = $core_api;
 
-        add_action('transition_post_status', array($this, 'on_post_status_transition'), 10, 3);
-        add_action('bcc_send_scheduled_notification', array($this, 'send_notification'), 10, 1);
+        add_action('rest_api_init', array($this, 'register_send_notifications_endpoint'));
     }
 
-    // NB: This does not run if a post is published without first being saved as a draft.
-    public function on_post_status_transition($new_status, $old_status, $post)
-    {
-        if ('publish' === $new_status && 'publish' !== $old_status && in_array($post->post_type, $this->settings->notification_post_types)) {
-            if ($this->settings->notification_delay > 0) {
-                wp_schedule_single_event(time() + $this->settings->notification_delay, 'bcc_send_scheduled_notification', array($post->ID));
-            } else {
-                $this->send_notification($post->ID);
-            }
-        }
+    public function register_send_notifications_endpoint() {
+        register_rest_route('bcc-login/v1', '/send-notifications', array(
+            'methods' => 'POST',
+            'callback' => function (WP_REST_Request $request) {
+                $post_id = $request->get_param('postId');
+                if ($post_id) {
+                    $this->send_notification($post_id);
+                    return new WP_REST_Response(null, 200);
+                } else {
+                    return new WP_REST_Response(array('error' => 'postId parameter is required'), 400);
+                }
+            },
+            'permission_callback' => function () {
+                return current_user_can('manage_options');
+            },
+        ));
     }
 
     public function replace_notification_params($text, $post, $language)

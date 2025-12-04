@@ -8,9 +8,10 @@ import {
   SearchControl,
 } from "@wordpress/components";
 import GroupSelector from './components/group-selector';
+import SendNotifications from './components/send-notifications';
 import { registerPlugin } from "@wordpress/plugins";
 import { InspectorControls } from "@wordpress/block-editor";
-import { PluginPostStatusInfo } from "@wordpress/edit-post";
+import { PluginPostStatusInfo } from "@wordpress/editor";
 import { Fragment, cloneElement } from "@wordpress/element";
 import { withSelect, withDispatch } from "@wordpress/data";
 import {
@@ -140,6 +141,22 @@ registerPlugin("bcc-groups-2", {
   ])((props) => (
     <PluginPostStatusInfo>
       <GroupSelector label={__("Post Groups")} {...props} />
+    </PluginPostStatusInfo>
+  )),
+});
+
+registerPlugin("bcc-notifications", {
+  render: compose([
+    withSelect((select) => {
+      const { getCurrentPostId } = select("core/editor");
+      return {
+        postId: getCurrentPostId(),
+      };
+    }),
+    withInstanceId,
+  ])((props) => (
+    <PluginPostStatusInfo>
+      <SendNotifications label={__("Send notifications")} {...props} />
     </PluginPostStatusInfo>
   )),
 });
