@@ -145,73 +145,45 @@ class BCC_Login_Feed {
     // - user (requires authentication)
     // - internal:{district name} (requires affiliation with organization in specified district)
     function add_visibility_to_items($the_list, $visibility) {
-        if ($visibility == BCC_Login_Visibility::VISIBILITY_PUBLIC){
+        if ($visibility == BCC_Login_Visibility::VISIBILITY_PUBLIC) {
             echo "<bcc:visibility>public</bcc:visibility>\n"; 
-        } else if ($visibility == BCC_Login_Visibility::VISIBILITY_SUBSCRIBER){
+        } else if ($visibility == BCC_Login_Visibility::VISIBILITY_SUBSCRIBER) {
             echo "<bcc:visibility>user</bcc:visibility>\n"; 
-        } else if ($visibility == BCC_Login_Visibility::VISIBILITY_MEMBER){
+        } else if ($visibility == BCC_Login_Visibility::VISIBILITY_MEMBER) {
             echo "<bcc:visibility>internal:" . $this->_settings->member_organization_name . "</bcc:visibility>\n"; 
         }
     }
     
-    // Include group uid for each group that the post is visible for or targetted at (notification group)
-    // E.g. 
-    // <bcc:visiblityGroup>d4c434a7-504a-4246-9a10-def7dbfa982c</bcc:visiblityGroup>
-    // <bcc:visiblityGroup>25f5bc4d-48e0-4a6e-bf05-6b2a15d70861</bcc:visiblityGroup>
-    // <bcc:notificationGroup>d4c434a7-504a-4246-9a10-def7dbfa982c</bcc:notificationGroup>
+    // Include group uid for each group that the post is targeted at or visible for
+    // E.g.:
+    // <bcc:targetGroup>d4c434a7-504a-4246-9a10-def7dbfa982c</bcc:targetGroup>
+    // <bcc:visibilityGroup>d4c434a7-504a-4246-9a10-def7dbfa982c</bcc:visibilityGroup>
+    // <bcc:visibilityGroup>25f5bc4d-48e0-4a6e-bf05-6b2a15d70861</bcc:visibilityGroup>
     function add_groups_to_items($the_list, $visibility) {
         global $post;
         $result = '';
 
         if ( !empty($this->_settings->site_groups) || !empty($this->_settings->full_content_access_groups) ) {
-            // Get groups that are checked on post
             $post_target_groups = get_post_meta($post->ID, 'bcc_groups', false);
             $post_visibility_groups = get_post_meta($post->ID, 'bcc_visibility_groups', false);
 
-            // Visibility Groups: groups with access to all posts + target groups + visibility groups that are checked on post
-            if ($visibility != BCC_Login_Visibility::VISIBILITY_PUBLIC)
-            {
-                // Start with groups that have full content access
-                $visibility_groups = $this->_settings->full_content_access_groups;
+            if ($visibility == BCC_Login_Visibility::VISIBILITY_PUBLIC) {
+                return; // No groups for public posts
+            }
 
-                // Add post target groups
-                if (is_array($post_target_groups) && count($post_target_groups)) {
-                    $visibility_groups = $this->_settings->array_union($post_target_groups, $visibility_groups);
-                }
-
-                // Add post visibility groups
-                if (is_array($post_visibility_groups) && count($post_visibility_groups)) {
-                    $visibility_groups = $this->_settings->array_union($post_visibility_groups, $visibility_groups);
-                }
-
-                foreach ($visibility_groups as $group){
-                    $result .= "\t\t<bcc:visibilityGroup>" . $group . "</bcc:visibilityGroup>\n";
+            // Target Groups: the primary groups that the KPIs are measured for
+            if (is_array($post_target_groups)) {
+                foreach ($post_target_groups as $group) {
+                    $result = $result . "\t\t<bcc:targetGroup>" . $group . "</bcc:targetGroup>\n";
                 }
             }
 
-            // Notification Groups: groups that are checked on posts to receive notification + are eligible for notification
-            if (in_array($post->post_type, $this->_settings->notification_post_types)) {
-                $notification_groups = array();
-                $should_receive_notifications = array();
+            // Visibility Groups: the secondary groups which can view the post
+            if (is_array($post_visibility_groups) && count($post_visibility_groups)) {
+                $visibility_groups = $this->_settings->array_union($post_visibility_groups, $this->_settings->full_content_access_groups);
 
-                // Get post target groups if they are marked to receive notifications
-                $send_email_to_target_groups = get_post_meta($post->ID, 'bcc_groups_email', true);
-                if (is_array($post_target_groups) && $send_email_to_target_groups === 'Yes') {
-                    $should_receive_notifications = $post_target_groups;
-                }
-
-                // Get post visibility groups if they are marked to receive notifications
-                $send_email_to_visibility_groups = get_post_meta($post->ID, 'bcc_visibility_groups_email', true);
-                if (is_array($post_visibility_groups) && $send_email_to_visibility_groups === 'Yes') {
-                    $should_receive_notifications = $this->_settings->array_union($should_receive_notifications, $post_visibility_groups);
-                }
-
-                // Intersect groups that should receive notifications with site groups,
-                // just to make sure NOT to include groups that are no longer selected in settings
-                $notification_groups = array_intersect($should_receive_notifications, $this->_settings->site_groups);
-
-                foreach ($notification_groups as $group) {
-                    $result = $result . "\t\t<bcc:notificationGroup>" . $group . "</bcc:notificationGroup>\n";
+                foreach ($visibility_groups as $group) {
+                    $result .= "\t\t<bcc:visibilityGroup>" . $group . "</bcc:visibilityGroup>\n";
                 }
             }
         }
