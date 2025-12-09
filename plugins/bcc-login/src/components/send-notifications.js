@@ -118,29 +118,27 @@ const SendNotifications = ({ label, postId, status, targetGroupsCount, visibilit
                 <p>Status: {status === 'publish' ? <Tag icon="dashicons dashicons-yes" severity="success" value="Publisert"></Tag> : <Tag icon="dashicons dashicons-warning" severity="warning" value="IKKE publisert"></Tag>}</p>
 
                 <div class="bcc-send-notifications__translations">
-                    <p>Oversettelser:</p>
-                    {translations !== null ? (
-                        translations.length > 0 ? (
-                            <ul>
-                                {translations.map((t) => (
-                                    <li key={t.id}>
-                                        <div>
-                                            <strong>{t.language}:</strong>{" "}
-                                            {t.status === "publish" ? (
-                                                <Tag icon="dashicons dashicons-yes" severity="success" value="Publisert" />
-                                            ) : (
-                                                <Tag icon="dashicons dashicons-warning" severity="warning" value="IKKE publisert" />
-                                            )}
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <Tag icon="dashicons dashicons-warning" severity="warning" value="Ingen oversettelser tilgjengelig" />
-                        )
-                    ) : (
-                        <Tag icon="dashicons dashicons-info" severity="info" className="italic" value="Laster inn oversettelser ..." />
-                    )}
+                    <p>Oversettelser: {translations === null
+                        ? <Tag icon="dashicons dashicons-info" severity="info" className="italic" value="Laster inn oversettelser ..." />
+                        : (translations.length == 0 ? <Tag icon="dashicons dashicons-warning" severity="warning" value="Ingen oversettelser tilgjengelig" /> : '')
+                    }</p>
+
+                    {translations !== null && translations.length > 0 ? (
+                        <ul>
+                            {translations.map((t) => (
+                                <li key={t.id}>
+                                    <div>
+                                        <strong>{t.language}:</strong>{" "}
+                                        {t.status === "publish" ? (
+                                            <Tag icon="dashicons dashicons-yes" severity="success" value="Publisert" />
+                                        ) : (
+                                            <Tag icon="dashicons dashicons-warning" severity="warning" value="IKKE publisert" />
+                                        )}
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : ''}
                 </div>
 
                 <div class="bcc-send-notifications__target-groups">
