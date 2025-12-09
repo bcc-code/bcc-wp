@@ -174,7 +174,7 @@ class BCC_Login_Feed {
             // Target Groups: the primary groups that the KPIs are measured for
             if (is_array($post_target_groups)) {
                 foreach ($post_target_groups as $group) {
-                    $result = $result . "\t\t<bcc:targetGroup>" . $group . "</bcc:targetGroup>\n";
+                    $result .= "\t\t<bcc:targetGroup>" . $group . "</bcc:targetGroup>\n";
                 }
             }
 

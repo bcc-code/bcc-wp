@@ -31,17 +31,19 @@ class BCC_Login_Settings {
     public $track_page_load;
     public $track_page_interaction;
 
-    public function array_union($x, $y)
-    { 
-        if (empty($x) && empty($y)){
+    public function array_union($x, $y) {
+        if (empty($x) && empty($y)) {
             return [];
         }
-        if (empty($x)){
+
+        if (empty($x)) {
             return $y;
         }
-        if (empty($y)){
+
+        if (empty($y)) {
             return $x;
         }
+
         // Use array_merge to combine three arrays:
         // 1. Intersection of $x and $y
         // 2. Elements in $x that are not in $y
@@ -248,7 +250,6 @@ class BCC_Login_Settings_Provider {
             true
         );
     }
-
 
     /**
      * Registers the settings page under the «Settings» section.
