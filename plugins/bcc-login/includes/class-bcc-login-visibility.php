@@ -445,6 +445,12 @@ class BCC_Login_Visibility {
                 'before'
             );
         }
+
+        wp_add_inline_script(
+            $script_handle,
+            'var bccLoginNotificationDryRun = ' . ($this->_settings->notification_dry_run ? 'true' : 'false'),
+            'before'
+        );
     }
 
     /**

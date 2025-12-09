@@ -1,6 +1,10 @@
+/* Generic Styles */
+
 .interface-complementary-area h2 {
     margin-block: 1rem;
 }
+
+/* Visibility Settings */
 
 .bcc-login-visibility__choice:last-child {
     margin-bottom: 0 !important;
@@ -12,6 +16,8 @@
 .bcc-groups__checkbox.components-base-control {
     margin-bottom: 0.5rem !important;
 }
+
+/* Post Groups */
 
 .bcc-group-selector__dialog {
     width: 100vw;
@@ -165,6 +171,8 @@ ul.p-treenode-children .p-treenode-content {
     display: none !important;
 }
 
+/* Send Notifications */
+
 .bcc-notifications {
     width: 100%;
     margin-top: 1rem;
@@ -181,6 +189,63 @@ ul.p-treenode-children .p-treenode-content {
     background: rgba(0, 120, 212, 0.1);
     color: #005a9e;
 }
+
+.bcc-send-notifications__dialog {
+    min-width: 420px;
+}
+
+.bcc-send-notifications__dialog .p-dialog-content {
+    padding-bottom: 2.5rem;
+}
+
+.bcc-send-notifications__dialog p {
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.bcc-send-notifications__dialog .p-dialog-content > div > p {
+    margin-bottom: 0 !important;
+}
+
+.bcc-send-notifications__dialog .p-dialog-content > div {
+    margin-bottom: 1.5rem;
+}
+
+.bcc-send-notifications__dialog p:first-child {
+    margin-top: 0;
+}
+
+.bcc-send-notifications__translations > .p-tag,
+.bcc-send-notifications__target-groups > .p-tag {
+    margin-top: 0.5rem;
+}
+
+.bcc-send-notifications__dialog ul {
+    margin-top: 0.5rem;
+}
+
+.bcc-send-notifications__dialog li {
+    list-style-type: disc;
+    list-style-position: inside;
+    padding-left: 1rem;
+}
+
+.bcc-send-notifications__dialog li > div {
+    display: inline-flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.bcc-send-notifications__dialog .p-button {
+    position: absolute;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    border-radius: 6px;
+}
+
+/* React Prime */
 
 .p-toast {
     opacity: 1;
@@ -283,4 +348,63 @@ ul.p-treenode-children .p-treenode-content {
 .p-toast .p-toast-message.p-toast-message-error .p-toast-message-icon,
 .p-toast .p-toast-message.p-toast-message-error .p-toast-icon-close {
     color: #ff5757;
-  }
+}
+
+.p-tag {
+    background: transparent;
+    color: #000;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.8rem 0.25rem 0.4rem;
+    border-radius: 6px;
+}
+
+.p-tag.p-tag-success {
+    color: #22c55e;
+    border: 1px solid #22c55e;
+}
+
+.p-tag.p-tag-info {
+    color: #0ea5e9;
+    border: 1px solid #0ea5e9;
+}
+
+.p-tag.p-tag-warning {
+    color: #f97316;
+    border: 1px solid #f97316;
+}
+
+.p-tag.p-tag-danger {
+    color: #ef4444;
+    border: 1px solid #ef4444;
+}
+
+.p-badge {
+    background: transparent;
+    color: #000;
+    font-size: 0.75rem;
+    font-weight: 700;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    line-height: 1.375rem;
+}
+
+.p-badge.p-badge-success {
+    color: #22c55e;
+    border: 1px solid #22c55e;
+}
+
+.p-badge.p-badge-info {
+    color: #0ea5e9;
+    border: 1px solid #0ea5e9;
+}
+
+.p-badge.p-badge-warning {
+    color: #f97316;
+    border: 1px solid #f97316;
+}
+
+.p-badge.p-badge-danger {
+    color: #ef4444;
+    border: 1px solid #ef4444;
+}

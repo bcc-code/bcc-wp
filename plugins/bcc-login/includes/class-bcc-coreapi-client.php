@@ -7,7 +7,8 @@ class BCC_Coreapi_Client
     private $_site_groups;
     private $_all_groups;
 
-    function __construct(BCC_Login_Settings $login_settings, BCC_Storage $storage) {
+    function __construct(BCC_Login_Settings $login_settings, BCC_Storage $storage)
+    {
         $this->_settings = $login_settings;
         $this->_storage = $storage;
         add_filter( 'http_request_timeout', array( $this, 'extend_http_request_timeout' ) );
@@ -171,7 +172,9 @@ class BCC_Coreapi_Client
     }
 
     function fetch_groups_for_user($user_uid) {
-        if (empty($this->_settings->site_groups)) return array();
+        if (empty($this->_settings->site_groups)) {
+            return array();
+        }
 
         $token = $this->get_coreapi_token();
 
@@ -181,7 +184,6 @@ class BCC_Coreapi_Client
         $user_groups = [];
 
         for ($i = 0; $i < $total_groups; $i += $batch_size) {
-
             $batch = array_slice($this->_settings->site_groups, $i, $batch_size);
             $request_body = array(
                 "groupUids" => $batch
@@ -211,6 +213,7 @@ class BCC_Coreapi_Client
 
             $user_groups = array_merge($user_groups, $body->data->groupUids);
         }
+
         return $user_groups;
     }
 

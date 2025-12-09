@@ -148,15 +148,31 @@ registerPlugin("bcc-groups-2", {
 registerPlugin("bcc-notifications", {
   render: compose([
     withSelect((select) => {
-      const { getCurrentPostId } = select("core/editor");
+      const { getCurrentPostId, getEditedPostAttribute, isEditedPostDirty, isAutosavingPost } = select("core/editor");
+      const meta = getEditedPostAttribute('meta');
+
+      const targetGroupsCount = Array.isArray(meta.bcc_groups)
+        && meta.bcc_groups_email == 'Yes'
+          ? meta.bcc_groups.length : 0;
+      
+      const visibilityGroupsCount = Array.isArray(meta.bcc_visibility_groups)
+        && meta.bcc_visibility_groups_email == 'Yes'
+          ? meta.bcc_visibility_groups.length : 0;
+
       return {
         postId: getCurrentPostId(),
+        status: getEditedPostAttribute('status'),
+        targetGroupsCount: targetGroupsCount,
+        visibilityGroupsCount: visibilityGroupsCount,
+        isNotificationDryRun: window.bccLoginNotificationDryRun,
+        isDirty: isEditedPostDirty(),
+        isAutoSaving: isAutosavingPost()
       };
     }),
     withInstanceId,
   ])((props) => (
     <PluginPostStatusInfo>
-      <SendNotifications label={__("Send notifications")} {...props} />
+      <SendNotifications label={__("Send ut varsler")} {...props} />
     </PluginPostStatusInfo>
   )),
 });
