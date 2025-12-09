@@ -96,8 +96,8 @@ class BCC_Login_Visibility {
             register_post_meta( $post_type, 'bcc_groups_email', array(
                 'show_in_rest' => true,
                 'single'       => true,
-                'type'         => 'string',
-                'default'      => 'Yes',
+                'type'         => 'boolean',
+                'default'      => true,
             ) );
 
             register_post_meta( $post_type, 'bcc_visibility_groups', array(
@@ -109,8 +109,8 @@ class BCC_Login_Visibility {
             register_post_meta( $post_type, 'bcc_visibility_groups_email', array(
                 'show_in_rest' => true,
                 'single'       => true,
-                'type'         => 'string',
-                'default'      => 'No',
+                'type'         => 'boolean',
+                'default'      => false,
             ) );
         }
     }

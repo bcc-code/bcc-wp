@@ -75,11 +75,11 @@ class BCC_Notifications
 
         $notification_groups = array();
 
-        if ($send_email_to_target_groups && $send_email_to_target_groups === 'Yes') {
+        if ($send_email_to_target_groups) {
             $notification_groups = $post_target_groups;
         }
 
-        if ($send_email_to_visibility_groups && $send_email_to_visibility_groups === 'Yes') {
+        if ($send_email_to_visibility_groups) {
             $notification_groups = $this->settings->array_union($notification_groups, $post_visibility_groups);
         }
 
@@ -271,12 +271,17 @@ class BCC_Notifications
 
         foreach ( (array) $translations as $lang_code => $t ) {
             $tid = (int) $t->element_id;
+            $is_current = ( $tid === $post_id );
+
+            if ($is_current) {
+                // Skip the current post
+                continue;
+            }
 
             $items[] = [
                 'id'          => $tid,
                 'language'    => $t->language_code, // e.g. "en", "nb"
                 'status'      => $t->post_status,   // e.g. "publish", "draft"
-                'is_current'  => ( $tid === $post_id ),
                 'is_original' => (bool) $t->original,
             ];
         }

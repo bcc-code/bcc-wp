@@ -359,6 +359,10 @@ ul.p-treenode-children .p-treenode-content {
     border-radius: 6px;
 }
 
+.p-tag.italic {
+    font-style: italic;
+}
+
 .p-tag.p-tag-success {
     color: #22c55e;
     border: 1px solid #22c55e;

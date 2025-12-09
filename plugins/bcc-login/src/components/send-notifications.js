@@ -9,18 +9,17 @@ const SendNotifications = ({ label, postId, status, targetGroupsCount, visibilit
     const [visible, setVisible] = useState(false);
     const toast = useRef(null);
     const [nonce, setNonce] = useState(null);
-    const [translations, setTranslations] = useState([]);
+    const [translations, setTranslations] = useState(null);
 
     useEffect(() => {
-        // WordPress exposes wpApiSettings.nonce when scripts are enqueued correctly
         const wpNonce = window?.wpApiSettings?.nonce || window?.bccLoginNonce;
         setNonce(wpNonce || null);
     }, []);
 
     const showToast = (status) => {
         const messages = {
-            success: { severity: 'success', summary: 'Success', detail: 'Varsler sendt ut!' },
-            error: { severity: 'error', summary: 'Error', detail: 'Feil ved utsending av varsler.', sticky: true },
+            success: { severity: 'success', summary: 'Suksess', detail: 'Varsler sendt ut!' },
+            error: { severity: 'error', summary: 'Feil', detail: 'Feil ved utsending av varsler.', sticky: true },
             info: { severity: 'info', summary: 'Info', detail: 'Sender ut varsler ...' },
         };
         toast.current.show(messages[status]);
@@ -97,8 +96,6 @@ const SendNotifications = ({ label, postId, status, targetGroupsCount, visibilit
                     console.warn('Non-JSON response:', text);
                     setTranslations([]);
                 }
-
-                console.log('WPML translations:', data);
             } catch (error) {
                 console.error('Error getting WPML translations:', error);
             }
@@ -122,18 +119,27 @@ const SendNotifications = ({ label, postId, status, targetGroupsCount, visibilit
 
                 <div class="bcc-send-notifications__translations">
                     <p>Oversettelser:</p>
-                    {translations.length > 0 ? (
-                        <ul>
-                            {translations.filter((t) => !t.is_current).map((t) => (
-                                <li key={t.id}>
-                                    <div>
-                                        <strong>{t.language}:</strong> {t.status === 'publish' ? <Tag icon="dashicons dashicons-yes" severity="success" value="Publisert"></Tag> : <Tag icon="dashicons dashicons-warning" severity="warning" value="IKKE publisert"></Tag>}
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
+                    {translations !== null ? (
+                        translations.length > 0 ? (
+                            <ul>
+                                {translations.map((t) => (
+                                    <li key={t.id}>
+                                        <div>
+                                            <strong>{t.language}:</strong>{" "}
+                                            {t.status === "publish" ? (
+                                                <Tag icon="dashicons dashicons-yes" severity="success" value="Publisert" />
+                                            ) : (
+                                                <Tag icon="dashicons dashicons-warning" severity="warning" value="IKKE publisert" />
+                                            )}
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <Tag icon="dashicons dashicons-warning" severity="warning" value="Ingen oversettelser tilgjengelig" />
+                        )
                     ) : (
-                        <Tag icon="dashicons dashicons-warning" severity="warning" value="Ingen oversettelser tilgjengelig"></Tag>
+                        <Tag icon="dashicons dashicons-info" severity="info" className="italic" value="Laster inn oversettelser ..." />
                     )}
                 </div>
 
@@ -161,7 +167,9 @@ const SendNotifications = ({ label, postId, status, targetGroupsCount, visibilit
                     )}
                 </div>
 
-                <p>Live modus: {isNotificationDryRun ? <Tag icon="dashicons dashicons-no" severity="danger" value="Av"></Tag> : <Tag icon="dashicons dashicons-yes" severity="success" value="På"></Tag>}</p>
+                {isNotificationDryRun && (
+                    <p>Test modus: <Tag icon="dashicons dashicons-no" severity="danger" value="På"></Tag></p>
+                )}
 
                 <p>Endringer: {isDirty ? <Tag icon="dashicons dashicons-warning" severity="warning" value="Ulagrede endringer"></Tag> : <Tag icon="dashicons dashicons-yes" severity="success" value="Lagret"></Tag>}</p>
 

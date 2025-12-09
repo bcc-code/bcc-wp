@@ -112,11 +112,19 @@ registerPlugin("bcc-groups-2", {
       const { getEditedPostAttribute } = select("core/editor");
       const meta = getEditedPostAttribute("meta");
 
+      const sendEmailToTargetGroups = meta.bcc_groups_email !== null
+        ? (meta.bcc_groups_email === true ? 'Yes' : 'No')
+        : 'Yes'; // Default to 'Yes' if not set
+
+      const sendEmailToVisibilityGroups = meta.bcc_visibility_groups_email !== null
+        ? (meta.bcc_visibility_groups_email === true ? 'Yes' : 'No')
+        : 'No'; // Default to 'No' if not set
+
       return {
         targetGroupsValue: (meta.bcc_groups ?? []).join(","),
-        sendEmailToTargetGroupsValue: meta.bcc_groups_email ?? 'Yes',
+        sendEmailToTargetGroupsValue: sendEmailToTargetGroups,
         visibilityGroupsValue: (meta.bcc_visibility_groups ?? []).join(","),
-        sendEmailToVisibilityGroupsValue: meta.bcc_visibility_groups_email ?? 'No',
+        sendEmailToVisibilityGroupsValue: sendEmailToVisibilityGroups,
         options: window.siteGroups,
         tags: window.siteGroupTags,
         isSettingPostGroups: true
@@ -129,9 +137,9 @@ registerPlugin("bcc-groups-2", {
           editPost({
             meta: {
               bcc_groups: targetGroupsValue,
-              bcc_groups_email: sendEmailToTargetGroupsValue,
+              bcc_groups_email: sendEmailToTargetGroupsValue === 'Yes',
               bcc_visibility_groups: visibilityGroupsValue,
-              bcc_visibility_groups_email: sendEmailToVisibilityGroupsValue,
+              bcc_visibility_groups_email: sendEmailToVisibilityGroupsValue === 'Yes',
             },
           });
         },
@@ -152,11 +160,11 @@ registerPlugin("bcc-notifications", {
       const meta = getEditedPostAttribute('meta');
 
       const targetGroupsCount = Array.isArray(meta.bcc_groups)
-        && meta.bcc_groups_email == 'Yes'
+        && meta.bcc_groups_email
           ? meta.bcc_groups.length : 0;
       
       const visibilityGroupsCount = Array.isArray(meta.bcc_visibility_groups)
-        && meta.bcc_visibility_groups_email == 'Yes'
+        && meta.bcc_visibility_groups_email
           ? meta.bcc_visibility_groups.length : 0;
 
       return {
