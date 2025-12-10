@@ -112,19 +112,11 @@ registerPlugin("bcc-groups-2", {
       const { getEditedPostAttribute } = select("core/editor");
       const meta = getEditedPostAttribute("meta");
 
-      const sendEmailToTargetGroups = meta.bcc_groups_email !== null
-        ? (meta.bcc_groups_email === true ? 'Yes' : 'No')
-        : 'Yes'; // Default to 'Yes' if not set
-
-      const sendEmailToVisibilityGroups = meta.bcc_visibility_groups_email !== null
-        ? (meta.bcc_visibility_groups_email === true ? 'Yes' : 'No')
-        : 'No'; // Default to 'No' if not set
-
       return {
         targetGroupsValue: (meta.bcc_groups ?? []).join(","),
-        sendEmailToTargetGroupsValue: sendEmailToTargetGroups,
+        sendEmailToTargetGroupsValue: meta.bcc_groups_email ?? true,
         visibilityGroupsValue: (meta.bcc_visibility_groups ?? []).join(","),
-        sendEmailToVisibilityGroupsValue: sendEmailToVisibilityGroups,
+        sendEmailToVisibilityGroupsValue: meta.bcc_visibility_groups_email ?? false,
         options: window.siteGroups,
         tags: window.siteGroupTags,
         isSettingPostGroups: true
@@ -137,9 +129,9 @@ registerPlugin("bcc-groups-2", {
           editPost({
             meta: {
               bcc_groups: targetGroupsValue,
-              bcc_groups_email: sendEmailToTargetGroupsValue === 'Yes',
+              bcc_groups_email: sendEmailToTargetGroupsValue,
               bcc_visibility_groups: visibilityGroupsValue,
-              bcc_visibility_groups_email: sendEmailToVisibilityGroupsValue === 'Yes',
+              bcc_visibility_groups_email: sendEmailToVisibilityGroupsValue,
             },
           });
         },

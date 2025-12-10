@@ -8,7 +8,10 @@ import { Tree } from 'primereact/tree';
 const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsValue, sendEmailToTargetGroupsValue, visibilityGroupsName, visibilityGroupsValue, sendEmailToVisibilityGroupsValue, isSettingPostGroups, onChange }) => {
     const [visible, setVisible] = useState(false);
 
-    const sendEmailOptions = ['Yes', 'No'];
+    const sendEmailOptions = [
+        { label: 'Yes', value: true },
+        { label: 'No', value: false }
+    ];
     const [sendEmailToTargetGroups, setSendEmailToTargetGroups] = useState(() => {
         return sendEmailToTargetGroupsValue ? sendEmailToTargetGroupsValue : sendEmailOptions[0]
     });
