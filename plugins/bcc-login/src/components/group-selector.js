@@ -4,6 +4,7 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { SelectButton } from 'primereact/selectbutton';
 import { Tree } from 'primereact/tree';
+import { __ } from '@wordpress/i18n';
 
 const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsValue, sendEmailToTargetGroupsValue, visibilityGroupsName, visibilityGroupsValue, sendEmailToVisibilityGroupsValue, isSettingPostGroups, onChange }) => {
     const [visible, setVisible] = useState(false);
@@ -287,29 +288,29 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
             {label && <h2 htmlFor={targetGroupsName}>{label}</h2>}
 
             <div class="post-groups-selector">
-                <Button type="button" label="Select" onClick={() => setVisible(true)} />
-                <p class="post-groups-count">{onlyPostGroups(targetGroupsSelected).length + onlyPostGroups(visibilityGroupsSelected).length} group(s) selected</p>
+                <Button type="button" label={__('Select', 'bcc-login')} onClick={() => setVisible(true)} />
+                <p class="post-groups-count">{onlyPostGroups(targetGroupsSelected).length + onlyPostGroups(visibilityGroupsSelected).length} {__('group(s) selected', 'bcc-login')}</p>
             </div>
 
             <Dialog 
-                header="Post Groups" 
+                header={__('Post Groups', 'bcc-login')} 
                 visible={visible} 
                 onHide={() => setVisible(false)}
                 loading={true}
                 className="bcc-group-selector__dialog"
             >
                 <div id="target-groups-selector" class="group-selector-section">
-                    { isSettingPostGroups && ( <h3>Krever handling</h3> ) }
+                    { isSettingPostGroups && ( <h3>{__('Requires action:', 'bcc-login')}</h3> ) }
 
                     <div className="toggle-keys-buttons flex flex-wrap gap-2 mb-4 items-center">
-                        <Button type="button" icon="dashicons dashicons-plus" label="Expand All" onClick={() => setTargetGroupsExpandedKeys(getAllKeys())} />
-                        <Button type="button" icon="dashicons dashicons-minus" label="Collapse All" onClick={() => setTargetGroupsExpandedKeys({})} />
+                        <Button type="button" icon="dashicons dashicons-plus" label={__('Expand All', 'bcc-login')} onClick={() => setTargetGroupsExpandedKeys(getAllKeys())} />
+                        <Button type="button" icon="dashicons dashicons-minus" label={__('Collapse All', 'bcc-login')} onClick={() => setTargetGroupsExpandedKeys({})} />
                     </div>
 
                     <Tree 
                         value={treeNodes}
                         filter
-                        filterPlaceholder="Search group ..."
+                        filterPlaceholder={__('Search group ...', 'bcc-login')}
                         filterDelay={100}
                         filterMode="lenient"
                         selectionMode="checkbox"
@@ -317,27 +318,27 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
                         onSelectionChange={targetGroupsOnSelectionChange}
                         expandedKeys={targetGroupsExpandedKeys}
                         onToggle={targetGroupsHandleToggle}
-                        emptyMessage="No groups match your search."
+                        emptyMessage={__('No groups match your search.', 'bcc-login')}
                     />
 
                     { isSettingPostGroups && ( <div className="flex flex-wrap gap-2 items-center">
-                        <h4>Send Email:</h4>
+                        <h4>{__('Send Email:', 'bcc-login')}</h4>
                         <SelectButton value={sendEmailToTargetGroups} onChange={sendEmailToTargetGroupsOnChange} options={sendEmailOptions} />
                     </div> ) }
                 </div>
 
                 { isSettingPostGroups && (
                     <div id="visibility-groups-selector" class="group-selector-section">
-                        <h3>Til informasjon</h3>
+                        <h3>{__('Til informasjon', 'bcc-login')}</h3>
                         <div className="toggle-keys-buttons flex flex-wrap gap-2 mb-4 items-center">
-                            <Button type="button" icon="dashicons dashicons-plus" label="Expand All" onClick={() => setVisibilityGroupsExpandedKeys(getAllKeys())} />
-                            <Button type="button" icon="dashicons dashicons-minus" label="Collapse All" onClick={() => setVisibilityGroupsExpandedKeys({})} />
+                            <Button type="button" icon="dashicons dashicons-plus" label={__('Expand All', 'bcc-login')} onClick={() => setVisibilityGroupsExpandedKeys(getAllKeys())} />
+                            <Button type="button" icon="dashicons dashicons-minus" label={__('Collapse All', 'bcc-login')} onClick={() => setVisibilityGroupsExpandedKeys({})} />
                         </div>
 
                         <Tree 
                             value={treeNodes}
                             filter
-                            filterPlaceholder="Search group ..."
+                            filterPlaceholder={__('Search group ...', 'bcc-login')}
                             filterDelay={100}
                             filterMode="lenient"
                             selectionMode="checkbox"
@@ -345,11 +346,11 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
                             onSelectionChange={visibilityGroupsOnSelectionChange}
                             expandedKeys={visibilityGroupsExpandedKeys}
                             onToggle={visibilityGroupsHandleToggle}
-                            emptyMessage="No groups match your search."
+                            emptyMessage={__('No groups match your search.', 'bcc-login')}
                         />
 
                         <div className="flex flex-wrap gap-2 items-center">
-                            <h4>Send Email:</h4>
+                            <h4>{__('Send Email:', 'bcc-login')}</h4>
                             <SelectButton value={sendEmailToVisibilityGroups} onChange={sendEmailToVisibilityGroupsOnChange} options={sendEmailOptions} />
                         </div>
                     </div>

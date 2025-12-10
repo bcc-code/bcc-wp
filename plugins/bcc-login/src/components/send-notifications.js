@@ -4,7 +4,8 @@ import { Dialog } from 'primereact/dialog';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
 import { Badge } from 'primereact/badge';
-        
+import { __ } from '@wordpress/i18n';
+
 const SendNotifications = ({ label, postId, status, targetGroupsCount, visibilityGroupsCount, isNotificationDryRun, isDirty, isAutoSaving }) => {
     const [visible, setVisible] = useState(false);
     const toast = useRef(null);
@@ -18,9 +19,9 @@ const SendNotifications = ({ label, postId, status, targetGroupsCount, visibilit
 
     const showToast = (status) => {
         const messages = {
-            success: { severity: 'success', summary: 'Suksess', detail: 'Varsler sendt ut!' },
-            error: { severity: 'error', summary: 'Feil', detail: 'Feil ved utsending av varsler.', sticky: true },
-            info: { severity: 'info', summary: 'Info', detail: 'Sender ut varsler ...' },
+            success: { severity: 'success', summary: __('Success', 'bcc-login'), detail: __('Notifications sent!', 'bcc-login') },
+            error: { severity: 'error', summary: __('Error', 'bcc-login'), detail: __('Error sending notifications.', 'bcc-login'), sticky: true },
+            info: { severity: 'info', summary: __('Info', 'bcc-login'), detail: __('Sending notifications ...', 'bcc-login') },
         };
         toast.current.show(messages[status]);
     };
@@ -115,12 +116,12 @@ const SendNotifications = ({ label, postId, status, targetGroupsCount, visibilit
                 loading={true}
                 className="bcc-send-notifications__dialog"
             >
-                <p>Status: {status === 'publish' ? <Tag icon="dashicons dashicons-yes" severity="success" value="Publisert"></Tag> : <Tag icon="dashicons dashicons-warning" severity="warning" value="IKKE publisert"></Tag>}</p>
+                <p>{__('Status', 'bcc-login')}: {status === 'publish' ? <Tag icon="dashicons dashicons-yes" severity="success" value={__('Published', 'bcc-login')} /> : <Tag icon="dashicons dashicons-warning" severity="warning" value={__('NOT published', 'bcc-login')} />}</p>
 
                 <div class="bcc-send-notifications__translations">
-                    <p>Oversettelser: {translations === null
-                        ? <Tag icon="dashicons dashicons-info" severity="info" className="italic" value="Laster inn oversettelser ..." />
-                        : (translations.length == 0 ? <Tag icon="dashicons dashicons-warning" severity="warning" value="Ingen oversettelser tilgjengelig" /> : '')
+                    <p>{__('Translations', 'bcc-login')}: {translations === null
+                        ? <Tag icon="dashicons dashicons-info" severity="info" className="italic" value={__('Loading translations ...', 'bcc-login')} />
+                        : (translations.length == 0 ? <Tag icon="dashicons dashicons-warning" severity="warning" value={__('No translations available', 'bcc-login')} /> : '')
                     }</p>
 
                     {translations !== null && translations.length > 0 ? (
@@ -130,9 +131,9 @@ const SendNotifications = ({ label, postId, status, targetGroupsCount, visibilit
                                     <div>
                                         <strong>{t.language}:</strong>{" "}
                                         {t.status === "publish" ? (
-                                            <Tag icon="dashicons dashicons-yes" severity="success" value="Publisert" />
+                                            <Tag icon="dashicons dashicons-yes" severity="success" value={__('Published', 'bcc-login')} />
                                         ) : (
-                                            <Tag icon="dashicons dashicons-warning" severity="warning" value="IKKE publisert" />
+                                            <Tag icon="dashicons dashicons-warning" severity="warning" value={__('NOT published', 'bcc-login')} />
                                         )}
                                     </div>
                                 </li>
@@ -142,36 +143,36 @@ const SendNotifications = ({ label, postId, status, targetGroupsCount, visibilit
                 </div>
 
                 <div class="bcc-send-notifications__target-groups">
-                    <p>Følgende grupper kommer til å få varsel:</p>
+                    <p>{__('The following groups will get notified:', 'bcc-login')}</p>
                     {targetGroupsCount > 0 || visibilityGroupsCount > 0 ? (
                         <ul>
                             {targetGroupsCount > 0 && (
                                 <li>
                                     <div>
-                                        <strong>Krever handling:</strong> <Badge value={targetGroupsCount} severity="success"></Badge> gruppe(r)
+                                        <strong>{__('Requires action:', 'bcc-login')}</strong> <Badge value={targetGroupsCount} severity="success"></Badge> {__('group(s)', 'bcc-login')}
                                     </div>
                                 </li>
                             )}
                             {visibilityGroupsCount > 0 && (
                                 <li>
                                     <div>
-                                        <strong>Til informasjon:</strong> <Badge value={visibilityGroupsCount} severity="success"></Badge> gruppe(r)
+                                        <strong>{__('For information:', 'bcc-login')}</strong> <Badge value={visibilityGroupsCount} severity="success"></Badge> {__('group(s)', 'bcc-login')}
                                     </div>
                                 </li>
                             )}
                         </ul>
                     ) : (
-                        <Tag icon="dashicons dashicons-no" severity="danger" value="Ingen grupper"></Tag>
+                        <Tag icon="dashicons dashicons-no" severity="danger" value={__('No groups', 'bcc-login')}></Tag>
                     )}
                 </div>
 
                 {isNotificationDryRun && (
-                    <p>Test modus: <Tag icon="dashicons dashicons-no" severity="danger" value="På"></Tag></p>
+                    <p>{__('Test mode:', 'bcc-login')} <Tag icon="dashicons dashicons-no" severity="danger" value={__('On', 'bcc-login')}></Tag></p>
                 )}
 
-                <p>Endringer: {isDirty ? <Tag icon="dashicons dashicons-warning" severity="warning" value="Ulagrede endringer"></Tag> : <Tag icon="dashicons dashicons-yes" severity="success" value="Lagret"></Tag>}</p>
+                <p>{__('Changes:', 'bcc-login')} {isDirty ? <Tag icon="dashicons dashicons-warning" severity="warning" value={__('Unsaved changes', 'bcc-login')}></Tag> : <Tag icon="dashicons dashicons-yes" severity="success" value={__('Saved', 'bcc-login')}></Tag>}</p>
 
-                <Button type="button" label="Send" onClick={() => sendNotifications()} disabled={status !== 'publish' || (targetGroupsCount === 0 && visibilityGroupsCount === 0) || isNotificationDryRun || isDirty} />
+                <Button type="button" label={__('Send', 'bcc-login')} onClick={() => sendNotifications()} disabled={status !== 'publish' || (targetGroupsCount === 0 && visibilityGroupsCount === 0) || isNotificationDryRun || isDirty} />
             </Dialog>
 
             <Toast ref={toast} position="bottom-right" />

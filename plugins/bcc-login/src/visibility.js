@@ -26,19 +26,19 @@ let filteredSiteGroups = siteGroups || [];
 const visibilityOptions = [
   {
     value: levels.public,
-    label: __("Public"),
+    label: __("Public", "bcc-login"),
   },
   {
     value: levels.subscriber,
-    label: __("Logged In"),
+    label: __("Logged In", "bcc-login"),
   },
   {
     value: levels["bcc-login-member"],
-    label: sprintf(__("%s Members"), localName),
+    label: sprintf(__("%s Members", "bcc-login"), localName),
   },
   {
     value: levels["public-only"],
-    label: __("Not Logged In"),
+    label: __("Not Logged In", "bcc-login"),
   },
 ];
 
@@ -101,7 +101,7 @@ registerPlugin("bcc-login-visibility", {
     withInstanceId,
   ])((props) => (
     <PluginPostStatusInfo>
-      <VisibilityOptions heading={__("Post Audience")} {...props} />
+      <VisibilityOptions heading={__("Post Audience", "bcc-login")} {...props} />
     </PluginPostStatusInfo>
   )),
 });
@@ -172,7 +172,7 @@ registerPlugin("bcc-notifications", {
     withInstanceId,
   ])((props) => (
     <PluginPostStatusInfo>
-      <SendNotifications label={__("Send ut varsler")} {...props} />
+      <SendNotifications label={__("Send notifications", "bcc-login")} {...props} />
     </PluginPostStatusInfo>
   )),
 });
@@ -189,7 +189,7 @@ addFilter(
           <InspectorControls>
             <PanelBody>
               <VisibilityOptions
-                heading={__("Block Audience")}
+                heading={__("Block Audience", "bcc-login")}
                 visibility={attributes.bccLoginVisibility || defaultLevel}
                 onUpdateVisibility={(value) => {
                   setAttributes({
@@ -200,7 +200,7 @@ addFilter(
               />
             <PanelRow>
                 <GroupSelector
-                  label={__("Block Groups")}
+                  label={__("Block Groups", "bcc-login")}
                   tags={window.siteGroupTags}
                   options={window.siteGroups}
                   targetGroupsValue={(attributes.bccGroups ?? []).join(",")}

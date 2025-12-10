@@ -313,7 +313,7 @@ class BCC_Login_Settings_Provider {
             array(
                 'name' => 'client_id',
                 'value' => $this->_settings->client_id,
-                'label' => __( 'ClientID', 'client_id' ),
+                'label' => __( 'ClientID', 'bcc-login' ),
                 'readonly' => 1,
                 'description' => 'OIDC variables can be configured using environment variables or constants in wp-config.php. Commonly used variables: <i>OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_SCOPE</i>'
             )
@@ -359,7 +359,7 @@ class BCC_Login_Settings_Provider {
             array(
                 'name' => 'bcc_feed_key',
                 'value' => $this->_settings->feed_key,
-                'label' => __( 'Feed', 'feed_key' ),
+                'label' => __( 'Feed', 'bcc-login' ),
                 'readonly' => 0,
                 'description' => 'The following link can be used to retrieve protected content: <a target="_blank" href="' . get_site_url(null,'/feed') . '?id=' . $this->_settings->feed_key . '">' . get_site_url(null,'/feed') . '?id=' . $this->_settings->feed_key . '</a>'
             )

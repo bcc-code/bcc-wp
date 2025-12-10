@@ -370,7 +370,6 @@ class BCC_Login_Visibility {
         return false;
     }
 
-
     /**
      * Removes the default level from the database.
      *
@@ -802,9 +801,9 @@ class BCC_Login_Visibility {
 
             $html .= '<section class="roles-list">';
                 $html .= '<span>' . (count($user_site_groups) == 1 
-                    ? __('Min rolle:', 'bcc-login')
-                    : __('Mine roller:', 'bcc-login')
-                ) . '</span>';
+                    ? __('My role', 'bcc-login')
+                    : __('My roles', 'bcc-login')
+                ) . ':</span>';
                 $html .= '<div class="my-roles-tags">';
 
                     foreach ($user_site_groups as $group) {
@@ -815,7 +814,7 @@ class BCC_Login_Visibility {
             $html .= '</section>';
 
             $html .= '<section class="local-church-roles">';
-                $html .= '<a href="https://members.bcc.no/roles" target="_blank">' . __('Roller i min lokalmenighet', 'bcc-login') . '</a>';
+                $html .= '<a href="https://members.bcc.no/roles" target="_blank">' . __('Roles in my local church', 'bcc-login') . '</a>';
             $html .= '</section>';
 
         $html .= '</div>';
@@ -943,11 +942,11 @@ class BCC_Login_Visibility {
             return $columns;
         }
 
-        $columns['post_groups'] = __( 'Krever handling', 'bcc-login' );
-        $columns['post_groups_name'] = __( 'Krever handling', 'bcc-login' );
+        $columns['post_groups'] = __( 'Requires action', 'bcc-login' );
+        $columns['post_groups_name'] = __( 'Requires action', 'bcc-login' );
 
-        $columns['post_visibility_groups'] = __( 'Til informasjon', 'bcc-login' );
-        $columns['post_visibility_groups_name'] = __( 'Til informasjon', 'bcc-login' );
+        $columns['post_visibility_groups'] = __( 'For information', 'bcc-login' );
+        $columns['post_visibility_groups_name'] = __( 'For information', 'bcc-login' );
 
         return $columns;
     }
@@ -1086,7 +1085,7 @@ class BCC_Login_Visibility {
 
     function get_group_name($group_uid) {
         if ($group_uid == 'all-members') {
-            return __('Alle medlemmer', 'bcc-login');
+            return __('All members', 'bcc-login');
         }
 
         foreach ($this->_coreapi->get_translated_site_groups() as $group) {
