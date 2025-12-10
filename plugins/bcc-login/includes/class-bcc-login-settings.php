@@ -401,10 +401,8 @@ class BCC_Login_Settings_Provider {
                 $this->options_page,
                 'groups',
                 array(
-                    'targetGroupsName' => 'bcc_site_groups',
-                    'targetGroupsValue' => join(",", $this->_settings->site_groups),
-                    'visibilityGroupsName' => 'bcc_visibility_groups',
-                    'visibilityGroupsValue' => join(",", $this->_settings->visibility_groups),
+                    'groupsName' => 'bcc_site_groups',
+                    'groupsValue' => join(",", $this->_settings->site_groups),
                     'description' => 'Provide group uids for groups you\'re going to use.',
                     'options' => $all_groups,
                     'tags' => $this->_settings->site_group_tags
@@ -429,8 +427,8 @@ class BCC_Login_Settings_Provider {
                 $this->options_page,
                 'groups',
                 array(
-                    'targetGroupsName' => 'bcc_full_content_access_groups',
-                    'targetGroupsValue' => join(",", $this->_settings->full_content_access_groups),
+                    'groupsName' => 'bcc_full_content_access_groups',
+                    'groupsValue' => join(",", $this->_settings->full_content_access_groups),
                     'description' => 'Groups that always can see published content regardless of group settings on content.',
                     'options' => $all_groups,
                     'tags' => $this->_settings->site_group_tags
@@ -644,17 +642,15 @@ class BCC_Login_Settings_Provider {
     }
 
     function render_group_selector_field( $args ) { ?>
-        <div id="<?php echo $args['targetGroupsName']; ?>-container"></div>
+        <div id="<?php echo $args['groupsName']; ?>-container"></div>
         <script type="text/javascript">
             document.addEventListener('DOMContentLoaded', function() {
-                window.renderGroupSelector('<?php echo $args['targetGroupsName']; ?>-container', {
+                window.renderGroupSelector('<?php echo $args['groupsName']; ?>-container', {
                     tags: <?php echo json_encode($args['tags']); ?>,
                     options: <?php echo json_encode($args['options']); ?>,
                     label: '<?php echo isset($args['label']) ? $args['label'] : ''; ?>',
-                    targetGroupsName: '<?php echo $args['targetGroupsName']; ?>',
-                    targetGroupsValue: <?php echo json_encode($args['targetGroupsValue']); ?>,
-                    visibilityGroupsName: '<?php echo isset($args['visibilityGroupsName']) ? $args['visibilityGroupsName'] : ''; ?>',
-                    visibilityGroupsValue: <?php echo isset($args['visibilityGroupsValue']) ? json_encode($args['visibilityGroupsValue']) : "''"; ?>,
+                    groupsName: '<?php echo $args['groupsName']; ?>',
+                    groupsValue: <?php echo json_encode($args['groupsValue']); ?>,
                     readonly: <?php echo isset($args['readonly']) && $args['readonly'] ? 'true' : 'false'; ?>,
                 });
             });

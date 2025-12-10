@@ -6,19 +6,15 @@ import { SelectButton } from 'primereact/selectbutton';
 import { Tree } from 'primereact/tree';
 import { __ } from '@wordpress/i18n';
 
-const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsValue, sendEmailToTargetGroupsValue, visibilityGroupsName, visibilityGroupsValue, sendEmailToVisibilityGroupsValue, isSettingPostGroups, onChange }) => {
+const GroupSelector = ({ tags, options, label, groupsName, groupsValue, isSettingPostGroups, onChange, visibilityGroupsValue, sendEmailToTargetGroupsValue, sendEmailToVisibilityGroupsValue }) => {
     const [visible, setVisible] = useState(false);
 
     const sendEmailOptions = [
         { label: 'Yes', value: true },
         { label: 'No', value: false }
     ];
-    const [sendEmailToTargetGroups, setSendEmailToTargetGroups] = useState(() => {
-        return sendEmailToTargetGroupsValue ? sendEmailToTargetGroupsValue : sendEmailOptions[0]
-    });
-    const [sendEmailToVisibilityGroups, setSendEmailToVisibilityGroups] = useState(() => {
-        return sendEmailToVisibilityGroupsValue ? sendEmailToVisibilityGroupsValue : sendEmailOptions[1]
-    });
+    const [sendEmailToTargetGroups, setSendEmailToTargetGroups] = useState(sendEmailToTargetGroupsValue);
+    const [sendEmailToVisibilityGroups, setSendEmailToVisibilityGroups] = useState(sendEmailToVisibilityGroupsValue);
 
     const getGroupsByTag = (selectedTags) => {
         const optionGroups = [];
@@ -51,7 +47,7 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
 
     const getInitialTargetGroupsSelected = () => {
         // Initialize selected groups from value prop
-        const selectedUids = targetGroupsValue ? targetGroupsValue.split(',') : [];
+        const selectedUids = groupsValue ? groupsValue.split(',') : [];
         const targetGroupsSelectedKeys = {};
 
         selectedUids.forEach(uid => {
@@ -285,7 +281,7 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
 
     return (
         <div>
-            {label && <h2 htmlFor={targetGroupsName}>{label}</h2>}
+            {label && <h2 htmlFor={groupsName}>{label}</h2>}
 
             <div class="post-groups-selector">
                 <Button type="button" label={__('Select', 'bcc-login')} onClick={() => setVisible(true)} />
@@ -300,7 +296,7 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
                 className="bcc-group-selector__dialog"
             >
                 <div id="target-groups-selector" class="group-selector-section">
-                    { isSettingPostGroups && ( <h3>{__('Requires action:', 'bcc-login')}</h3> ) }
+                    { isSettingPostGroups && ( <h3>{__('Requires action', 'bcc-login')}</h3> ) }
 
                     <div className="toggle-keys-buttons flex flex-wrap gap-2 mb-4 items-center">
                         <Button type="button" icon="dashicons dashicons-plus" label={__('Expand All', 'bcc-login')} onClick={() => setTargetGroupsExpandedKeys(getAllKeys())} />
@@ -357,12 +353,12 @@ const GroupSelector = ({ tags, options, label, targetGroupsName, targetGroupsVal
                 ) }
             </Dialog>
 
-            <input type="hidden" name={targetGroupsName} value={onlyPostGroups(targetGroupsSelected).join(',')} />
+            <input type="hidden" name={groupsName} value={onlyPostGroups(targetGroupsSelected).join(',')} />
 
             { isSettingPostGroups && (
                 <div>
                     <input type="hidden" value={sendEmailToTargetGroups} />
-                    <input type="hidden" name={visibilityGroupsName} value={onlyPostGroups(visibilityGroupsSelected).join(',')} />
+                    <input type="hidden" value={onlyPostGroups(visibilityGroupsSelected).join(',')} />
                     <input type="hidden" value={sendEmailToVisibilityGroups} />
                 </div>
             ) }

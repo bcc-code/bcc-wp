@@ -113,7 +113,7 @@ registerPlugin("bcc-groups-2", {
       const meta = getEditedPostAttribute("meta");
 
       return {
-        targetGroupsValue: (meta.bcc_groups ?? []).join(","),
+        groupsValue: (meta.bcc_groups ?? []).join(","),
         sendEmailToTargetGroupsValue: meta.bcc_groups_email ?? true,
         visibilityGroupsValue: (meta.bcc_visibility_groups ?? []).join(","),
         sendEmailToVisibilityGroupsValue: meta.bcc_visibility_groups_email ?? false,
@@ -125,13 +125,13 @@ registerPlugin("bcc-groups-2", {
     withDispatch((dispatch) => {
       const { editPost } = dispatch("core/editor");
       return {
-        onChange(targetGroupsValue, sendEmailToTargetGroupsValue, visibilityGroupsValue, sendEmailToVisibilityGroupsValue) {
+        onChange(targetGroups, sendEmailToTargetGroups, visibilityGroups, sendEmailToVisibilityGroups) {
           editPost({
             meta: {
-              bcc_groups: targetGroupsValue,
-              bcc_groups_email: sendEmailToTargetGroupsValue,
-              bcc_visibility_groups: visibilityGroupsValue,
-              bcc_visibility_groups_email: sendEmailToVisibilityGroupsValue,
+              bcc_groups: targetGroups,
+              bcc_groups_email: sendEmailToTargetGroups,
+              bcc_visibility_groups: visibilityGroups,
+              bcc_visibility_groups_email: sendEmailToVisibilityGroups,
             },
           });
         },
@@ -203,10 +203,10 @@ addFilter(
                   label={__("Block Groups", "bcc-login")}
                   tags={window.siteGroupTags}
                   options={window.siteGroups}
-                  targetGroupsValue={(attributes.bccGroups ?? []).join(",")}
-                  onChange={(targetGroupsValue) => {
+                  groupsValue={(attributes.bccGroups ?? []).join(",")}
+                  onChange={(groupsValue) => {
                     setAttributes({
-                      bccGroups: targetGroupsValue,
+                      bccGroups: groupsValue,
                     });
                   }}
                 />
