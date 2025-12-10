@@ -83,7 +83,7 @@ registerPlugin("bcc-login-visibility", {
       const { getEditedPostAttribute } = select("core/editor");
       return {
         visibility:
-          getEditedPostAttribute("meta").bcc_login_visibility || defaultLevel,
+          getEditedPostAttribute("meta")?.bcc_login_visibility || defaultLevel,
       };
     }),
     withDispatch((dispatch) => {
@@ -113,10 +113,10 @@ registerPlugin("bcc-groups-2", {
       const meta = getEditedPostAttribute("meta");
 
       return {
-        groupsValue: (meta.bcc_groups ?? []).join(","),
-        sendEmailToTargetGroupsValue: meta.bcc_groups_email ?? true,
-        visibilityGroupsValue: (meta.bcc_visibility_groups ?? []).join(","),
-        sendEmailToVisibilityGroupsValue: meta.bcc_visibility_groups_email ?? false,
+        groupsValue: (meta?.bcc_groups ?? []).join(","),
+        sendEmailToTargetGroupsValue: meta?.bcc_groups_email ?? true,
+        visibilityGroupsValue: (meta?.bcc_visibility_groups ?? []).join(","),
+        sendEmailToVisibilityGroupsValue: meta?.bcc_visibility_groups_email ?? false,
         options: window.siteGroups,
         tags: window.siteGroupTags,
         isSettingPostGroups: true
@@ -151,12 +151,12 @@ registerPlugin("bcc-notifications", {
       const { getCurrentPostId, getEditedPostAttribute, isEditedPostDirty, isAutosavingPost } = select("core/editor");
       const meta = getEditedPostAttribute('meta');
 
-      const targetGroupsCount = Array.isArray(meta.bcc_groups)
-        && meta.bcc_groups_email
+      const targetGroupsCount = Array.isArray(meta?.bcc_groups)
+        && meta?.bcc_groups_email
           ? meta.bcc_groups.length : 0;
-      
-      const visibilityGroupsCount = Array.isArray(meta.bcc_visibility_groups)
-        && meta.bcc_visibility_groups_email
+
+      const visibilityGroupsCount = Array.isArray(meta?.bcc_visibility_groups)
+        && meta?.bcc_visibility_groups_email
           ? meta.bcc_visibility_groups.length : 0;
 
       return {
