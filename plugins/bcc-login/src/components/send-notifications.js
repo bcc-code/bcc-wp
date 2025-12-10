@@ -167,7 +167,7 @@ const SendNotifications = ({ label, postId, status, targetGroupsCount, visibilit
                 </div>
 
                 {isNotificationDryRun && (
-                    <p>{__('Test mode:', 'bcc-login')} <Tag icon="dashicons dashicons-no" severity="danger" value={__('On', 'bcc-login')}></Tag></p>
+                    <Tag icon="dashicons dashicons-no" severity="danger" value={__('Test mode is activated in Settings. Notifications cannot be sent!', 'bcc-login')}></Tag>
                 )}
 
                 <p>{__('Changes:', 'bcc-login')} {isDirty ? <Tag icon="dashicons dashicons-warning" severity="warning" value={__('Unsaved changes', 'bcc-login')}></Tag> : <Tag icon="dashicons dashicons-yes" severity="success" value={__('Saved', 'bcc-login')}></Tag>}</p>
