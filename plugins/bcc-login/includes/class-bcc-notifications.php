@@ -21,6 +21,10 @@ class BCC_Notifications
                 $post_id = $request->get_param('postId');
 
                 if ($post_id) {
+                    if (!in_array(get_post_type($post_id), $this->settings->notification_post_types)) {
+                        return new WP_REST_Response(array('error' => 'This post type is not allowed to sent notifications'), 400);
+                    }
+
                     $this->send_notification($post_id);
                     return new WP_REST_Response(null, 200);
                 } else {
