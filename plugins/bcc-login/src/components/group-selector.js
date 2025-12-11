@@ -10,8 +10,8 @@ const GroupSelector = ({ tags, options, label, groupsName, groupsValue, isSettin
     const [visible, setVisible] = useState(false);
 
     const sendEmailOptions = [
-        { label: 'Yes', value: true },
-        { label: 'No', value: false }
+        { label: __('Yes', 'bcc-login'), value: true },
+        { label: __('No', 'bcc-login'), value: false }
     ];
     const [sendEmailToTargetGroups, setSendEmailToTargetGroups] = useState(sendEmailToTargetGroupsValue);
     const [sendEmailToVisibilityGroups, setSendEmailToVisibilityGroups] = useState(sendEmailToVisibilityGroupsValue);
