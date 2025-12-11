@@ -19,6 +19,7 @@ class BCC_Notifications
             'methods' => 'POST',
             'callback' => function (WP_REST_Request $request) {
                 $post_id = $request->get_param('postId');
+
                 if ($post_id) {
                     $this->send_notification($post_id);
                     return new WP_REST_Response(null, 200);

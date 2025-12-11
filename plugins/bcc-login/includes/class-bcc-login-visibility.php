@@ -450,6 +450,12 @@ class BCC_Login_Visibility {
             'var bccLoginNotificationDryRun = ' . ($this->_settings->notification_dry_run ? 'true' : 'false'),
             'before'
         );
+
+        wp_add_inline_script(
+            $script_handle,
+            'var bccLoginNotificationPostTypes = ' . json_encode($this->_settings->notification_post_types),
+            'before'
+        );
     }
 
     /**

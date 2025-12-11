@@ -148,32 +148,37 @@ registerPlugin("bcc-groups-2", {
 registerPlugin("bcc-notifications", {
   render: compose([
     withSelect((select) => {
-      const { getCurrentPostId, getEditedPostAttribute, isEditedPostDirty, isAutosavingPost } = select("core/editor");
+      const { getCurrentPostId, getCurrentPostType, getEditedPostAttribute, isEditedPostDirty, isAutosavingPost } = select("core/editor");
       const meta = getEditedPostAttribute('meta');
 
-      const targetGroupsCount = Array.isArray(meta?.bcc_groups)
-        && meta?.bcc_groups_email
+      const targetGroupsCount = Array.isArray(meta?.bcc_groups) && meta?.bcc_groups_email
           ? meta.bcc_groups.length : 0;
 
-      const visibilityGroupsCount = Array.isArray(meta?.bcc_visibility_groups)
-        && meta?.bcc_visibility_groups_email
+      const visibilityGroupsCount = Array.isArray(meta?.bcc_visibility_groups) && meta?.bcc_visibility_groups_email
           ? meta.bcc_visibility_groups.length : 0;
+
+      const postType = getCurrentPostType();
+      const allowedTypes = Array.isArray(window.bccLoginNotificationPostTypes) ? window.bccLoginNotificationPostTypes : [];
 
       return {
         postId: getCurrentPostId(),
+        postType,
         status: getEditedPostAttribute('status'),
-        targetGroupsCount: targetGroupsCount,
-        visibilityGroupsCount: visibilityGroupsCount,
+        targetGroupsCount,
+        visibilityGroupsCount,
         isNotificationDryRun: window.bccLoginNotificationDryRun,
         isDirty: isEditedPostDirty(),
-        isAutoSaving: isAutosavingPost()
+        isAutoSaving: isAutosavingPost(),
+        isAllowedPostType: allowedTypes.includes(postType),
       };
     }),
     withInstanceId,
   ])((props) => (
-    <PluginPostStatusInfo>
-      <SendNotifications label={__("Send notifications", "bcc-login")} {...props} />
-    </PluginPostStatusInfo>
+    props.isAllowedPostType ? (
+      <PluginPostStatusInfo>
+        <SendNotifications label={__("Send notifications", "bcc-login")} {...props} />
+      </PluginPostStatusInfo>
+    ) : null
   )),
 });
 
