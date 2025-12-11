@@ -7,9 +7,11 @@ const TagInput = ({ name, value }) => {
     const handleChange = (e) => {
         setTags(e.value);
 
-        window.dispatchEvent(new CustomEvent('bcc:tagsChanged', {
-            detail: { value: e.value }
-        }));
+        if (name === 'bcc_site_group_tags') {
+            window.dispatchEvent(new CustomEvent('bcc:tagsChanged', {
+                detail: { value: e.value }
+            }));
+        }
     };
 
     return (
