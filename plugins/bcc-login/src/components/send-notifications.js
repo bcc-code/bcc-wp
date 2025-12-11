@@ -172,7 +172,7 @@ const SendNotifications = ({ label, postId, status, targetGroupsCount, visibilit
 
                 <p>{__('Changes:', 'bcc-login')} {isDirty ? <Tag icon="dashicons dashicons-warning" severity="warning" value={__('Unsaved changes', 'bcc-login')}></Tag> : <Tag icon="dashicons dashicons-yes" severity="success" value={__('Saved', 'bcc-login')}></Tag>}</p>
 
-                <Button type="button" label={__('Send', 'bcc-login')} onClick={() => sendNotifications()} disabled={status !== 'publish' || (targetGroupsCount === 0 && visibilityGroupsCount === 0) || isNotificationDryRun || isDirty} />
+                <Button type="button" label={__('Send', 'bcc-login')} onClick={() => sendNotifications()} disabled={status !== 'publish' || (targetGroupsCount === 0 && visibilityGroupsCount === 0) || isNotificationDryRun || isDirty || isAutoSaving} />
             </Dialog>
 
             <Toast ref={toast} position="bottom-right" />
