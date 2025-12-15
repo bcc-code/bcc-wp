@@ -26,6 +26,7 @@ class BCC_Notifications
                     }
 
                     $this->send_notification($post_id);
+
                     return new WP_REST_Response(null, 200);
                 } else {
                     return new WP_REST_Response(array('error' => 'postId parameter is required'), 400);
@@ -235,6 +236,8 @@ class BCC_Notifications
                 $this->core_api->send_notification($notification_groups, 'email', 'simpleemail', $email_payload);
                 $this->core_api->send_notification($notification_groups, 'inapp', 'simpleinapp', $inapp_payload);
 
+                $this->add_notification_sent_date($post_id, $notification_groups);
+
                 error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($email_payload) . ' languages.  Post ID: ' . $post_id);
 
             } else {
@@ -244,6 +247,30 @@ class BCC_Notifications
         else {
             error_log('DEBUG: ' . __METHOD__ . ' - No notification groups found for post: ' . $post_id);
         }
+    }
+
+    // Save the timestamp when the notification has been sent
+    public function add_notification_sent_date($post_id, $notification_groups = array()) {
+        // Ensure array of strings (UIDs)
+        $group_uids = array_values(array_filter((array) $notification_groups, function($uid) {
+            return is_string($uid) && $uid !== '';
+        }));
+
+        // Load current meta; normalize to array
+        $sent_notifications = get_post_meta($post_id, 'sent_notifications', true);
+        if (!is_array($sent_notifications)) {
+            $sent_notifications = [];
+        }
+
+        // Append new record that matches the REST schema
+        $sent_notifications[] = array(
+            'date' => gmdate('c'), // ISO-8601 UTC
+            'notification_groups' => $group_uids,
+        );
+
+        // Reindex and save
+        $sent_notifications = array_values($sent_notifications);
+        update_post_meta($post_id, 'sent_notifications', $sent_notifications);
     }
 
     public function bcc_get_wpml_post_translations($post_id) {

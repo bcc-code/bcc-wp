@@ -112,6 +112,34 @@ class BCC_Login_Visibility {
                 'type'         => 'boolean',
                 'default'      => false,
             ) );
+
+            register_post_meta( $post_type, 'sent_notifications', array(
+                'show_in_rest' => [
+                    'schema' => [
+                        'type'  => 'array',
+                        'items' => [
+                            'type'       => 'object',
+                            'properties' => [
+                                'date' => [
+                                    'type'   => 'string',
+                                    'format' => 'date-time', // ISO-8601 like 2025-12-12T09:15:00Z
+                                ],
+                                'notification_groups' => [
+                                    'type'  => 'array',
+                                    'items' => [
+                                        'type' => 'string',
+                                    ],
+                                ],
+                            ],
+                            'required' => [ 'date', 'notification_groups' ],
+                        ],
+                    ],
+                ],
+                'single'            => true,
+                'type'              => 'array',
+                'default'           => [],
+                'sanitize_callback' => array( $this, 'sanitize_sent_notifications_meta' ),
+            ) );
         }
     }
 
@@ -555,7 +583,7 @@ class BCC_Login_Visibility {
                     ),
                     array(
                         'key' => 'bcc_visibility_groups',
-                        'compare' => 'NOT EXISTS',
+                        'compare' => 'NOT EXISTS'
                     )
                 );
             } else {
@@ -1278,5 +1306,34 @@ class BCC_Login_Visibility {
      */
     static function on_uninstall() {
         delete_metadata( 'post', 0, 'bcc_login_visibility', '', true );
+    }
+
+    public static function sanitize_sent_notifications_meta( $value, $meta_key, $object_type ) {
+        // Normalize to array
+        if ( ! is_array( $value ) ) {
+            return [];
+        }
+
+        $out = [];
+        foreach ( $value as $item ) {
+            if ( ! is_array( $item ) ) {
+                continue;
+            }
+
+            $date = isset( $item['date'] ) && is_string( $item['date'] ) ? $item['date'] : null;
+            $groups = isset( $item['notification_groups'] ) && is_array( $item['notification_groups'] )
+                ? array_values( array_filter( $item['notification_groups'], fn( $uid ) => is_string( $uid ) && $uid !== '' ) )
+                : [];
+
+            if ( $date ) {
+                $out[] = array(
+                    'date' => $date,
+                    'notification_groups' => $groups,
+                );
+            }
+        }
+
+        // Reindex
+        return array_values( $out );
     }
 }

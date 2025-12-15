@@ -9,6 +9,7 @@ import {
 } from "@wordpress/components";
 import GroupSelector from './components/group-selector';
 import SendNotifications from './components/send-notifications';
+import SentNotificationsList from './components/sent-notifications-list';
 import { registerPlugin } from "@wordpress/plugins";
 import { InspectorControls } from "@wordpress/block-editor";
 import { PluginPostStatusInfo } from "@wordpress/editor";
@@ -160,6 +161,13 @@ registerPlugin("bcc-notifications", {
       const postType = getCurrentPostType();
       const allowedTypes = Array.isArray(window.bccLoginNotificationPostTypes) ? window.bccLoginNotificationPostTypes : [];
 
+      const sentNotifications = meta?.sent_notifications.map(notification => {
+        return {
+          date: (new Date(notification.date)).toLocaleString(),
+          no_of_groups: notification.notification_groups.length
+        };
+      }) ?? [];
+
       return {
         postId: getCurrentPostId(),
         postType,
@@ -170,13 +178,15 @@ registerPlugin("bcc-notifications", {
         isDirty: isEditedPostDirty(),
         isAutoSaving: isAutosavingPost(),
         isAllowedPostType: allowedTypes.includes(postType),
+        sentNotifications: sentNotifications
       };
     }),
     withInstanceId,
   ])((props) => (
     props.isAllowedPostType ? (
-      <PluginPostStatusInfo>
+      <PluginPostStatusInfo className="bcc-login-notifications-plugin-post-status-info">
         <SendNotifications label={__("Send notifications", "bcc-login")} {...props} />
+        <SentNotificationsList {...props} />
       </PluginPostStatusInfo>
     ) : null
   )),

@@ -20,13 +20,28 @@
 /* Post Groups */
 
 .bcc-group-selector__dialog {
-    width: 100vw;
+    min-width: 100vw;
 }
 
 @media screen and (min-width: 768px) {
     .bcc-group-selector__dialog {
-        width: 75vw;
+        min-width: 60vw;
     }
+}
+
+.bcc-group-selector__dialog button.p-dialog-header-close {
+    width: auto;
+    padding: 1rem !important;
+}
+
+.bcc-group-selector__dialog button.p-dialog-header-close:hover {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+}
+
+.bcc-group-selector__dialog button.p-dialog-header-close:after {
+    content: attr(aria-label);
+    display: inline-block;
 }
 
 .group-selector-section {
@@ -168,11 +183,23 @@ ul.p-treenode-children .p-treenode-content {
     display: none !important;
 }
 
+.all-done {
+    border-radius: 6px;
+    background: transparent;
+    color: #0078d4;
+    padding-block: 0.5rem;
+}
+
 /* Send Notifications */
+
+.bcc-login-notifications-plugin-post-status-info {
+    flex-direction: column;
+    margin: 1.25rem 0 0.5rem;
+    gap: 0.25rem;
+}
 
 .bcc-notifications {
     width: 100%;
-    margin-top: 1rem;
 }
 
 .bcc-notifications .p-button {
@@ -235,6 +262,12 @@ ul.p-treenode-children .p-treenode-content {
     align-items: center;
 }
 
+.bcc-send-notifications__dialog .bcc-send-notifications__info {
+    font-size: 0.875rem;
+    font-style: italic;
+    color: rgba(0,0,0,.6);
+}
+
 .bcc-send-notifications__dialog .p-button {
     position: absolute;
     right: 1.5rem;
@@ -247,6 +280,7 @@ ul.p-treenode-children .p-treenode-content {
 .p-toast {
     opacity: 1;
     font-size: 1rem;
+    z-index: 9999;
 }
 
 .p-toast .p-toast-message {

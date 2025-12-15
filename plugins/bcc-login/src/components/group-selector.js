@@ -113,8 +113,8 @@ const GroupSelector = ({ tags, options, label, groupsName, groupsValue, isSettin
 
     // Rebuild treeNodes when tags change via external Tag Input component
     useEffect(() => {
-        const rebuild = (currentTags) => {
-            const groupsByTag = getGroupsByTag(currentTags);
+        const rebuild = (newTags) => {
+            const groupsByTag = getGroupsByTag(newTags);
             setTreeNodes(groupsByTag);
 
             // Keep selected groups belonging to current tags
@@ -142,14 +142,14 @@ const GroupSelector = ({ tags, options, label, groupsName, groupsValue, isSettin
             const { value } = ev.detail || {};
 
             // Accept both array and comma-separated string
-            const nextTags = Array.isArray(value)
+            const newTags = Array.isArray(value)
                 ? value
                 : (typeof value === 'string'
                     ? value.split(',').map(t => t.trim()).filter(Boolean) 
                     : tags
                 );
 
-            rebuild(nextTags);
+            rebuild(newTags);
         };
 
         window.addEventListener('bcc:tagsChanged', handler);
@@ -294,6 +294,8 @@ const GroupSelector = ({ tags, options, label, groupsName, groupsValue, isSettin
                 onHide={() => setVisible(false)}
                 loading={true}
                 className="bcc-group-selector__dialog"
+                closeIcon={<i className="dashicons dashicons-yes" />}
+                ariaCloseIconLabel={__('Done', 'bcc-login')}
             >
                 <div id="target-groups-selector" class="group-selector-section">
                     { isSettingPostGroups && ( <h3>{__('Requires action', 'bcc-login')}</h3> ) }

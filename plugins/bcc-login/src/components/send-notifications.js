@@ -6,7 +6,7 @@ import { Tag } from 'primereact/tag';
 import { Badge } from 'primereact/badge';
 import { __ } from '@wordpress/i18n';
 
-const SendNotifications = ({ label, postId, status, targetGroupsCount, visibilityGroupsCount, isNotificationDryRun, isDirty, isAutoSaving }) => {
+const SendNotifications = ({ label, postId, postType, status, targetGroupsCount, visibilityGroupsCount, isNotificationDryRun, isDirty, isAutoSaving }) => {
     const [visible, setVisible] = useState(false);
     const toast = useRef(null);
     const [nonce, setNonce] = useState(null);
@@ -19,10 +19,14 @@ const SendNotifications = ({ label, postId, status, targetGroupsCount, visibilit
 
     const showToast = (status) => {
         const messages = {
-            success: { severity: 'success', summary: __('Success', 'bcc-login'), detail: __('Notifications sent!', 'bcc-login') },
+            success: { severity: 'success', summary: __('Success', 'bcc-login'), detail: __('Notifications sent!', 'bcc-login'), life: 5000 },
             error: { severity: 'error', summary: __('Error', 'bcc-login'), detail: __('Error sending notifications.', 'bcc-login'), sticky: true },
-            info: { severity: 'info', summary: __('Info', 'bcc-login'), detail: __('Sending notifications ...', 'bcc-login') },
+            info: { severity: 'info', summary: __('Info', 'bcc-login'), detail: __('Sending notifications ...', 'bcc-login'), sticky: true },
         };
+
+        // First remove the info toast if it's showing
+        toast.current.remove(messages.info);
+
         toast.current.show(messages[status]);
     };
 
@@ -51,6 +55,13 @@ const SendNotifications = ({ label, postId, status, targetGroupsCount, visibilit
                 showToast('error');
                 throw new Error(`Request failed (${response.status}): ${text}`);
             }
+
+            window.dispatchEvent(new CustomEvent('bcc:notificationSent', {
+                detail: {
+                    date: new Date().toLocaleString(),
+                    no_of_groups: targetGroupsCount + visibilityGroupsCount
+                }
+            }));
 
             showToast('success');
         } catch (error) {
@@ -121,7 +132,7 @@ const SendNotifications = ({ label, postId, status, targetGroupsCount, visibilit
                 <div class="bcc-send-notifications__translations">
                     <p>{__('Translations', 'bcc-login')}: {translations === null
                         ? <Tag icon="dashicons dashicons-info" severity="info" className="italic" value={__('Loading translations ...', 'bcc-login')} />
-                        : (translations.length == 0 ? <Tag icon="dashicons dashicons-warning" severity="warning" value={__('No translations available', 'bcc-login')} /> : '')
+                        : (translations.length == 0 ? <Tag icon="dashicons dashicons-info" severity="info" value={__('No translations available', 'bcc-login')} /> : '')
                     }</p>
 
                     {translations !== null && translations.length > 0 ? (
@@ -164,6 +175,8 @@ const SendNotifications = ({ label, postId, status, targetGroupsCount, visibilit
                     ) : (
                         <Tag icon="dashicons dashicons-no" severity="danger" value={__('No groups', 'bcc-login')}></Tag>
                     )}
+
+                    <p className='bcc-send-notifications__info'>* {__('The email will be sent immediately when you click "Send"', 'bcc-login')}</p>
                 </div>
 
                 {isNotificationDryRun && (
