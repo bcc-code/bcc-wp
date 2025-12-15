@@ -10,24 +10,48 @@ class BCC_Notifications
         $this->settings = $settings;
         $this->core_api = $core_api;
 
-        add_action('transition_post_status', array($this, 'on_post_status_transition'), 10, 3);
-        add_action('bcc_send_scheduled_notification', array($this, 'send_notification'), 10, 1);
+        add_action('rest_api_init', array($this, 'register_send_notifications_endpoint'));
+        add_action('rest_api_init', array($this, 'register_wpml_translations_endpoint'));
     }
 
-    // NB: This does not run if a post is published without first being saved as a draft.
-    public function on_post_status_transition($new_status, $old_status, $post)
-    {
-        if ('publish' === $new_status && 'publish' !== $old_status && in_array($post->post_type, $this->settings->notification_post_types)) {
-            if ($this->settings->notification_delay > 0) {
-                wp_schedule_single_event(time() + $this->settings->notification_delay, 'bcc_send_scheduled_notification', array($post->ID));
-            } else {
-                $this->send_notification($post->ID);
-            }
-        }
+    public function register_send_notifications_endpoint() {
+        register_rest_route('bcc-login/v1', '/send-notifications', array(
+            'methods' => 'POST',
+            'callback' => function (WP_REST_Request $request) {
+                $post_id = $request->get_param('postId');
+
+                if ($post_id) {
+                    if (!in_array(get_post_type($post_id), $this->settings->notification_post_types)) {
+                        return new WP_REST_Response(array('error' => 'This post type is not allowed to sent notifications'), 400);
+                    }
+
+                    $this->send_notification($post_id);
+
+                    return new WP_REST_Response(null, 200);
+                } else {
+                    return new WP_REST_Response(array('error' => 'postId parameter is required'), 400);
+                }
+            },
+            'permission_callback' => function () {
+                return current_user_can('manage_options');
+            },
+        ));
     }
 
-    public function replace_notification_params($text, $post, $language)
-    {
+    public function register_wpml_translations_endpoint() {
+        register_rest_route('bcc-login/v1', '/wpml-translations/(?P<id>\d+)', array(
+            'methods' => 'GET',
+            'callback' => function (WP_REST_Request $request) {
+                $post_id = (int) $request['id'];
+                return $this->bcc_get_wpml_post_translations($post_id);
+            },
+            'permission_callback' => function () {
+                return current_user_can('edit_posts');
+            },
+        ));
+    }
+
+    public function replace_notification_params($text, $post, $language) {
         $text = str_replace('[postTitle]', $post->post_title, $text);
         $text = str_replace('[postExcerpt]', get_the_excerpt($post), $text);
         $text = str_replace('[postUrl]', get_permalink($post) ?? (get_site_url() . '/?p=' . $post->ID . (isset($language) ? '&lang=' . $language : '')), $text);
@@ -36,13 +60,12 @@ class BCC_Notifications
         return $text;
     }
 
-    public function send_notification($post_id)
-    {
+    public function send_notification($post_id) {
         error_log('DEBUG: ' . __METHOD__ . ' - Sending notification for post ID: ' . $post_id);
 
         // Fetch the post object since only the ID is passed through scheduling.
         $post = get_post($post_id);
-        $wpml_installed = defined('ICL_SITEPRESS_VERSION');
+
         if (!$post) {
             error_log('DEBUG: ' . __METHOD__ . ' - Could not get post: ' . $post_id);
             return; // Exit if the post doesn't exist.
@@ -50,17 +73,24 @@ class BCC_Notifications
         $post_type = $post->post_type;
 
         // 1. Get groups for post
-        $post_groups = get_post_meta($post->ID, 'bcc_groups', false);
+        $post_target_groups = get_post_meta($post->ID, 'bcc_groups', false);
+        $send_email_to_target_groups = get_post_meta($post->ID, 'bcc_groups_email', true);
 
-        // Notification logic goes here.
-        if (isset($post_groups) && !empty($post_groups)) {
+        $post_visibility_groups = get_post_meta($post->ID, 'bcc_visibility_groups', false);
+        $send_email_to_visibility_groups = get_post_meta($post->ID, 'bcc_visibility_groups_email', true);
 
-            $notification_groups = array_intersect($post_groups, $this->settings->notification_groups);
-            if (empty($notification_groups)) {
-                error_log('DEBUG: ' . __METHOD__ . ' - No notification groups found for post: ' . $post_id);
-                return;
-            }
+        $notification_groups = array();
 
+        if ($send_email_to_target_groups) {
+            $notification_groups = $post_target_groups;
+        }
+
+        if ($send_email_to_visibility_groups) {
+            $notification_groups = $this->settings->array_union($notification_groups, $post_visibility_groups);
+        }
+
+        // Notification logic goes here
+        if (!empty($notification_groups)) {
             // 2. Get default language and url for site
             $site_language = get_bloginfo('language'); //E.g. "en-US"
             $site_url = get_site_url();
@@ -68,6 +98,7 @@ class BCC_Notifications
             // 3. Define array of content to send
             $payload = [];
 
+            $wpml_installed = defined('ICL_SITEPRESS_VERSION');
             $is_multilinguage_post = false;
 
             // 4. Handle multilingual posts
@@ -77,26 +108,26 @@ class BCC_Notifications
 
                 // Check if post has been translated
                 $has_translations = apply_filters('wpml_element_has_translations', '', $post_id, $post_type);
+                
                 if ($has_translations) {
-
                     error_log('DEBUG: ' . __METHOD__ . ' - Post has translations. Post ID: ' . $post_id);
 
                     $trid = apply_filters('wpml_element_trid', NULL, $post_id, 'post_' . $post_type);
                     $translations = apply_filters('wpml_get_element_translations', NULL, $trid, 'post_' . $post_type);
 
                     // Determine if current post is the original
-                    $is_orginal = false;
+                    $is_original = false;
+
                     foreach ($translations as $lang_code => $details) {
                         if ($details->element_id == $post_id) {
-                            $is_orginal = $details->original == "1";
+                            $is_original = $details->original == "1";
                             break;
                         }
                     }
 
                     $is_multilinguage_post = true;
 
-                    if ($is_orginal) {
-
+                    if ($is_original) {
                         error_log('DEBUG: ' . __METHOD__ . ' - Post is original. Post ID: ' . $post_id);
 
                         foreach ($translations as $lang => $details) {
@@ -107,7 +138,9 @@ class BCC_Notifications
                             $language = str_replace('_', '-', $locale);
                             $language_code = $language_details["language_code"];
                             $excerpt = get_the_excerpt($translation);
+
                             do_action('wpml_switch_language', $language_code);
+
                             if ($translation->post_status == 'publish') {
                                 $payload[] = [
                                     'post' => $translation,
@@ -120,22 +153,20 @@ class BCC_Notifications
                                     'date' => str_replace(' ', 'T', $translation->post_date_gmt) . 'Z'
                                 ];
                             }
+
                             do_action('wpml_switch_language', $default_local);
                         }
                     } else {
-
                         error_log('DEBUG: ' . __METHOD__ . ' - Post is NOT original. Post ID: ' . $post_id);
 
                         // Don't process non-default languages of posts that have translations
                         // This is to avoid sending duplicate notifications
                         return;
                     }
-
                 }
             }
 
             if (!$is_multilinguage_post) {
-
                 error_log('DEBUG: ' . __METHOD__ . ' - Post is NOT multilingual. Post ID: ' . $post_id);
 
                 $excerpt = get_the_excerpt($post);
@@ -151,13 +182,14 @@ class BCC_Notifications
             }
 
             if (!empty($payload)) {
-
                 $inapp_payload = [];
                 $email_payload = [];
+
                 foreach ($payload as $item) {
                     $default_local = apply_filters('wpml_current_language', null);
                     $wp_lang = str_replace('-', '_', $item["language"]);
                     switch_to_locale($wp_lang);
+
                     if ($wpml_installed && isset($item["language_code"])) {
                         do_action('wpml_switch_language', $item["language_code"]);
                     }
@@ -169,7 +201,6 @@ class BCC_Notifications
                             : null);
 
                     if ($templates) {
-
                         $payload_lang = str_replace('nb-NO', 'no-NO', $item["language"]);
 
                         $inapp_payload[] = [
@@ -192,9 +223,11 @@ class BCC_Notifications
                             "body" => $email_body, //obsolete
                         ), $post_id);
                     }
+
                     if ($wpml_installed) {
                         do_action('wpml_switch_language', $default_local);
                     }
+
                     restore_previous_locale();
                 }
 
@@ -203,11 +236,88 @@ class BCC_Notifications
                 $this->core_api->send_notification($notification_groups, 'email', 'simpleemail', $email_payload);
                 $this->core_api->send_notification($notification_groups, 'inapp', 'simpleinapp', $inapp_payload);
 
+                $this->add_notification_sent_date($post_id, $notification_groups);
+
                 error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($email_payload) . ' languages.  Post ID: ' . $post_id);
 
             } else {
                 error_log('DEBUG: ' . __METHOD__ . ' - Notification payload is EMPTY. Post ID: ' . $post_id);
             }
         }
+        else {
+            error_log('DEBUG: ' . __METHOD__ . ' - No notification groups found for post: ' . $post_id);
+        }
+    }
+
+    // Save the timestamp when the notification has been sent
+    public function add_notification_sent_date($post_id, $notification_groups = array()) {
+        // Ensure array of strings (UIDs)
+        $group_uids = array_values(array_filter((array) $notification_groups, function($uid) {
+            return is_string($uid) && $uid !== '';
+        }));
+
+        // Load current meta; normalize to array
+        $sent_notifications = get_post_meta($post_id, 'sent_notifications', true);
+        if (!is_array($sent_notifications)) {
+            $sent_notifications = [];
+        }
+
+        // Append new record that matches the REST schema
+        $sent_notifications[] = array(
+            'date' => gmdate('c'), // ISO-8601 UTC
+            'notification_groups' => $group_uids,
+        );
+
+        // Reindex and save
+        $sent_notifications = array_values($sent_notifications);
+        update_post_meta($post_id, 'sent_notifications', $sent_notifications);
+    }
+
+    public function bcc_get_wpml_post_translations($post_id) {
+        if ( ! $post_id || ! get_post( $post_id ) ) {
+            return new WP_Error(
+                'invalid_post',
+                'Invalid post ID',
+                [ 'status' => 400 ]
+            );
+        }
+
+        // Make sure WPML is present
+        if ( ! has_filter( 'wpml_element_trid' ) || ! has_filter( 'wpml_get_element_translations' ) ) {
+            return [];
+        }
+
+        $post_type    = get_post_type( $post_id );
+        $element_type = 'post_' . $post_type; // format WPML expects
+
+        // 1) Get translation group ID (trid)
+        $trid = apply_filters( 'wpml_element_trid', null, $post_id, $element_type );
+
+        if ( ! $trid ) {
+            return [];
+        }
+
+        // 2) Get all translations in this group
+        $translations = apply_filters( 'wpml_get_element_translations', null, $trid, $element_type );
+        $items = [];
+
+        foreach ( (array) $translations as $lang_code => $t ) {
+            $tid = (int) $t->element_id;
+            $is_current = ( $tid === $post_id );
+
+            if ($is_current) {
+                // Skip the current post
+                continue;
+            }
+
+            $items[] = [
+                'id'          => $tid,
+                'language'    => $t->language_code, // e.g. "en", "nb"
+                'status'      => $t->post_status,   // e.g. "publish", "draft"
+                'is_original' => (bool) $t->original,
+            ];
+        }
+
+        return new WP_REST_Response($items, 200);
     }
 }

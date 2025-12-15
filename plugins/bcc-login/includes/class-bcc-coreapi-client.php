@@ -46,21 +46,9 @@ class BCC_Coreapi_Client
         foreach ($result as $group) {
             $groups[$group->uid] = $group;
         }
-
-        // $group_uids = $this->_settings->filtering_groups;
-        // $result = $this->fetch_groups($group_uids);
-        // foreach ($result as $group) {
-        //     $groups[$group->uid] = $group;
-        // }
-
-        // $group_uids = $this->_settings->notification_groups;
-        // $result = $this->fetch_groups($group_uids);
-        // foreach ($result as $group) {
-        //     $groups[$group->uid] = $group;
-        // }
     
         $this->_all_groups = array_values($groups);
-        
+
         $expiration_duration = 60 * 60 * 24; // 1 day
         set_transient($cache_key, $this->_all_groups, $expiration_duration);
 
@@ -98,8 +86,7 @@ class BCC_Coreapi_Client
         return $site_groups;
     }
 
-    function fetch_groups($group_uids)
-    {
+    function fetch_groups($group_uids) {
         $token = $this->get_coreapi_token();
 
         $qry = array(
@@ -138,11 +125,11 @@ class BCC_Coreapi_Client
                 $all_groups[$group->uid] = $group;
             }
         }
+
         return array_values($all_groups);
     }
 
-    function fetch_groups_by_tag($tag)
-    {
+    function fetch_groups_by_tag($tag) {
         $token = $this->get_coreapi_token();
 
         $qry = array(
@@ -167,7 +154,6 @@ class BCC_Coreapi_Client
 
         return $body->data;
     }
-    
 
     function get_groups_for_user($user_uid) {
         $cache_key = 'coreapi_user_groups_'.$user_uid;
@@ -186,7 +172,9 @@ class BCC_Coreapi_Client
     }
 
     function fetch_groups_for_user($user_uid) {
-        if (empty($this->_settings->site_groups)) return array();
+        if (empty($this->_settings->site_groups)) {
+            return array();
+        }
 
         $token = $this->get_coreapi_token();
 
@@ -196,7 +184,6 @@ class BCC_Coreapi_Client
         $user_groups = [];
 
         for ($i = 0; $i < $total_groups; $i += $batch_size) {
-
             $batch = array_slice($this->_settings->site_groups, $i, $batch_size);
             $request_body = array(
                 "groupUids" => $batch
@@ -226,10 +213,9 @@ class BCC_Coreapi_Client
 
             $user_groups = array_merge($user_groups, $body->data->groupUids);
         }
+
         return $user_groups;
     }
-
-
 
     public function ensure_subscription_to_person_updates() {
         if ($this->_settings->disable_pubsub) {
@@ -241,9 +227,9 @@ class BCC_Coreapi_Client
             return;
         }
 
-        $lock = new ExclusiveLock( "subscribe_person_updates" );
+        $lock = new ExclusiveLock("subscribe_person_updates");
 
-        if( $lock->lock( ) == FALSE ){
+        if ($lock->lock() == FALSE) {
             return;
         }
 
@@ -331,13 +317,9 @@ class BCC_Coreapi_Client
     //     ]
     //   }
 
-
-
-
     // Type = email, sms, inapp
     public function send_notification($group_uids, $type, $workflow, $payload) {
         $token = $this->get_coreapi_token();
-
 
         //$request_url =  $this->_settings->coreapi_base_url . "/notifications/notification?createSubscribers=false&pushNotifications=true";
         $request_url =  str_replace("https://", "https://notifications.", $this->_settings->coreapi_base_url) . "/notifications/notification/". $type ."?createSubscribers=true&pushNotifications=" . ($this->_settings->notification_dry_run ? "false" : "true");

@@ -23,8 +23,8 @@
 
 /* Hide the post_audience column from the overview
 but we need to keep it in the DOM in order to populate the radio fields with values. */
-.wp-admin table .column-post_audience, .column-post_groups {
+.wp-admin table .column-post_audience,
+.column-post_groups,
+.column-post_visibility_groups {
     display: none !important;
 }
-
-

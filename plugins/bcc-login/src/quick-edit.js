@@ -12,9 +12,6 @@ jQuery(function ($) {
     if (id > 0) {
       var specific_post_row = $("#post-" + id);
       var post_audience = $(".column-post_audience", specific_post_row).text();
-      var post_groups = $(".column-post_groups", specific_post_row)
-        .text()
-        .split(",");
 
       // uncheck option from previous opened post
       $(':input[name="bcc_login_visibility"]').attr("checked", false);
@@ -22,16 +19,6 @@ jQuery(function ($) {
       $(
         ':input[name="bcc_login_visibility"][id="option-' + post_audience + '"]'
       ).attr("checked", true);
-
-      // uncheck option from previous opened post
-      $(':input[name="bcc_groups[]"] option').attr("selected", false);
-      // populate the inputs with column data
-
-      for (const post_group of post_groups) {
-        $(
-          ':input[name="bcc_groups[]"] option[value="' + post_group + '"]'
-        ).attr("selected", true);
-      }
     }
   };
 

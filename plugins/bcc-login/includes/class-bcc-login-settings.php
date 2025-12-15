@@ -17,14 +17,12 @@ class BCC_Login_Settings {
     public $show_protected_menu_items;
     public $site_group_tags = array();
     public $site_groups = array();
-    public $notification_groups = array();
+    public $visibility_groups = array();
     public $notification_languages = array();
     public $notification_templates = array();
     public $notification_post_types = array();
     public $notification_dry_run = 0;
-    public $notification_delay = 0;
     public $full_content_access_groups = array();
-    public $filtering_groups = array();
     public $coreapi_audience;
     public $coreapi_base_url;
     public $disable_pubsub;
@@ -32,6 +30,33 @@ class BCC_Login_Settings {
     public $track_clicks;
     public $track_page_load;
     public $track_page_interaction;
+
+    public function array_union($x, $y) {
+        if (empty($x) && empty($y)) {
+            return [];
+        }
+
+        if (empty($x)) {
+            return $y;
+        }
+
+        if (empty($y)) {
+            return $x;
+        }
+
+        // Use array_merge to combine three arrays:
+        // 1. Intersection of $x and $y
+        // 2. Elements in $x that are not in $y
+        // 3. Elements in $y that are not in $x
+        $aunion = array_merge(
+            array_intersect($x, $y),   // Intersection of $x and $y
+            array_diff($x, $y),        // Elements in $x but not in $y
+            array_diff($y, $x)         // Elements in $y but not in $x
+        );
+
+        // Return the resulting array representing the union
+        return $aunion;
+    }
 }
 
 /**
@@ -88,8 +113,6 @@ class BCC_Login_Settings_Provider {
         $settings->track_page_load = true;
         $settings->track_page_interaction = true;
 
-        
-
         // Set settings from environment variables.
         foreach ( $this->environment_variables as $key => $constant ) {
             if ( defined( $constant ) && constant( $constant ) != '' ) {
@@ -116,6 +139,11 @@ class BCC_Login_Settings_Provider {
             $settings->site_groups = explode(",", $site_groups_option);
         }
 
+        $visibility_groups_option = get_option('bcc_visibility_groups');
+        if ($visibility_groups_option) {
+            $settings->visibility_groups = explode(",", $visibility_groups_option);
+        }
+
         $settings->disable_pubsub = get_option('bcc_disable_pubsub');
 
         $full_content_access_groups_option = get_option('bcc_full_content_access_groups');
@@ -123,19 +151,8 @@ class BCC_Login_Settings_Provider {
             $settings->full_content_access_groups = explode(",", $full_content_access_groups_option);
         }
 
-        $notification_groups_option = get_option('bcc_notification_groups');
-        if ($notification_groups_option) {
-            $settings->notification_groups = explode(",", $notification_groups_option);
-        }
-
-        $notification_delay_option = get_option('bcc_notification_delay');
-        if ($notification_delay_option) {
-            $settings->notification_delay = (int)$notification_delay_option;
-        }
-
         $settings->notification_dry_run = get_option('bcc_notification_dry_run', 0);
         
-
         $notification_post_types_option = get_option('bcc_notification_post_types');
         if ($notification_post_types_option) {
             $settings->notification_post_types = explode(",", $notification_post_types_option);
@@ -160,11 +177,6 @@ class BCC_Login_Settings_Provider {
 
             $email_title_option = get_option('bcc_notification_' . $language . '_email_title');
             $settings->notification_templates[ $language ]['email_title'] = $email_title_option ? $email_title_option : ''; 
-        }
-
-        $filtering_groups_option = get_option('bcc_filtering_groups');
-        if ($filtering_groups_option) {
-            $settings->filtering_groups = explode(",", $filtering_groups_option);
         }
 
         $track_clicks_option = get_option('bcc_track_clicks', -1);
@@ -239,7 +251,6 @@ class BCC_Login_Settings_Provider {
         );
     }
 
-
     /**
      * Registers the settings page under the «Settings» section.
      */
@@ -263,14 +274,12 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_feed_key' );
         register_setting( $this->option_name, 'bcc_site_group_tags' );
         register_setting( $this->option_name, 'bcc_site_groups' );
+        register_setting( $this->option_name, 'bcc_visibility_groups' );
         register_setting( $this->option_name, 'bcc_disable_pubsub' );
-        register_setting( $this->option_name, 'bcc_notification_groups' );
         register_setting( $this->option_name, 'bcc_notification_languages' );
         register_setting( $this->option_name, 'bcc_notification_post_types' );
-        register_setting( $this->option_name, 'bcc_notification_delay' );
         register_setting( $this->option_name, 'bcc_notification_dry_run' );
         register_setting( $this->option_name, 'bcc_full_content_access_groups' );
-        register_setting( $this->option_name, 'bcc_filtering_groups' );
         register_setting( $this->option_name, 'show_protected_menu_items' );
         register_setting( $this->option_name, 'bcc_track_clicks' );
         register_setting( $this->option_name, 'bcc_track_page_load' );
@@ -304,7 +313,7 @@ class BCC_Login_Settings_Provider {
             array(
                 'name' => 'client_id',
                 'value' => $this->_settings->client_id,
-                'label' => __( 'ClientID', 'client_id' ),
+                'label' => __( 'ClientID', 'bcc-login' ),
                 'readonly' => 1,
                 'description' => 'OIDC variables can be configured using environment variables or constants in wp-config.php. Commonly used variables: <i>OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_SCOPE</i>'
             )
@@ -331,13 +340,13 @@ class BCC_Login_Settings_Provider {
         add_settings_field(
             'bcc_member_organization_name',
             __( 'Member Organization', 'bcc-login' ),
-            array( $this, 'render_text_field' ),
+            array( $this, 'render_tag_input_field' ),
             $this->options_page,
             'general',
             array(
                 'name' => 'bcc_member_organization_name',
                 'value' => $this->_settings->member_organization_name,
-                'description' => 'Comma delimeted list of locations'
+                'description' => 'List of locations'
             )
         );
 
@@ -350,7 +359,7 @@ class BCC_Login_Settings_Provider {
             array(
                 'name' => 'bcc_feed_key',
                 'value' => $this->_settings->feed_key,
-                'label' => __( 'Feed', 'feed_key' ),
+                'label' => __( 'Feed', 'bcc-login' ),
                 'readonly' => 0,
                 'description' => 'The following link can be used to retrieve protected content: <a target="_blank" href="' . get_site_url(null,'/feed') . '?id=' . $this->_settings->feed_key . '">' . get_site_url(null,'/feed') . '?id=' . $this->_settings->feed_key . '</a>'
             )
@@ -370,27 +379,18 @@ class BCC_Login_Settings_Provider {
         );
 
         if ($use_groups_settings) {
-
             $all_groups = $this->_coreapi->get_all_groups();
-            $allowed_filtering_groups = array_values(array_filter($all_groups, function($group) {
-                return in_array($group->uid, $this->_settings->site_groups) || in_array($group->uid, $this->_settings->filtering_groups);
-            }));
-            $allowed_notification_groups = array_values(array_filter($all_groups, function($group) {
-                return in_array($group->uid, $this->_settings->site_groups) || in_array($group->uid, $this->_settings->notification_groups);
-            }));
-
-            
 
             add_settings_field(
                 'bcc_site_group_tags',
                 'Group Tags',
-                array( $this, 'render_text_field' ),
+                array( $this, 'render_tag_input_field' ),
                 $this->options_page,
                 'groups',
                 array(
                     'name' => 'bcc_site_group_tags',
                     'value' => join(",", $this->_settings->site_group_tags),
-                    'description' => 'Comma delimited list of tags to retrieve groups for.'
+                    'description' => 'List of tags to retrieve groups for. When adding tags, remember to first save before being able to select the new groups under Site Groups.'
                 )
             );
 
@@ -401,9 +401,9 @@ class BCC_Login_Settings_Provider {
                 $this->options_page,
                 'groups',
                 array(
-                    'name' => 'bcc_site_groups',
-                    'value' => join(",", $this->_settings->site_groups),
-                    'description' => 'Provide group uids for groups you\'re going to use (comma delimited).',
+                    'groupsName' => 'bcc_site_groups',
+                    'groupsValue' => join(",", $this->_settings->site_groups),
+                    'description' => 'Provide group uids for groups you\'re going to use.',
                     'options' => $all_groups,
                     'tags' => $this->_settings->site_group_tags
                 )
@@ -427,25 +427,10 @@ class BCC_Login_Settings_Provider {
                 $this->options_page,
                 'groups',
                 array(
-                    'name' => 'bcc_full_content_access_groups',
-                    'value' => join(",", $this->_settings->full_content_access_groups),
+                    'groupsName' => 'bcc_full_content_access_groups',
+                    'groupsValue' => join(",", $this->_settings->full_content_access_groups),
                     'description' => 'Groups that always can see published content regardless of group settings on content.',
                     'options' => $all_groups,
-                    'tags' => $this->_settings->site_group_tags
-                )
-            );
-        
-            add_settings_field(
-                'bcc_filtering_groups',
-                'Filtering Groups',
-                array( $this, 'render_group_selector_field' ),
-                $this->options_page,
-                'groups',
-                array(
-                    'name' => 'bcc_filtering_groups',
-                    'value' => join(",", $this->_settings->filtering_groups),
-                    'description' => 'Provide group uids for groups that should be displayed in the filter widget (comma delimited).',
-                    'options' => $allowed_filtering_groups,
                     'tags' => $this->_settings->site_group_tags
                 )
             );
@@ -456,41 +441,13 @@ class BCC_Login_Settings_Provider {
             add_settings_field(
                 'bcc_notification_post_types',
                 'Notification Post Types',
-                array( $this, 'render_text_field' ),
+                array( $this, 'render_tag_input_field' ),
                 $this->options_page,
                 'notifications',
                 array(
                     'name' => 'bcc_notification_post_types',
                     'value' => join(",", $this->_settings->notification_post_types),
-                    'description' => 'Post types that may receive notifications (comma delimited identifiers).'
-                )
-            );
-
-            add_settings_field(
-                'bcc_notification_groups',
-                'Notification Groups',
-                array( $this, 'render_group_selector_field' ),
-                $this->options_page,
-                'notifications',
-                array(
-                    'name' => 'bcc_notification_groups',
-                    'value' => join(",", $this->_settings->notification_groups),
-                    'description' => 'Provide group uids for groups that may receive notifications (comma delimited).',
-                    'options' => $allowed_notification_groups,
-                    'tags' => $this->_settings->site_group_tags
-                )
-            );
-
-            add_settings_field(
-                'bcc_notification_delay',
-                'Notification Delay',
-                array( $this, 'render_text_field' ),
-                $this->options_page,
-                'notifications',
-                array(
-                    'name' => 'bcc_notification_delay',
-                    'value' => $this->_settings->notification_delay,
-                    'description' => 'How long to wait (s) before sending notifications. Delays can be used to allow time for publishing translations etc.'
+                    'description' => 'Post types that may receive notifications.'
                 )
             );
 
@@ -510,13 +467,13 @@ class BCC_Login_Settings_Provider {
             add_settings_field(
                 'bcc_notification_languages',
                 'Notification Languages',
-                array( $this, 'render_text_field' ),
+                array( $this, 'render_tag_input_field' ),
                 $this->options_page,
                 'notifications',
                 array(
                     'name' => 'bcc_notification_languages',
                     'value' => join(",", $this->_settings->notification_languages),
-                    'description' => 'List of languages that are supported for notification templates (comma delimited) E.g. en_US, nb_NO, de_DE etc.'
+                    'description' => 'List of languages that are supported for notification templates. E.g. nb_NO, en_US, de_DE, nl_NL, fr_FR etc.'
                 )
             );
 
@@ -685,12 +642,28 @@ class BCC_Login_Settings_Provider {
     }
 
     function render_group_selector_field( $args ) { ?>
+        <div id="<?php echo $args['groupsName']; ?>-container"></div>
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+                window.renderGroupSelector('<?php echo $args['groupsName']; ?>-container', {
+                    tags: <?php echo json_encode($args['tags']); ?>,
+                    options: <?php echo json_encode($args['options']); ?>,
+                    label: '<?php echo isset($args['label']) ? $args['label'] : ''; ?>',
+                    groupsName: '<?php echo $args['groupsName']; ?>',
+                    groupsValue: <?php echo json_encode($args['groupsValue']); ?>,
+                    readonly: <?php echo isset($args['readonly']) && $args['readonly'] ? 'true' : 'false'; ?>,
+                });
+            });
+        </script>
+        <?php
+        $this->render_field_description($args);
+    }
+
+    function render_tag_input_field( $args ) { ?>
         <div id="<?php echo $args['name']; ?>-container"></div>
         <script type="text/javascript">
             document.addEventListener('DOMContentLoaded', function() {
-                window.renderGroupSelector('<?php echo $args['name']; ?>-container', {
-                    tags: <?php echo json_encode($args['tags']); ?>,
-                    options: <?php echo json_encode($args['options']); ?>,
+                window.renderTagInput('<?php echo $args['name']; ?>-container', {
                     name: '<?php echo $args['name']; ?>',
                     label: '<?php echo isset($args['label']) ? $args['label'] : ''; ?>',
                     value: <?php echo json_encode($args['value']); ?>,
@@ -726,12 +699,13 @@ class BCC_Login_Settings_Provider {
      */
     function render_text_field( $args ) { ?>
         <input
-            type="text"
+            type="<?php echo isset( $args['numberOnly'] ) && $args['numberOnly'] ? 'number' : 'text'; ?>"
             id="<?php echo $args['name']; ?>"
             name="<?php echo $args['name']; ?>"   
             class="large-text"             
             value="<?php echo htmlspecialchars($args['value']); ?>"
             <?php echo isset( $args['readonly'] ) && $args['readonly'] ? 'readonly onclick="return false;"' : ''; ?>
+            <?php echo isset( $args['numberOnly'] ) && $args['numberOnly'] ? 'min="0"' : ''; ?>
         >
         <?php
         $this->render_field_description( $args );
@@ -741,11 +715,12 @@ class BCC_Login_Settings_Provider {
      * Renders a text box in settings page.
      */
     function render_textarea_field( $args ) { ?>
-        <textarea 
+        <textarea
             id="<?php echo $args['name']; ?>"
             name="<?php echo $args['name']; ?>"   
             class="large-text"
             <?php echo isset( $args['readonly'] ) && $args['readonly'] ? 'readonly onclick="return false;"' : ''; ?>
+            rows="10"
          ><?php echo htmlspecialchars($args['value']); ?></textarea>
         <?php
         $this->render_field_description( $args );

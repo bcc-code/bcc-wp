@@ -8,9 +8,11 @@ import {
   SearchControl,
 } from "@wordpress/components";
 import GroupSelector from './components/group-selector';
+import SendNotifications from './components/send-notifications';
+import SentNotificationsList from './components/sent-notifications-list';
 import { registerPlugin } from "@wordpress/plugins";
 import { InspectorControls } from "@wordpress/block-editor";
-import { PluginPostStatusInfo } from "@wordpress/edit-post";
+import { PluginPostStatusInfo } from "@wordpress/editor";
 import { Fragment, cloneElement } from "@wordpress/element";
 import { withSelect, withDispatch } from "@wordpress/data";
 import {
@@ -25,19 +27,19 @@ let filteredSiteGroups = siteGroups || [];
 const visibilityOptions = [
   {
     value: levels.public,
-    label: __("Public"),
+    label: __("Public", "bcc-login"),
   },
   {
     value: levels.subscriber,
-    label: __("Logged In"),
+    label: __("Logged In", "bcc-login"),
   },
   {
     value: levels["bcc-login-member"],
-    label: sprintf(__("%s Members"), localName),
+    label: sprintf(__("%s Members", "bcc-login"), localName),
   },
   {
     value: levels["public-only"],
-    label: __("Not Logged In"),
+    label: __("Not Logged In", "bcc-login"),
   },
 ];
 
@@ -76,72 +78,13 @@ function VisibilityOptions({
   );
 }
 
-function GroupsOptions({
-  heading,
-  siteGroups,
-  selectedGroups,
-  instanceId,
-  onUpdateGroup,
-}) {
-  const [searchInput, setSearchInput] = useState("");
-
-  if (!siteGroups || siteGroups.length === 0) {
-    return;
-  }
-
-  // Sort by name
-  siteGroups.sort((a, b) => {
-    return a.name.localeCompare(b.name);
-  });
-
-  return (
-    <div>
-      {heading && <h2>{heading}</h2>}
-      <SearchControl
-        className="bcc-groups__search"
-        value={searchInput}
-        onChange={(e) => {
-          setSearchInput(e);
-
-          if (e == "") {
-            filteredSiteGroups = siteGroups;
-          } else {
-            filteredSiteGroups = siteGroups.filter((group) =>
-              group.name.toLowerCase().includes(e.toLowerCase())
-            );
-          }
-        }}
-      />
-      {filteredSiteGroups.map((group) => (
-        <CheckboxControl
-          className="bcc-groups__checkbox"
-          label={group.name}
-          onChange={(event) => {
-            const index = selectedGroups
-              ? selectedGroups.indexOf(group.uid)
-              : -1;
-            const newGroups = JSON.parse(JSON.stringify(selectedGroups));
-            if (index === -1) {
-              newGroups.push(group.uid);
-            } else {
-              newGroups.splice(index, 1);
-            }
-            onUpdateGroup(newGroups);
-          }}
-          checked={selectedGroups ? selectedGroups.includes(group.uid) : false}
-        />
-      ))}
-    </div>
-  );
-}
-
 registerPlugin("bcc-login-visibility", {
   render: compose([
     withSelect((select) => {
       const { getEditedPostAttribute } = select("core/editor");
       return {
         visibility:
-          getEditedPostAttribute("meta").bcc_login_visibility || defaultLevel,
+          getEditedPostAttribute("meta")?.bcc_login_visibility || defaultLevel,
       };
     }),
     withDispatch((dispatch) => {
@@ -159,60 +102,37 @@ registerPlugin("bcc-login-visibility", {
     withInstanceId,
   ])((props) => (
     <PluginPostStatusInfo>
-      <VisibilityOptions heading={__("Post Audience")} {...props} />
+      <VisibilityOptions heading={__("Post Audience", "bcc-login")} {...props} />
     </PluginPostStatusInfo>
   )),
 });
-
-// registerPlugin("bcc-groups", {
-//   render: compose([
-//     withSelect((select) => {
-//       const { getEditedPostAttribute } = select("core/editor");
-//       const meta = getEditedPostAttribute("meta");
-//       return {
-//         selectedGroups: meta.bcc_groups ?? [],
-//         siteGroups: window.siteGroups,
-//       };
-//     }),
-//     withDispatch((dispatch) => {
-//       const { editPost } = dispatch("core/editor");
-//       return {
-//         onUpdateGroup(value) {
-//           editPost({
-//             meta: {
-//               bcc_groups: value,
-//             },
-//           });
-//         },
-//       };
-//     }),
-//     withInstanceId,
-//   ])((props) => (
-//     <PluginPostStatusInfo>
-//       <GroupsOptions heading={__("Post Groups")} {...props} />
-//     </PluginPostStatusInfo>
-//   )),
-// });
-
 
 registerPlugin("bcc-groups-2", {
   render: compose([
     withSelect((select) => {
       const { getEditedPostAttribute } = select("core/editor");
       const meta = getEditedPostAttribute("meta");
+
       return {
-        value: (meta.bcc_groups ?? []).join(","),
+        groupsValue: (meta?.bcc_groups ?? []).join(","),
+        sendEmailToTargetGroupsValue: meta?.bcc_groups_email ?? true,
+        visibilityGroupsValue: (meta?.bcc_visibility_groups ?? []).join(","),
+        sendEmailToVisibilityGroupsValue: meta?.bcc_visibility_groups_email ?? false,
         options: window.siteGroups,
         tags: window.siteGroupTags,
+        isSettingPostGroups: true
       };
     }),
     withDispatch((dispatch) => {
       const { editPost } = dispatch("core/editor");
       return {
-        onChange(value) {
+        onChange(targetGroups, sendEmailToTargetGroups, visibilityGroups, sendEmailToVisibilityGroups) {
           editPost({
             meta: {
-              bcc_groups: value,
+              bcc_groups: targetGroups,
+              bcc_groups_email: sendEmailToTargetGroups,
+              bcc_visibility_groups: visibilityGroups,
+              bcc_visibility_groups_email: sendEmailToVisibilityGroups,
             },
           });
         },
@@ -223,6 +143,52 @@ registerPlugin("bcc-groups-2", {
     <PluginPostStatusInfo>
       <GroupSelector label={__("Post Groups")} {...props} />
     </PluginPostStatusInfo>
+  )),
+});
+
+registerPlugin("bcc-notifications", {
+  render: compose([
+    withSelect((select) => {
+      const { getCurrentPostId, getCurrentPostType, getEditedPostAttribute, isEditedPostDirty, isAutosavingPost } = select("core/editor");
+      const meta = getEditedPostAttribute('meta');
+
+      const targetGroupsCount = Array.isArray(meta?.bcc_groups) && meta?.bcc_groups_email
+          ? meta.bcc_groups.length : 0;
+
+      const visibilityGroupsCount = Array.isArray(meta?.bcc_visibility_groups) && meta?.bcc_visibility_groups_email
+          ? meta.bcc_visibility_groups.length : 0;
+
+      const postType = getCurrentPostType();
+      const allowedTypes = Array.isArray(window.bccLoginNotificationPostTypes) ? window.bccLoginNotificationPostTypes : [];
+
+      const sentNotifications = meta?.sent_notifications.map(notification => {
+        return {
+          date: (new Date(notification.date)).toLocaleString(),
+          no_of_groups: notification.notification_groups.length
+        };
+      }) ?? [];
+
+      return {
+        postId: getCurrentPostId(),
+        postType,
+        status: getEditedPostAttribute('status'),
+        targetGroupsCount,
+        visibilityGroupsCount,
+        isNotificationDryRun: window.bccLoginNotificationDryRun,
+        isDirty: isEditedPostDirty(),
+        isAutoSaving: isAutosavingPost(),
+        isAllowedPostType: allowedTypes.includes(postType),
+        sentNotifications: sentNotifications
+      };
+    }),
+    withInstanceId,
+  ])((props) => (
+    props.isAllowedPostType ? (
+      <PluginPostStatusInfo className="bcc-login-notifications-plugin-post-status-info">
+        <SendNotifications label={__("Send notifications", "bcc-login")} {...props} />
+        <SentNotificationsList {...props} />
+      </PluginPostStatusInfo>
+    ) : null
   )),
 });
 
@@ -238,7 +204,7 @@ addFilter(
           <InspectorControls>
             <PanelBody>
               <VisibilityOptions
-                heading={__("Block Audience")}
+                heading={__("Block Audience", "bcc-login")}
                 visibility={attributes.bccLoginVisibility || defaultLevel}
                 onUpdateVisibility={(value) => {
                   setAttributes({
@@ -249,31 +215,17 @@ addFilter(
               />
             <PanelRow>
                 <GroupSelector
-                  label={__("Block Groups")}
+                  label={__("Block Groups", "bcc-login")}
                   tags={window.siteGroupTags}
                   options={window.siteGroups}
-                  value={(attributes.bccGroups ?? []).join(",")}
-                  onChange={(value) => {
+                  groupsValue={(attributes.bccGroups ?? []).join(",")}
+                  onChange={(groupsValue) => {
                     setAttributes({
-                      bccGroups: value,
+                      bccGroups: groupsValue,
                     });
                   }}
                 />
               </PanelRow>
-
-              {/* <PanelRow>
-                <GroupsOptions
-                  heading={__("Block Groups")}
-                  siteGroups={window.siteGroups}
-                  selectedGroups={attributes.bccGroups ?? []}
-                  onUpdateGroup={(value) => {
-                    setAttributes({
-                      bccGroups: value,
-                    });
-                  }}
-                  {...props}
-                />
-              </PanelRow> */}
             </PanelBody>
           </InspectorControls>
           <BlockEdit {...props} />
