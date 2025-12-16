@@ -231,14 +231,37 @@ class BCC_Notifications
                     restore_previous_locale();
                 }
 
-                error_log('DEBUG: ' . __METHOD__ . ' - Sending notifications for ' . count($email_payload) . ' languages.  Post ID: ' . $post_id);
+                error_log('DEBUG: ' . __METHOD__ . ' - Sending notifications for ' . count($email_payload) . ' languages. Post ID: ' . $post_id);
 
-                $this->core_api->send_notification($notification_groups, 'email', 'simpleemail', $email_payload);
-                $this->core_api->send_notification($notification_groups, 'inapp', 'simpleinapp', $inapp_payload);
+                if ($send_email_to_target_groups) {
+                    $requires_action_email_payload = array();
+                    
+                    foreach ($email_payload as $email_item) {
+                        $email_item['subject'] = __('Requires action', 'bcc-login') . ': ' . $email_item['subject'];
+                        $requires_action_email_payload[] = $email_item;
+                    }
+
+                    $this->core_api->send_notification($post_target_groups, 'email', 'simpleemail', $requires_action_email_payload);
+                    $this->core_api->send_notification($post_target_groups, 'inapp', 'simpleinapp', $inapp_payload);
+
+                    error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($post_target_groups) . ' target groups. Post ID: ' . $post_id);
+                }
+
+                if ($send_email_to_visibility_groups) {
+                    foreach ($email_payload as $email_item) {
+                        $email_item['subject'] = __('For information', 'bcc-login') . ': ' . $email_item['subject'];
+                        $for_information_email_payload[] = $email_item;
+                    }
+
+                    $this->core_api->send_notification($post_visibility_groups, 'email', 'simpleemail', $for_information_email_payload);
+                    $this->core_api->send_notification($post_visibility_groups, 'inapp', 'simpleinapp', $inapp_payload);
+
+                    error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($post_visibility_groups) . ' visibility groups. Post ID: ' . $post_id);
+                }
 
                 $this->add_notification_sent_date($post_id, $notification_groups);
 
-                error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($email_payload) . ' languages.  Post ID: ' . $post_id);
+                error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($email_payload) . ' languages. Post ID: ' . $post_id);
 
             } else {
                 error_log('DEBUG: ' . __METHOD__ . ' - Notification payload is EMPTY. Post ID: ' . $post_id);
