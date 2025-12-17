@@ -61,7 +61,7 @@ class BCC_Notifications
     }
 
     public function send_notification($post_id) {
-        error_log('DEBUG: ' . __METHOD__ . ' - Sending notification for post ID: ' . $post_id);
+        error_log('DEBUG: ' . __METHOD__ . ' - Sending notification for post: ' . $post_id);
 
         // Fetch the post object since only the ID is passed through scheduling.
         $post = get_post($post_id);
@@ -104,13 +104,13 @@ class BCC_Notifications
             // 4. Handle multilingual posts
             if ($wpml_installed) {
                 // WPML is installed and active.
-                error_log('DEBUG: ' . __METHOD__ . ' - WPML is installed. Post ID: ' . $post_id);
+                error_log('DEBUG: ' . __METHOD__ . ' - WPML is installed.');
 
                 // Check if post has been translated
                 $has_translations = apply_filters('wpml_element_has_translations', '', $post_id, $post_type);
                 
                 if ($has_translations) {
-                    error_log('DEBUG: ' . __METHOD__ . ' - Post has translations. Post ID: ' . $post_id);
+                    error_log('DEBUG: ' . __METHOD__ . ' - Post has translations.');
 
                     $trid = apply_filters('wpml_element_trid', NULL, $post_id, 'post_' . $post_type);
                     $translations = apply_filters('wpml_get_element_translations', NULL, $trid, 'post_' . $post_type);
@@ -128,7 +128,7 @@ class BCC_Notifications
                     $is_multilinguage_post = true;
 
                     if ($is_original) {
-                        error_log('DEBUG: ' . __METHOD__ . ' - Post is original. Post ID: ' . $post_id);
+                        error_log('DEBUG: ' . __METHOD__ . ' - Post is original.');
 
                         foreach ($translations as $lang => $details) {
                             $default_local = apply_filters('wpml_current_language', null);
@@ -157,7 +157,7 @@ class BCC_Notifications
                             do_action('wpml_switch_language', $default_local);
                         }
                     } else {
-                        error_log('DEBUG: ' . __METHOD__ . ' - Post is NOT original. Post ID: ' . $post_id);
+                        error_log('DEBUG: ' . __METHOD__ . ' - Post is NOT original.');
 
                         // Don't process non-default languages of posts that have translations
                         // This is to avoid sending duplicate notifications
@@ -167,7 +167,7 @@ class BCC_Notifications
             }
 
             if (!$is_multilinguage_post) {
-                error_log('DEBUG: ' . __METHOD__ . ' - Post is NOT multilingual. Post ID: ' . $post_id);
+                error_log('DEBUG: ' . __METHOD__ . ' - Post is NOT multilingual.');
 
                 $excerpt = get_the_excerpt($post);
                 $payload[] = [
@@ -205,6 +205,7 @@ class BCC_Notifications
 
                         $inapp_payload[] = [
                             "language" => $payload_lang,
+                            "language_code" => $item["language_code"],
                             "title" => $item["title"],
                             "content" => $item["excerpt"] . '<br> [cta text="' . __('Read more', 'bcc-login') . '" link="' . $item["url"] . '"]',
                             "notification" => $item["excerpt"] . '<br> [cta text="' . __('Read more', 'bcc-login') . '" link="' . $item["url"] . '"]' //obsolete
@@ -216,6 +217,7 @@ class BCC_Notifications
 
                         $email_payload[] = apply_filters('bcc_notification_email_payload', array(
                             "language" => $payload_lang,
+                            "language_code" => $item["language_code"],
                             "subject" => $email_subject,
                             "banner" => $item["image_url"] !== false ? $item["image_url"] : null,
                             "title" => $email_title,
@@ -231,7 +233,7 @@ class BCC_Notifications
                     restore_previous_locale();
                 }
 
-                error_log('DEBUG: ' . __METHOD__ . ' - Sending notifications for ' . count($email_payload) . ' languages. Post ID: ' . $post_id);
+                error_log('DEBUG: ' . __METHOD__ . ' - Sending notifications for ' . count($email_payload) . ' languages.');
 
                 // Send notifications to target groups
                 if ($send_email_to_target_groups) {
@@ -240,20 +242,20 @@ class BCC_Notifications
                     
                     // Modify email subject to include "Requires action"
                     foreach ($email_payload as $email_item) {
-                        $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'Requires action', 'bcc-login', 'Requires action', $email_item["language"] ) . ': ' . $email_item['subject'];
+                        $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'Requires action', 'bcc-login', 'Requires action', $email_item["language_code"] ) . ': ' . $email_item['subject'];
                         $requires_action_email_payload[] = $email_item;
                     }
 
                     // Modify notification title to include "Requires action"
                     foreach ($inapp_payload as $inapp_item) {
-                        $inapp_item['title'] = apply_filters( 'wpml_translate_single_string', 'Requires action', 'bcc-login', 'Requires action', $inapp_item["language"] ) . ': ' . $inapp_item['title'];
+                        $inapp_item['title'] = apply_filters( 'wpml_translate_single_string', 'Requires action', 'bcc-login', 'Requires action', $inapp_item["language_code"] ) . ': ' . $inapp_item['title'];
                         $requires_action_inapp_payload[] = $inapp_item;
                     }
 
                     $this->core_api->send_notification($post_target_groups, 'email', 'simpleemail', $requires_action_email_payload);
                     $this->core_api->send_notification($post_target_groups, 'inapp', 'simpleinapp', $requires_action_inapp_payload);
 
-                    error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($post_target_groups) . ' target groups. Post ID: ' . $post_id);
+                    error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($post_target_groups) . ' target groups.');
                 }
 
                 // Send notifications to visibility groups
@@ -263,29 +265,29 @@ class BCC_Notifications
 
                     // Modify email subject to include "For information"
                     foreach ($email_payload as $email_item) {
-                        $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'For information', 'bcc-login', 'For information', $email_item["language"] ) . ': ' . $email_item['subject'];
+                        $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'For information', 'bcc-login', 'For information', $email_item["language_code"] ) . ': ' . $email_item['subject'];
                         $for_information_email_payload[] = $email_item;
                     }
 
                     // Modify notification title to include "For information"
                     foreach ($inapp_payload as $inapp_item) {
-                        $inapp_item['title'] = apply_filters( 'wpml_translate_single_string', 'For information', 'bcc-login', 'For information', $inapp_item["language"] ) . ': ' . $inapp_item['title'];
+                        $inapp_item['title'] = apply_filters( 'wpml_translate_single_string', 'For information', 'bcc-login', 'For information', $inapp_item["language_code"] ) . ': ' . $inapp_item['title'];
                         $for_information_inapp_payload[] = $inapp_item;
                     }
 
                     $this->core_api->send_notification($post_visibility_groups, 'email', 'simpleemail', $for_information_email_payload);
                     $this->core_api->send_notification($post_visibility_groups, 'inapp', 'simpleinapp', $for_information_inapp_payload);
 
-                    error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($post_visibility_groups) . ' visibility groups. Post ID: ' . $post_id);
+                    error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($post_visibility_groups) . ' visibility groups.');
                 }
 
                 // Store sent notification data
                 $this->save_notification_data($post_id, $notification_groups);
 
-                error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($email_payload) . ' languages. Post ID: ' . $post_id);
+                error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($email_payload) . ' languages.');
 
             } else {
-                error_log('DEBUG: ' . __METHOD__ . ' - Notification payload is EMPTY. Post ID: ' . $post_id);
+                error_log('DEBUG: ' . __METHOD__ . ' - Notification payload is EMPTY.');
             }
         }
         else {
