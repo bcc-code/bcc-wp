@@ -298,7 +298,7 @@ const GroupSelector = ({ tags, options, label, groupsName, groupsValue, isSettin
                 ariaCloseIconLabel={__('Done', 'bcc-login')}
             >
                 <div id="target-groups-selector" class="group-selector-section">
-                    { isSettingPostGroups && ( <h3>{__('Requires action', 'bcc-login')}</h3> ) }
+                    { isSettingPostGroups && ( <h3>{__('Action required', 'bcc-login')}</h3> ) }
 
                     <div className="toggle-keys-buttons flex flex-wrap gap-2 mb-4 items-center">
                         <Button type="button" icon="dashicons dashicons-plus" label={__('Expand All', 'bcc-login')} onClick={() => setTargetGroupsExpandedKeys(getAllKeys())} />
@@ -320,17 +320,17 @@ const GroupSelector = ({ tags, options, label, groupsName, groupsValue, isSettin
                     />
 
                     { isSettingPostGroups && ( <div className="flex flex-wrap gap-2 items-center">
-                        <h4>{__('Send Email:', 'bcc-login')}</h4>
+                        <h4>{__('Send email', 'bcc-login')}:</h4>
                         <SelectButton value={sendEmailToTargetGroups} onChange={sendEmailToTargetGroupsOnChange} options={sendEmailOptions} />
                     </div> ) }
                 </div>
 
                 { isSettingPostGroups && (
                     <div id="visibility-groups-selector" class="group-selector-section">
-                        <h3>{__('Til informasjon', 'bcc-login')}</h3>
+                        <h3>{__('For information', 'bcc-login')}</h3>
                         <div className="toggle-keys-buttons flex flex-wrap gap-2 mb-4 items-center">
-                            <Button type="button" icon="dashicons dashicons-plus" label={__('Expand All', 'bcc-login')} onClick={() => setVisibilityGroupsExpandedKeys(getAllKeys())} />
-                            <Button type="button" icon="dashicons dashicons-minus" label={__('Collapse All', 'bcc-login')} onClick={() => setVisibilityGroupsExpandedKeys({})} />
+                            <Button type="button" icon="dashicons dashicons-plus" label={__('Expand all', 'bcc-login')} onClick={() => setVisibilityGroupsExpandedKeys(getAllKeys())} />
+                            <Button type="button" icon="dashicons dashicons-minus" label={__('Collapse all', 'bcc-login')} onClick={() => setVisibilityGroupsExpandedKeys({})} />
                         </div>
 
                         <Tree 
@@ -348,7 +348,7 @@ const GroupSelector = ({ tags, options, label, groupsName, groupsValue, isSettin
                         />
 
                         <div className="flex flex-wrap gap-2 items-center">
-                            <h4>{__('Send Email:', 'bcc-login')}</h4>
+                            <h4>{__('Send email', 'bcc-login')}:</h4>
                             <SelectButton value={sendEmailToVisibilityGroups} onChange={sendEmailToVisibilityGroupsOnChange} options={sendEmailOptions} />
                         </div>
                     </div>

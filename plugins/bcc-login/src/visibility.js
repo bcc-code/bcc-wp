@@ -35,6 +35,7 @@ const visibilityOptions = [
   },
   {
     value: levels["bcc-login-member"],
+    /* translators: %s is the local name of the member organization (e.g., "BCC") */
     label: sprintf(__("%s Members", "bcc-login"), localName),
   },
   {

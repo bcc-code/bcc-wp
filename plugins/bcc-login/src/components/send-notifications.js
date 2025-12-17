@@ -154,20 +154,20 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
                 </div>
 
                 <div class="bcc-send-notifications__target-groups">
-                    <p>{__('The following groups will get notified:', 'bcc-login')}</p>
+                    <p>{__('The following groups will get notified', 'bcc-login')}:</p>
                     {targetGroupsCount > 0 || visibilityGroupsCount > 0 ? (
                         <ul>
                             {targetGroupsCount > 0 && (
                                 <li>
                                     <div>
-                                        <strong>{__('Requires action:', 'bcc-login')}</strong> <Badge value={targetGroupsCount} severity="success"></Badge> {__('group(s)', 'bcc-login')}
+                                        <strong>{__('Action required', 'bcc-login')}:</strong> <Badge value={targetGroupsCount} severity="success"></Badge> {__('group(s)', 'bcc-login')}
                                     </div>
                                 </li>
                             )}
                             {visibilityGroupsCount > 0 && (
                                 <li>
                                     <div>
-                                        <strong>{__('For information:', 'bcc-login')}</strong> <Badge value={visibilityGroupsCount} severity="success"></Badge> {__('group(s)', 'bcc-login')}
+                                        <strong>{__('For information', 'bcc-login')}:</strong> <Badge value={visibilityGroupsCount} severity="success"></Badge> {__('group(s)', 'bcc-login')}
                                     </div>
                                 </li>
                             )}
@@ -183,7 +183,7 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
                     <Tag icon="dashicons dashicons-no" severity="danger" value={__('Test mode is activated in Settings. Notifications cannot be sent!', 'bcc-login')}></Tag>
                 )}
 
-                <p>{__('Changes:', 'bcc-login')} {isDirty ? <Tag icon="dashicons dashicons-warning" severity="warning" value={__('Unsaved changes', 'bcc-login')}></Tag> : <Tag icon="dashicons dashicons-yes" severity="success" value={__('Saved', 'bcc-login')}></Tag>}</p>
+                <p>{__('Changes', 'bcc-login')}: {isDirty ? <Tag icon="dashicons dashicons-warning" severity="warning" value={__('Unsaved changes', 'bcc-login')}></Tag> : <Tag icon="dashicons dashicons-yes" severity="success" value={__('Saved', 'bcc-login')}></Tag>}</p>
 
                 <Button type="button" label={__('Send', 'bcc-login')} onClick={() => sendNotifications()} disabled={status !== 'publish' || (targetGroupsCount === 0 && visibilityGroupsCount === 0) || isNotificationDryRun || isDirty || isAutoSaving} />
             </Dialog>

@@ -942,8 +942,8 @@ class BCC_Login_Visibility {
             return $columns;
         }
 
-        $columns['post_groups'] = __( 'Requires action', 'bcc-login' );
-        $columns['post_groups_name'] = __( 'Requires action', 'bcc-login' );
+        $columns['post_groups'] = __( 'Action required', 'bcc-login' );
+        $columns['post_groups_name'] = __( 'Action required', 'bcc-login' );
 
         $columns['post_visibility_groups'] = __( 'For information', 'bcc-login' );
         $columns['post_visibility_groups_name'] = __( 'For information', 'bcc-login' );
@@ -1145,7 +1145,7 @@ class BCC_Login_Visibility {
 
         if (count($post_target_groups)) {
             $html .= '<div class="bcc-target-groups">';
-                $html .= '<strong>' . __('Requires action:', 'bcc-login') . '</strong>';
+                $html .= '<strong>' . __('Action required', 'bcc-login') . ':</strong>';
                 foreach ($post_target_groups as $role) {
                     $link = $attributes['link'] . '?target-groups[]=' . $role->uid;
                     $html .= '<a href="'. $link . '"><span class="member-overview__role-badge">' . $role->name . '</span></a>';
@@ -1155,7 +1155,7 @@ class BCC_Login_Visibility {
 
         if (count($post_visibility_groups)) {
             $html .= '<div class="bcc-visibility-groups">';
-                $html .= '<strong>' . __('For information:', 'bcc-login') . '</strong>';
+                $html .= '<strong>' . __('For information', 'bcc-login') . ':</strong>';
                 foreach ($post_visibility_groups as $role) {
                     $link = $attributes['link'] . '?target-groups[]=' . $role->uid;
                     $html .= '<a href="'. $link . '"><span class="member-overview__role-badge">' . $role->name . '</span></a>';

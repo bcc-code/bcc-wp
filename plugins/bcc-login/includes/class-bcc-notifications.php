@@ -240,15 +240,15 @@ class BCC_Notifications
                     $requires_action_email_payload = array();
                     $requires_action_inapp_payload = array();
                     
-                    // Modify email subject to include "Requires action"
+                    // Modify email subject to include "Action required"
                     foreach ($email_payload as $email_item) {
-                        $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'Requires action', 'bcc-login', 'Requires action', $email_item["language_code"] ) . ': ' . $email_item['subject'];
+                        $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'Action required', 'bcc-login', 'Action required', $email_item["language_code"] ) . ': ' . $email_item['subject'];
                         $requires_action_email_payload[] = $email_item;
                     }
 
-                    // Modify notification title to include "Requires action"
+                    // Modify notification title to include "Action required"
                     foreach ($inapp_payload as $inapp_item) {
-                        $inapp_item['title'] = apply_filters( 'wpml_translate_single_string', 'Requires action', 'bcc-login', 'Requires action', $inapp_item["language_code"] ) . ': ' . $inapp_item['title'];
+                        $inapp_item['title'] = apply_filters( 'wpml_translate_single_string', 'Action required', 'bcc-login', 'Action required', $inapp_item["language_code"] ) . ': ' . $inapp_item['title'];
                         $requires_action_inapp_payload[] = $inapp_item;
                     }
 
