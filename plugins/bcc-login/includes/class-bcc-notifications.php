@@ -233,33 +233,54 @@ class BCC_Notifications
 
                 error_log('DEBUG: ' . __METHOD__ . ' - Sending notifications for ' . count($email_payload) . ' languages. Post ID: ' . $post_id);
 
+                // Send notifications to target groups
                 if ($send_email_to_target_groups) {
                     $requires_action_email_payload = array();
+                    $requires_action_inapp_payload = array();
                     
+                    // Modify email subject to include "Requires action"
                     foreach ($email_payload as $email_item) {
                         $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'Requires action', 'bcc-login', 'Requires action', $email_item["language"] ) . ': ' . $email_item['subject'];
                         $requires_action_email_payload[] = $email_item;
                     }
 
+                    // Modify notification title to include "Requires action"
+                    foreach ($inapp_payload as $inapp_item) {
+                        $inapp_item['title'] = apply_filters( 'wpml_translate_single_string', 'Requires action', 'bcc-login', 'Requires action', $inapp_item["language"] ) . ': ' . $inapp_item['title'];
+                        $requires_action_inapp_payload[] = $inapp_item;
+                    }
+
                     $this->core_api->send_notification($post_target_groups, 'email', 'simpleemail', $requires_action_email_payload);
-                    $this->core_api->send_notification($post_target_groups, 'inapp', 'simpleinapp', $inapp_payload);
+                    $this->core_api->send_notification($post_target_groups, 'inapp', 'simpleinapp', $requires_action_inapp_payload);
 
                     error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($post_target_groups) . ' target groups. Post ID: ' . $post_id);
                 }
 
+                // Send notifications to visibility groups
                 if ($send_email_to_visibility_groups) {
+                    $for_information_email_payload = array();
+                    $for_information_inapp_payload = array();
+
+                    // Modify email subject to include "For information"
                     foreach ($email_payload as $email_item) {
                         $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'For information', 'bcc-login', 'For information', $email_item["language"] ) . ': ' . $email_item['subject'];
                         $for_information_email_payload[] = $email_item;
                     }
 
+                    // Modify notification title to include "For information"
+                    foreach ($inapp_payload as $inapp_item) {
+                        $inapp_item['title'] = apply_filters( 'wpml_translate_single_string', 'For information', 'bcc-login', 'For information', $inapp_item["language"] ) . ': ' . $inapp_item['title'];
+                        $for_information_inapp_payload[] = $inapp_item;
+                    }
+
                     $this->core_api->send_notification($post_visibility_groups, 'email', 'simpleemail', $for_information_email_payload);
-                    $this->core_api->send_notification($post_visibility_groups, 'inapp', 'simpleinapp', $inapp_payload);
+                    $this->core_api->send_notification($post_visibility_groups, 'inapp', 'simpleinapp', $for_information_inapp_payload);
 
                     error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($post_visibility_groups) . ' visibility groups. Post ID: ' . $post_id);
                 }
 
-                $this->add_notification_sent_date($post_id, $notification_groups);
+                // Store sent notification data
+                $this->save_notification_data($post_id, $notification_groups);
 
                 error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($email_payload) . ' languages. Post ID: ' . $post_id);
 
@@ -272,8 +293,8 @@ class BCC_Notifications
         }
     }
 
-    // Save the timestamp when the notification has been sent
-    public function add_notification_sent_date($post_id, $notification_groups = array()) {
+    // Save the date and the notification groups of the notification
+    public function save_notification_data($post_id, $notification_groups = array()) {
         // Ensure array of strings (UIDs)
         $group_uids = array_values(array_filter((array) $notification_groups, function($uid) {
             return is_string($uid) && $uid !== '';
