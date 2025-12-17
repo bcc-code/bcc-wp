@@ -237,7 +237,7 @@ class BCC_Notifications
                     $requires_action_email_payload = array();
                     
                     foreach ($email_payload as $email_item) {
-                        $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'Requires action', 'bcc-login', 'Requires action', $email_item["language_code"] ) . ': ' . $email_item['subject'];
+                        $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'Requires action', 'bcc-login', 'Requires action', $email_item["language"] ) . ': ' . $email_item['subject'];
                         $requires_action_email_payload[] = $email_item;
                     }
 
@@ -249,7 +249,7 @@ class BCC_Notifications
 
                 if ($send_email_to_visibility_groups) {
                     foreach ($email_payload as $email_item) {
-                        $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'For information', 'bcc-login', 'For information', $email_item["language_code"] ) . ': ' . $email_item['subject'];
+                        $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'For information', 'bcc-login', 'For information', $email_item["language"] ) . ': ' . $email_item['subject'];
                         $for_information_email_payload[] = $email_item;
                     }
 
