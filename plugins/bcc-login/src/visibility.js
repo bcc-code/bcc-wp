@@ -162,7 +162,7 @@ registerPlugin("bcc-notifications", {
       const postType = getCurrentPostType();
       const allowedTypes = Array.isArray(window.bccLoginNotificationPostTypes) ? window.bccLoginNotificationPostTypes : [];
 
-      const sentNotifications = meta?.sent_notifications.map(notification => {
+      const sentNotifications = meta?.sent_notifications?.map(notification => {
         return {
           date: (new Date(notification.date)).toLocaleString(),
           no_of_groups: notification.notification_groups.length
