@@ -570,40 +570,34 @@ class BCC_Login_Visibility {
         if (empty($user_groups) || count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0) {
             $group_rules = array();
 
+            // Use case when no group filters have been set
+            $no_post_groups_rule = array(
+                'relation' => 'AND',
+                array(
+                    'key' => 'bcc_groups',
+                    'compare' => 'NOT EXISTS',
+                ),
+                array(
+                    'key' => 'bcc_visibility_groups',
+                    'compare' => 'NOT EXISTS'
+                )
+            );
+
             if (empty($user_groups)) {
                 // If user has no groups - just check that no group filters have been set
-                $group_rules = array(
-                    'relation' => 'AND',
-                    array(
-                        'key' => 'bcc_groups',
-                        'compare' => 'NOT EXISTS',
-                    ),
-                    array(
-                        'key' => 'bcc_visibility_groups',
-                        'compare' => 'NOT EXISTS'
-                    )
-                );
+                $group_rules = $no_post_groups_rule;
             } else {
                 // If user has groups - check if no group filters have been set OR if user has access to the groups
                 $group_rules = array(
                     'relation' => 'OR',
+                    $no_post_groups_rule,
+                    // Use case when user_groups is either in bcc_groups or bcc_visibility_groups
                     array(
                         'relation' => 'OR',
-                        array(
-                            'key' => 'bcc_groups',
-                            'compare' => 'NOT EXISTS',
-                        ),
                         array(
                             'key' => 'bcc_groups',
                             'compare' => 'IN',
                             'value' => $user_groups
-                        )
-                    ),
-                    array(
-                        'relation' => 'OR',
-                        array(
-                            'key' => 'bcc_visibility_groups',
-                            'compare' => 'NOT EXISTS',
                         ),
                         array(
                             'key' => 'bcc_visibility_groups',
