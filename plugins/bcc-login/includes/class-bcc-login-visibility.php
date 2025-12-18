@@ -997,7 +997,7 @@ class BCC_Login_Visibility {
             $group_names = array();
 
             foreach ($active_target_groups as $post_group) {
-                array_push($group_names, $this->get_group_name($post_group));
+                array_push($group_names, '<span class="group-name">' . $this->get_group_name($post_group) . '</span>');
             }
 
             echo join(", ", $group_names);
@@ -1014,7 +1014,7 @@ class BCC_Login_Visibility {
             $group_names = array();
 
             foreach ($active_visibility_groups as $post_group) {
-                array_push($group_names, $this->get_group_name($post_group));
+                array_push($group_names, '<span class="group-name">' . $this->get_group_name($post_group) . '</span>');
             }
 
             echo join(", ", $group_names);
