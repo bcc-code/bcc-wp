@@ -44,8 +44,8 @@ class BCC_Login_Visibility {
         add_action( 'added_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
         add_action( 'updated_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
         add_action( 'enqueue_block_editor_assets', array( $this, 'on_block_editor_assets' ) );
-        add_filter( 'pre_get_posts', array( $this, 'filter_pre_get_posts' ) );
-        add_filter( 'pre_get_posts', array( $this, 'filter_by_queried_target_groups' ) );
+        add_action( 'pre_get_posts', array( $this, 'filter_pre_get_posts' ) );
+        add_action( 'pre_get_posts', array( $this, 'filter_by_queried_target_groups' ) );
         add_filter( 'wp_get_nav_menu_items', array( $this, 'filter_menu_items' ), 20 );
         add_filter( 'render_block', array( $this, 'on_render_block' ), 10, 2 );
 
@@ -498,72 +498,74 @@ class BCC_Login_Visibility {
             if ( \Memsource\Utils\AuthUtils::getTokenFromRequest() != false ) {
                 // Validate the token in the request
                 if ( \Memsource\Utils\AuthUtils::validateTokenInRequest() ) {
-                    return $query;
+                    return;
                 }
             }
         }
 
         if ( current_user_can( 'edit_posts' ) || $query->is_singular ) {
-            return $query;
+            return;
         }
 
         // Don't filter posts for not supported post types
         // Menu items are e.g. handled in 'filter_menu_items()'
         if ( !$this->supports_visibility_filter($query) ) {
-            return $query;
+            return;
         }
 
         // Allow feeds to be accessed using key
         if ( $query->is_feed && ! empty($this->_settings->feed_key) && array_key_exists('id', $_GET) && $this->_settings->feed_key == $_GET['id'] ) {
-            return $query;
+            return;
         }
 
         // Get original meta query
         $meta_query = (array)$query->get('meta_query');
 
-        // Check if $meta_query already has visibility filters
-        foreach ($meta_query as $meta_query_item) {
-            if (is_array($meta_query_item) && array_key_exists('bcc-login-visibility', $meta_query_item)) {
-                // Visibility filter has already been added - return
-                return $query;
-            }
+        // Check if visibility filters have already been added
+        if ($query->get('bcc_login_visibility_filter_added')) {
+            // Visibility filter has already been added - return
+            return;
         }
 
         // Add visibility rules 
         $user_level = $this->_client->get_current_user_level();
+        $visibility_clause = array();
+
         if ( is_user_logged_in() ) {
             // If user is logged in, they shouldn't see the public-only posts (-1)
-            $rules = array(
-                array(
-                    'key'   => 'bcc_login_visibility',
-                    'value' => array( 0, $user_level ),
-                    'type'  => 'numeric',
-                    'compare' => 'BETWEEN',
-                )
+            $visibility_clause = array(
+                'key'   => 'bcc_login_visibility',
+                'value' => array( 0, $user_level ),
+                'type'  => 'NUMERIC',
+                'compare' => 'BETWEEN',
             );
         } else {
-            $rules = array(
-                array(
-                    'key'     => 'bcc_login_visibility',
-                    'type'    => 'numeric',
-                    'compare' => '<=',
-                    'value'   => $user_level,
-                )
+            $visibility_clause = array(
+                'key'     => 'bcc_login_visibility',
+                'value'   => $user_level,
+                'type'    => 'NUMERIC',
+                'compare' => '<=',
             );
         }
 
+        // Default: just the visibility clause
+        $visibility_rules = $visibility_clause;
+
         // Include also posts where visibility isn't specified based on the Default Content Access
         if ( $user_level >= $this->_settings->default_visibility ) {
-            $rules = array(
+            $visibility_rules = array(
                 'relation' => 'OR',
-                $rules,
                 array(
                     'key'     => 'bcc_login_visibility',
                     'compare' => 'NOT EXISTS'
-                )
+                ),
+                $visibility_clause
             );
         }
-       
+
+        // Default: only visibility rules
+        $rules = $visibility_rules;
+
         $user_groups = $this->get_current_user_groups();
 
         // Filter posts which user should have access to - except when user has full content access
@@ -610,19 +612,23 @@ class BCC_Login_Visibility {
 
             $rules = array(
                 'relation' => 'AND',
-                $rules,
-                $group_rules
+                $visibility_rules,
+                $group_rules,
             );
         }
 
         // Indicate that this set of rules is for the visibility filter
-        $rules['bcc-login-visibility'] = true;
-        $meta_query[] = $rules;
+        $query->set('bcc_login_visibility_filter_added', 1);
+
+        // Add all the rules to the meta query
+        $meta_query = array(
+            'relation' => 'AND',
+            $meta_query,
+            $rules,
+        );
 
         // Set the meta query to the complete, altered query
         $query->set('meta_query', $meta_query);
-
-        return $query;
     }
 
     /**
