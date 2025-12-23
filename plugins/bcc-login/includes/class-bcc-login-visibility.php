@@ -45,7 +45,6 @@ class BCC_Login_Visibility {
         add_action( 'updated_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
         add_action( 'enqueue_block_editor_assets', array( $this, 'on_block_editor_assets' ) );
         add_action( 'pre_get_posts', array( $this, 'filter_pre_get_posts' ) );
-        add_action( 'pre_get_posts', array( $this, 'filter_by_queried_target_groups' ) );
         add_filter( 'wp_get_nav_menu_items', array( $this, 'filter_menu_items' ), 20 );
         add_filter( 'render_block', array( $this, 'on_render_block' ), 10, 2 );
 
@@ -628,70 +627,6 @@ class BCC_Login_Visibility {
         );
 
         // Set the meta query to the complete, altered query
-        $query->set('meta_query', $meta_query);
-    }
-
-    /**
-     * Filters out posts that do not belong to the selected target groups.
-     * This filter applies to category lists and REST API results.
-     *
-     * @param WP_Query $query
-     * @return WP_Query
-     */
-    function filter_by_queried_target_groups($query) {
-        $post_target_groups = wp_doing_ajax()
-            ? (isset($_POST['target_groups']) ? $_POST['target_groups'] : null)
-            : (isset($_GET['target-groups']) ? $_GET['target-groups'] : null);
-
-        if (!$post_target_groups)
-            return;
-
-        if (wp_doing_ajax()) {
-            // For Ajax requests
-            if (!isset($_POST['post_type']) && in_array($_POST['post_type'], $this->post_types_allowing_filtering))
-                return;
-        }
-        else {
-            // Normal requests
-            if (is_admin() || !$this->supports_target_groups_filtering($query))
-                return;
-        }
-
-        // Get original meta query
-        $meta_query = (array) $query->get('meta_query');
-        $meta_query[] = array(
-            'relation' => 'OR',
-            array(
-                'key'     => 'bcc_groups',
-                'value'   => $post_target_groups,
-                'compare' => 'IN'
-            ),
-            array(
-                'key'     => 'bcc_visibility_groups',
-                'value'   => $post_target_groups,
-                'compare' => 'IN'
-            )
-        );
-
-        if (in_array('all-members', $post_target_groups)) {
-            $meta_query = array(
-                'relation' => 'OR',
-                $meta_query,
-                array(
-                    'relation' => 'AND',
-                    array(
-                        'key'     => 'bcc_groups',
-                        'compare' => 'NOT EXISTS'
-                    ),
-                    array(
-                        'key'     => 'bcc_visibility_groups',
-                        'compare' => 'NOT EXISTS'
-                    )
-                )
-            );
-        }
-
-        // Filter by selected target groups
         $query->set('meta_query', $meta_query);
     }
 
