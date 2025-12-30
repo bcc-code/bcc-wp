@@ -289,7 +289,7 @@ const GroupSelector = ({ tags, options, label, groupsName, groupsValue, isSettin
             </div>
 
             <Dialog 
-                header={__('Post Groups', 'bcc-login')} 
+                header={label} 
                 visible={visible} 
                 onHide={() => setVisible(false)}
                 loading={true}
