@@ -111,8 +111,11 @@ registerPlugin("bcc-login-visibility", {
 registerPlugin("bcc-groups-2", {
   render: compose([
     withSelect((select) => {
-      const { getEditedPostAttribute } = select("core/editor");
+      const { getCurrentPostType, getEditedPostAttribute } = select("core/editor");
+
       const meta = getEditedPostAttribute("meta");
+      const postType = getCurrentPostType();
+      const notificationPostTypes = Array.isArray(window.bccLoginNotificationPostTypes) ? window.bccLoginNotificationPostTypes : [];
 
       return {
         groupsValue: (meta?.bcc_groups ?? []).join(","),
@@ -121,7 +124,8 @@ registerPlugin("bcc-groups-2", {
         sendEmailToVisibilityGroupsValue: meta?.bcc_visibility_groups_email ?? false,
         options: window.siteGroups,
         tags: window.siteGroupTags,
-        isSettingPostGroups: true
+        isSettingPostGroups: true,
+        postTypeSupportsNotifications: notificationPostTypes.includes(postType),
       };
     }),
     withDispatch((dispatch) => {
@@ -160,7 +164,7 @@ registerPlugin("bcc-notifications", {
           ? meta.bcc_visibility_groups.length : 0;
 
       const postType = getCurrentPostType();
-      const allowedTypes = Array.isArray(window.bccLoginNotificationPostTypes) ? window.bccLoginNotificationPostTypes : [];
+      const notificationPostTypes = Array.isArray(window.bccLoginNotificationPostTypes) ? window.bccLoginNotificationPostTypes : [];
 
       const sentNotifications = meta?.sent_notifications?.map(notification => {
         return {
@@ -178,13 +182,13 @@ registerPlugin("bcc-notifications", {
         isNotificationDryRun: window.bccLoginNotificationDryRun,
         isDirty: isEditedPostDirty(),
         isAutoSaving: isAutosavingPost(),
-        isAllowedPostType: allowedTypes.includes(postType),
+        postTypeSupportsNotifications: notificationPostTypes.includes(postType),
         sentNotifications: sentNotifications
       };
     }),
     withInstanceId,
   ])((props) => (
-    props.isAllowedPostType ? (
+    props.postTypeSupportsNotifications ? (
       <PluginPostStatusInfo className="bcc-login-notifications-plugin-post-status-info">
         <SendNotifications label={__("Send notifications", "bcc-login")} {...props} />
         <SentNotificationsList {...props} />

@@ -193,7 +193,6 @@ class BCC_Login_Settings_Provider {
         if ($track_page_interaction_option != -1) {
             $settings->track_page_interaction = $track_page_interaction_option;
         }
-        
 
         // Backwards compatibility with old plugin configuration.
         if ( ! isset( $settings->client_id ) ) {
@@ -229,7 +228,6 @@ class BCC_Login_Settings_Provider {
     }
 
     function enqueue_bcc_login_config_script() {
-
         wp_enqueue_style( 'primereact-css', BCC_LOGIN_URL . 'src/primereact/fluent-light/theme.css' );
 
         $script_path    = BCC_LOGIN_PATH . 'build/settings.asset.php';
@@ -408,6 +406,7 @@ class BCC_Login_Settings_Provider {
                     'tags' => $this->_settings->site_group_tags
                 )
             );
+
             add_settings_field(
                 'bcc_disable_pubsub',
                 'Disable pubsub',
@@ -420,6 +419,7 @@ class BCC_Login_Settings_Provider {
                     'label' => 'This will make the post group access settings only update once a day. Only use in very resource limited environments (staging)'
                 )
             );
+
             add_settings_field(
                 'bcc_full_content_access_groups',
                 'Full Content Access Groups',
@@ -437,7 +437,6 @@ class BCC_Login_Settings_Provider {
         }
 
         if ($use_notification_settings) {
-
             add_settings_field(
                 'bcc_notification_post_types',
                 'Notification Post Types',
@@ -482,7 +481,6 @@ class BCC_Login_Settings_Provider {
                 register_setting( $this->option_name, 'bcc_notification_' . $language . '_email_title');
                 register_setting( $this->option_name, 'bcc_notification_' . $language . '_email_body');
 
-
                 add_settings_field(
                     'bcc_notification_' . $language . '_email_subject',
                     'Email Subject (' . $language . ')',
@@ -522,8 +520,6 @@ class BCC_Login_Settings_Provider {
                     )
                 );
             }
-
-
         }
 
         add_settings_field(
@@ -711,7 +707,7 @@ class BCC_Login_Settings_Provider {
         $this->render_field_description( $args );
     }
 
-        /**
+    /**
      * Renders a text box in settings page.
      */
     function render_textarea_field( $args ) { ?>

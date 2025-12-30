@@ -6,7 +6,7 @@ import { SelectButton } from 'primereact/selectbutton';
 import { Tree } from 'primereact/tree';
 import { __ } from '@wordpress/i18n';
 
-const GroupSelector = ({ tags, options, label, groupsName, groupsValue, isSettingPostGroups, onChange, visibilityGroupsValue, sendEmailToTargetGroupsValue, sendEmailToVisibilityGroupsValue }) => {
+const GroupSelector = ({ tags, options, label, groupsName, groupsValue, isSettingPostGroups, onChange, visibilityGroupsValue, sendEmailToTargetGroupsValue, sendEmailToVisibilityGroupsValue, postTypeSupportsNotifications }) => {
     const [visible, setVisible] = useState(false);
 
     const sendEmailOptions = [
@@ -319,10 +319,12 @@ const GroupSelector = ({ tags, options, label, groupsName, groupsValue, isSettin
                         emptyMessage={__('No groups match your search.', 'bcc-login')}
                     />
 
-                    { isSettingPostGroups && ( <div className="flex flex-wrap gap-2 items-center">
-                        <h4>{__('Send email', 'bcc-login')}:</h4>
-                        <SelectButton value={sendEmailToTargetGroups} onChange={sendEmailToTargetGroupsOnChange} options={sendEmailOptions} />
-                    </div> ) }
+                    { isSettingPostGroups && postTypeSupportsNotifications && (
+                        <div className="flex flex-wrap gap-2 items-center">
+                            <h4>{__('Send email', 'bcc-login')}:</h4>
+                            <SelectButton value={sendEmailToTargetGroups} onChange={sendEmailToTargetGroupsOnChange} options={sendEmailOptions} />
+                        </div>
+                    ) }
                 </div>
 
                 { isSettingPostGroups && (
@@ -347,10 +349,12 @@ const GroupSelector = ({ tags, options, label, groupsName, groupsValue, isSettin
                             emptyMessage={__('No groups match your search.', 'bcc-login')}
                         />
 
-                        <div className="flex flex-wrap gap-2 items-center">
-                            <h4>{__('Send email', 'bcc-login')}:</h4>
-                            <SelectButton value={sendEmailToVisibilityGroups} onChange={sendEmailToVisibilityGroupsOnChange} options={sendEmailOptions} />
-                        </div>
+                        {postTypeSupportsNotifications && (
+                            <div className="flex flex-wrap gap-2 items-center">
+                                <h4>{__('Send email', 'bcc-login')}:</h4>
+                                <SelectButton value={sendEmailToVisibilityGroups} onChange={sendEmailToVisibilityGroupsOnChange} options={sendEmailOptions} />
+                            </div>
+                        ) }
                     </div>
                 ) }
             </Dialog>
