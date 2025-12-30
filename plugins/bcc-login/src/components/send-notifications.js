@@ -11,6 +11,7 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
     const toast = useRef(null);
     const [nonce, setNonce] = useState(null);
     const [translations, setTranslations] = useState(null);
+    const [isOriginalPost, setIsOriginalPost] = useState(null);
 
     useEffect(() => {
         const wpNonce = window?.wpApiSettings?.nonce || window?.bccLoginNonce;
@@ -103,6 +104,7 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
                 try {
                     data = await response.json();
                     setTranslations(data);
+                    checkIfOriginalPost(data);
                 } catch {
                     const text = await response.text();
                     console.warn('Non-JSON response:', text);
@@ -116,6 +118,11 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
         fetchTranslations();
     }, [visible, nonce, postId]);
 
+    const checkIfOriginalPost = (translations) => {
+        const isOriginal = translations.every(t => !t.is_original);
+        setIsOriginalPost(isOriginal);
+    };
+
     return (
         <div className="bcc-notifications">
             <Button type="button" label={label} onClick={() => setVisible(true)} />
@@ -128,6 +135,12 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
                 className="bcc-send-notifications__dialog"
             >
                 <p>{__('Status', 'bcc-login')}: {status === 'publish' ? <Tag icon="dashicons dashicons-yes" severity="success" value={__('Published', 'bcc-login')} /> : <Tag icon="dashicons dashicons-warning" severity="warning" value={__('NOT published', 'bcc-login')} />}</p>
+
+                {isOriginalPost === false && (
+                    <p>
+                        <Tag icon="dashicons dashicons-no" severity="danger" value={__('This is a translation. Notifications should be sent from the original post.', 'bcc-login')}></Tag>
+                    </p>
+                )}
 
                 <div class="bcc-send-notifications__translations">
                     <p>{__('Translations', 'bcc-login')}: {translations === null
@@ -185,7 +198,7 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
 
                 <p>{__('Changes', 'bcc-login')}: {isDirty ? <Tag icon="dashicons dashicons-warning" severity="warning" value={__('Unsaved changes', 'bcc-login')}></Tag> : <Tag icon="dashicons dashicons-yes" severity="success" value={__('Saved', 'bcc-login')}></Tag>}</p>
 
-                <Button type="button" label={__('Send', 'bcc-login')} onClick={() => sendNotifications()} disabled={status !== 'publish' || (targetGroupsCount === 0 && visibilityGroupsCount === 0) || isNotificationDryRun || isDirty || isAutoSaving} />
+                <Button type="button" label={__('Send', 'bcc-login')} onClick={() => sendNotifications()} disabled={status !== 'publish' || (targetGroupsCount === 0 && visibilityGroupsCount === 0) || isNotificationDryRun || isDirty || isAutoSaving || !isOriginalPost} />
             </Dialog>
 
             <Toast ref={toast} position="bottom-right" />
