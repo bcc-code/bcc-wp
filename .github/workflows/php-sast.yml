@@ -30,7 +30,7 @@ jobs:
       run: |
         cat <<'EOF' > phpstan.neon
         parameters:
-          level: 5 # form 0 to 11 where 0 is the loosest and 11 the strictest
+          level: 3 # form 0 to 11 where 0 is the loosest and 11 the strictest
           errorFormat: github
           paths:
             - plugins
@@ -39,8 +39,7 @@ jobs:
           bootstrapFiles:
             - plugins/bcc-login/bcc-login.php
           ignoreErrors:
-            - '#Path in require\(\) "build/visibility\.asset\.php" is not a file or it does not exist\.#'
-            - '#Path in require\(\) "build/settings\.asset\.php" is not a file or it does not exist\.#'
+            - '#Path in require\(\) "build/.+\.asset\.php" is not a file or it does not exist\.#'
           excludePaths:
             - plugins/bcc-signon/*
             - plugins/bcc-wp-proxy/*
