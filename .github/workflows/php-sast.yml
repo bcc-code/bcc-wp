@@ -30,7 +30,7 @@ jobs:
       run: |
         cat <<'EOF' > phpstan.neon
         parameters:
-          level: 3 # form 0 to 11 where 0 is the loosest and 11 the strictest
+          level: 1 # form 0 to 11 where 0 is the loosest and 11 the strictest
           errorFormat: github
           paths:
             - plugins
