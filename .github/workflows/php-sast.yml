@@ -1,0 +1,27 @@
+name: PHP Code Analysis
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+
+    # - name: Validate composer.json and composer.lock
+    #   run: composer validate --strict
+
+    - name: Install PHPStan
+      run: composer require --dev phpstan/phpstan
+
+    - name: Run PHPStan
+      run: vendor/bin/phpstan analyse plugins/* --error-format github --no-progress
+
