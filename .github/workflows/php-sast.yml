@@ -28,6 +28,7 @@ jobs:
       run: |
         composer require --dev phpstan/phpstan
         composer require --dev szepeviktor/phpstan-wordpress
+        composer config --no-plugins allow-plugins.phpstan/extension-installer true
         composer require --dev phpstan/extension-installer
 
     - name: Run PHPStan
