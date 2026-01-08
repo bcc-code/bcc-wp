@@ -60,7 +60,7 @@ jobs:
                 $post_id = false,
                 bool $format_value = true,
                 bool $escape_html = false
-            );
+            ) {};
         }
         EOF
 
