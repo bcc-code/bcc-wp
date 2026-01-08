@@ -1,10 +1,15 @@
 name: PHP Code Analysis
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "master" ]
+    paths:
+      - "plugins/**"
   pull_request:
     branches: [ "master" ]
+    paths:
+      - "plugins/**"
 
 permissions:
   contents: read
@@ -19,8 +24,10 @@ jobs:
     # - name: Validate composer.json and composer.lock
     #   run: composer validate --strict
 
-    - name: Install PHPStan
-      run: composer require --dev phpstan/phpstan
+    - name: Install PHPStan and Wordpress-stub
+      run: |
+        composer require --dev phpstan/phpstan
+        composer require --dev szepeviktor/phpstan-wordpress
 
     - name: Run PHPStan
       run: vendor/bin/phpstan analyse plugins/* --error-format github --no-progress
