@@ -47,7 +47,7 @@ jobs:
         <?php
 
         // Advanced Custom Fields stubs
-        if (!function_exists('get_field')) {
+        //if (!function_exists('get_field')) {
             /**
             * @param string $selector The field name or field key.
             * @param mixed  $post_id Optional. Post ID, "option", false, or other ACF-supported context.
@@ -63,7 +63,7 @@ jobs:
                 bool $format_value = true,
                 bool $escape_html = false
             ) {};
-        }
+        //}
         EOF
 
     - name: Install PHPStan and Wordpress-stub
