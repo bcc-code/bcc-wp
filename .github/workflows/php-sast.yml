@@ -25,6 +25,7 @@ jobs:
     #   run: composer validate --strict
 
     # This config file gets auto-loaded by PHPStan
+    # !!!! The old bcc-signon plugin and the bcc-wp-proxy plugin are excluded from analysis!
     - name: Set PHPStan config
       run: |
         cat <<'EOF' > phpstan.neon
@@ -40,11 +41,11 @@ jobs:
           bootstrapFiles:
             - plugins/bcc-login/bcc-login.php
           ignoreErrors:
-            - '#Function get_culture not found\.#'
             - '#Path in require\(\) "build/visibility\.asset\.php" is not a file or it does not exist\.#'
             - '#Path in require\(\) "build/settings\.asset\.php" is not a file or it does not exist\.#'
           excludePaths:
             - plugins/bcc-signon/*
+            - plugins/bcc-wp-proxy/*
         includes:
           - vendor/szepeviktor/phpstan-wordpress/extension.neon
         EOF
@@ -64,6 +65,11 @@ jobs:
             bool $format_value = true,
             bool $escape_html = false
         ) {};
+
+        /**
+        * @return string
+        */
+        function get_culture() {};
         EOF
 
     - name: Install PHPStan and Wordpress-stub
