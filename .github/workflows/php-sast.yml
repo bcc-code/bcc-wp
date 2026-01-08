@@ -36,8 +36,6 @@ jobs:
             - plugins
           scanFiles:
             - custom-defs.stub
-          stubFiles:
-            - custom-defs.stub
           bootstrapFiles:
             - plugins/bcc-login/bcc-login.php
           ignoreErrors:
