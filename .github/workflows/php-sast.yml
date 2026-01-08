@@ -35,6 +35,9 @@ jobs:
             - plugins
           stubFiles:
             - custom-defs.stub
+          dynamicConstantNames:
+            BCC_LOGIN_PATH: string
+            BCC_LOGIN_URL: string
         includes:
           - vendor/szepeviktor/phpstan-wordpress/extension.neon
         EOF

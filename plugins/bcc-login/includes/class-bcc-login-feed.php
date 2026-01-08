@@ -3,9 +3,8 @@
 class BCC_Login_Feed {
     private BCC_Login_Settings $_settings;
     private BCC_Login_Client $_client;
-    private BCC_Login_Visibility $_visibility;
 
-    function __construct( BCC_Login_Settings $settings, BCC_Login_Client $client, BCC_Login_Visibility $visibility ) {
+    function __construct( BCC_Login_Settings $settings, BCC_Login_Client $client ) {
         $this->_settings = $settings;
         $this->_client = $client;
         add_action( 'pre_get_posts', array( $this, 'add_paging_support') );
