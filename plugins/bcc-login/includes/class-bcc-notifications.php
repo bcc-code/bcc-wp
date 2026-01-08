@@ -196,7 +196,7 @@ class BCC_Notifications
 
                     $templates = array_key_exists($wp_lang, $this->settings->notification_templates)
                         ? $this->settings->notification_templates[$wp_lang]
-                        : (array_key_exists($site_language, $this->_settings->notification_templates)
+                        : (array_key_exists($site_language, $this->settings->notification_templates)
                             ? $this->settings->notification_templates[$site_language]
                             : null);
 

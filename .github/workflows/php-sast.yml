@@ -24,13 +24,51 @@ jobs:
     # - name: Validate composer.json and composer.lock
     #   run: composer validate --strict
 
+    # This config file gets auto-loaded by PHPStan
+    - name: Set PHPStan config
+      run: |
+        cat <<'EOF' > phpstan.neon
+        parameters:
+          level: 1 # form 0 to 11 where 0 is the loosest and 11 the strictest
+          errorFormat: github
+          paths:
+            - plugins/*
+          stubFiles:
+            - custom-defs.stub
+        includes:
+          - vendor/szepeviktor/phpstan-wordpress/extension.neon
+        EOF
+
+    - name: Create custom stubs for plugin functions. If this grows too big it can be commited as a separate file
+      run: |
+        cat <<'EOF' > custom-defs.stub
+        <?php
+
+        // Advanced Custom Fields stubs
+        if (!function_exists('get_field')) {
+            /**
+            * @param string $selector The field name or field key.
+            * @param mixed  $post_id Optional. Post ID, "option", false, or other ACF-supported context.
+            * @param bool   $format_value Optional. Whether to apply formatting logic. Default true.
+            * @param bool   $escape_html Optional. Whether to return escaped HTML.
+            *                            Requires $format_value to be true. Default false.
+            *
+            * @return mixed|null The field value.
+            */
+            function get_field(
+                string $selector,
+                $post_id = false,
+                bool $format_value = true,
+                bool $escape_html = false
+            );
+        }
+        EOF
+
     - name: Install PHPStan and Wordpress-stub
       run: |
         composer require --dev phpstan/phpstan
         composer require --dev szepeviktor/phpstan-wordpress
-        composer config --no-plugins allow-plugins.phpstan/extension-installer true
-        composer require --dev phpstan/extension-installer
 
     - name: Run PHPStan
-      run: vendor/bin/phpstan analyse plugins/* --error-format github --no-progress
+      run: vendor/bin/phpstan analyse --error-format github --no-progress
 

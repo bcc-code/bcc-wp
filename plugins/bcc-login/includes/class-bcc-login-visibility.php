@@ -487,7 +487,7 @@ class BCC_Login_Visibility {
      * applies to category lists and REST API results.
      *
      * @param WP_Query $query
-     * @return WP_Query
+     * @return void
      */
     function filter_pre_get_posts( $query ) {
         // Don't filter posts for Phrase
@@ -628,7 +628,6 @@ class BCC_Login_Visibility {
 
         // Set the meta query to the complete, altered query
         $query->set('meta_query', $meta_query);
-        return;
     }
 
     /**
@@ -1159,7 +1158,7 @@ class BCC_Login_Visibility {
     /**
      * Save visibility value to attachments.
      */
-    function save_visibility_to_attachments( $attach_id ) {
+    function save_visibility_to_attachments( $attach_id, $post_after, $post_before ) {
         if ( !current_user_can( 'edit_post', $attach_id ) ) {
             return;
         }
