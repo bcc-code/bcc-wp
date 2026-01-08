@@ -15,11 +15,11 @@
 (function () {
     var webAuth = new auth0.WebAuth({
         domain: 'login.bcc.no',
-        clientID: '<?= $clientID ?>',
-        scope: '<?= $scope ?>',
+        clientID: '<?= $clientID ?? '' ?>',
+        scope: '<?= $scope ?? '' ?>',
         responseType: 'id_token',
         responseMode: 'fragment',
-        redirectUri: location.origin + '/<?= $redirectPath ?>'
+        redirectUri: location.origin + '/<?= $redirectPath ?? '' ?>'
     });
     setTimeout(function () {
         webAuth.checkSession({prompt: 'none'}, function (err, authResult) {

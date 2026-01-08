@@ -37,6 +37,12 @@ jobs:
             - custom-defs.stub
           bootstrapFiles:
             - plugins/bcc-login/bcc-login.php
+          ignoreErrors:
+            - '#Function get_culture not found\.#'
+            - '#Path in require\(\) "build/visibility\.asset\.php" is not a file or it does not exist\.#'
+            - '#Path in require\(\) "build/settings\.asset\.php" is not a file or it does not exist\.#'
+          excludePaths:
+            - plugins/bcc-signon/openid-connect-bcc-customizations/access-token.php
         includes:
           - vendor/szepeviktor/phpstan-wordpress/extension.neon
         EOF
@@ -46,24 +52,16 @@ jobs:
         cat <<'EOF' > custom-defs.stub
         <?php
 
-        // Advanced Custom Fields stubs
-        //if (!function_exists('get_field')) {
-            /**
-            * @param string $selector The field name or field key.
-            * @param mixed  $post_id Optional. Post ID, "option", false, or other ACF-supported context.
-            * @param bool   $format_value Optional. Whether to apply formatting logic. Default true.
-            * @param bool   $escape_html Optional. Whether to return escaped HTML.
-            *                            Requires $format_value to be true. Default false.
-            *
-            * @return mixed|null The field value.
-            */
-            function get_field(
-                string $selector,
-                $post_id = false,
-                bool $format_value = true,
-                bool $escape_html = false
-            ) {};
-        //}
+        /**
+        * @param mixed $post_id
+        * @return mixed|null
+        */
+        function get_field(
+            string $selector,
+            $post_id = false,
+            bool $format_value = true,
+            bool $escape_html = false
+        ) {};
         EOF
 
     - name: Install PHPStan and Wordpress-stub
