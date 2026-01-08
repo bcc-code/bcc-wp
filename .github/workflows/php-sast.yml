@@ -33,6 +33,8 @@ jobs:
           errorFormat: github
           paths:
             - plugins
+          scanFiles:
+            - custom-defs.stub
           stubFiles:
             - custom-defs.stub
           bootstrapFiles:
@@ -42,7 +44,7 @@ jobs:
             - '#Path in require\(\) "build/visibility\.asset\.php" is not a file or it does not exist\.#'
             - '#Path in require\(\) "build/settings\.asset\.php" is not a file or it does not exist\.#'
           excludePaths:
-            - plugins/bcc-signon/openid-connect-bcc-customizations/access-token.php
+            - plugins/bcc-signon/*
         includes:
           - vendor/szepeviktor/phpstan-wordpress/extension.neon
         EOF
