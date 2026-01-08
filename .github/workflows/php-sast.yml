@@ -28,6 +28,7 @@ jobs:
       run: |
         composer require --dev phpstan/phpstan
         composer require --dev szepeviktor/phpstan-wordpress
+        composer require --dev phpstan/extension-installer
 
     - name: Run PHPStan
       run: vendor/bin/phpstan analyse plugins/* --error-format github --no-progress
