@@ -32,7 +32,7 @@ jobs:
           level: 1 # form 0 to 11 where 0 is the loosest and 11 the strictest
           errorFormat: github
           paths:
-            - plugins/*
+            - plugins
           stubFiles:
             - custom-defs.stub
         includes:
@@ -70,5 +70,5 @@ jobs:
         composer require --dev szepeviktor/phpstan-wordpress
 
     - name: Run PHPStan
-      run: vendor/bin/phpstan analyse --error-format github --no-progress
+      run: vendor/bin/phpstan analyse --no-progress
 
