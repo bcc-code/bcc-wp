@@ -628,6 +628,7 @@ class BCC_Login_Visibility {
 
         // Set the meta query to the complete, altered query
         $query->set('meta_query', $meta_query);
+        return;
     }
 
     /**

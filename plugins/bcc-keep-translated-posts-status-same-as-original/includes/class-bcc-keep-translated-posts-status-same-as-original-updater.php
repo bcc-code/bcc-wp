@@ -153,7 +153,7 @@ class BCC_Keep_Translated_Posts_Status_Same_As_Original_Updater {
 
 	}
 
-	public function purge(){
+	public function purge( $upgrader_object, $options ){
 
 		if (
 			$this->cache_allowed

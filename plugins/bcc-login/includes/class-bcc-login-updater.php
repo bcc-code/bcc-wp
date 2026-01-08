@@ -157,7 +157,7 @@ class BCC_Login_Updater {
 
 	}
 
-	public function purge(){
+	public function purge( $upgrader_object, $options ){
 
 		if (
 			$this->cache_allowed
