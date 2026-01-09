@@ -76,7 +76,7 @@ jobs:
 
     - name: Install Wordpress plugin for Psalm
       run: |
-        composer require -dev humanmade/psalm-plugin-wordpress
+        composer require humanmade/psalm-plugin-wordpress
 
     - name: Run Psalm
       uses: docker://ghcr.io/psalm/psalm-github-actions
