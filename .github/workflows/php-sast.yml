@@ -74,9 +74,13 @@ jobs:
         function get_culture() {};
         EOF
 
-    - name: Install Wordpress plugin for Psalm
+    - name: Install Psalm and Wordpress stubs
       run: |
-        composer require humanmade/psalm-plugin-wordpress
+        composer require --dev vimeo/psalm
+        composer require --dev humanmade/psalm-plugin-wordpress
+        ./vendor/bin/psalm-plugin enable humanmade/psalm-plugin-wordpress
+        cat psalm.xml
+        ls
 
     - name: Run Psalm
       uses: docker://ghcr.io/psalm/psalm-github-actions
