@@ -60,6 +60,7 @@ class BCC_Login_Visibility {
         add_shortcode( 'post_group_tags_widget', array( $this, 'post_group_tags_widget' ) );
         add_shortcode( 'get_bcc_group_name', array( $this, 'get_bcc_group_name_by_id' ) );
         add_shortcode( 'bcc_my_roles', array( $this, 'bcc_my_roles' ) );
+        add_shortcode( 'has_bcc_role_with_full_content_access', array( $this, 'has_bcc_role_with_full_content_access' ) );
 
         add_action( 'add_meta_boxes', array( $this, 'add_visibility_meta_box_to_attachments' ) );
         add_action( 'attachment_updated', array( $this, 'save_visibility_to_attachments' ), 10, 3 );
@@ -204,7 +205,7 @@ class BCC_Login_Visibility {
             if ( $post_visibility ) {
                 $visibility = $post_visibility;
             }
-        }        
+        }
 
         if ( $visibility && $visibility > $level ) {                
             if ( is_user_logged_in() ) {
@@ -760,6 +761,20 @@ class BCC_Login_Visibility {
 
     public function bcc_my_roles() {
         return json_encode($this->get_user_groups_list());
+    }
+
+    public function has_bcc_role_with_full_content_access() {
+        $user_groups = $this->get_current_user_groups();
+
+        if (!$user_groups) {
+            return false;
+        }
+
+        if (count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) > 0) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
