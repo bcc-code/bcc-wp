@@ -1,8 +1,6 @@
 <?php
 
 class BCC_Storage {
-    private BCC_Encryption $_encryption;
-
     private $_encryption_key;
     private $_encryption_method = "AES-256-CBC";
 

@@ -204,8 +204,8 @@ class BCC_Login_Client {
             'user_email' => $email,
             'display_name' => $displayname,
             'nickname' => $nickname,
-            'first_name' => isset( $user_claim['given_name'] ) ? $user_claim['given_name'] : '',
-            'last_name' => isset( $user_claim['family_name'] ) ? $user_claim['family_name'] : '',
+            'first_name' => isset( $id_token_claims['given_name'] ) ? $id_token_claims['given_name'] : '',
+            'last_name' => isset( $id_token_claims['family_name'] ) ? $id_token_claims['family_name'] : '',
         );
 
         // Create the new user.

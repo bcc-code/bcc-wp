@@ -24,13 +24,56 @@ jobs:
     # - name: Validate composer.json and composer.lock
     #   run: composer validate --strict
 
+    # This config file gets auto-loaded by PHPStan
+    # !!!! The old bcc-signon plugin and the bcc-wp-proxy plugin are excluded from analysis!
+    - name: Set PHPStan config
+      run: |
+        cat <<'EOF' > phpstan.neon
+        parameters:
+          level: 1 # form 0 to 11 where 0 is the loosest and 11 the strictest
+          errorFormat: github
+          paths:
+            - plugins
+          scanFiles:
+            - custom-defs.stub
+          bootstrapFiles:
+            - plugins/bcc-login/bcc-login.php
+          ignoreErrors:
+            - '#Path in require\(\) "build/.+\.asset\.php" is not a file or it does not exist\.#'
+          excludePaths:
+            - plugins/bcc-signon/*
+            - plugins/bcc-wp-proxy/*
+        includes:
+          - vendor/szepeviktor/phpstan-wordpress/extension.neon
+        EOF
+
+    - name: Create custom stubs for plugin functions. If this grows too big it can be commited as a separate file
+      run: |
+        cat <<'EOF' > custom-defs.stub
+        <?php
+
+        /**
+        * @param mixed $post_id
+        * @return mixed|null
+        */
+        function get_field(
+            string $selector,
+            $post_id = false,
+            bool $format_value = true,
+            bool $escape_html = false
+        ) {};
+
+        /**
+        * @return string
+        */
+        function get_culture() {};
+        EOF
+
     - name: Install PHPStan and Wordpress-stub
       run: |
         composer require --dev phpstan/phpstan
         composer require --dev szepeviktor/phpstan-wordpress
-        composer config --no-plugins allow-plugins.phpstan/extension-installer true
-        composer require --dev phpstan/extension-installer
 
     - name: Run PHPStan
-      run: vendor/bin/phpstan analyse plugins/* --error-format github --no-progress
+      run: vendor/bin/phpstan analyse --no-progress
 

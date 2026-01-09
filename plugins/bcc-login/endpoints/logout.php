@@ -5,13 +5,14 @@ setcookie('wordpress_nocache', 'true');
 /** backchannel logout */
 $logout_token = $_POST['logout_token'];
 $token_id = '';
+$state = '';
 
 if ( $logout_token )
 {
     // OIDC backchannel logout. Retrieve session ID from logout_token.
     $logout_token_claims = BCC_Login_Token_Utility::get_token_claims( $logout_token );
-    $sid = $logout_token_claims['sid'];
-    if ( $sid && ! empty ( $sid )) {
+    $sid = $logout_token_claims['sid'] ?? '';
+    if ( ! empty ( $sid ) ) {
         $token_id = md5 ( $sid );
     }
     if ( ! empty( $token_id ) ) {

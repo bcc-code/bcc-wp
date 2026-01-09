@@ -153,7 +153,7 @@ class BCC_Post_Update_Translations_Notifier_Updater {
 
 	}
 
-	public function purge(){
+	public function purge( $upgrader_object, $options ){
 
 		if (
 			$this->cache_allowed

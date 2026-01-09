@@ -119,7 +119,7 @@ class BCC_Login_Settings_Provider {
                 $settings->$key = constant( $constant );
             } else {
                 $env = getenv( $constant );
-                if ( isset( $env ) && ! is_null( $env ) && $env != '') {
+                if ( $env !== false && $env != '') {
                     $settings->$key = $env;
                 }
             }
