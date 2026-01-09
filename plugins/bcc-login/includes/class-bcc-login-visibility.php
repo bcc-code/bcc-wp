@@ -569,7 +569,7 @@ class BCC_Login_Visibility {
         $user_groups = $this->get_current_user_groups();
 
         // Filter posts which user should have access to - except when user has full content access
-        if (empty($user_groups) || count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0) {
+        if (empty($user_groups) || !$this->has_bcc_role_with_full_content_access()) {
             $group_rules = array();
 
             // Use case when no group filters have been set
@@ -724,7 +724,7 @@ class BCC_Login_Visibility {
             return json_encode(array());
         }
 
-        if (count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) > 0) {
+        if ($this->has_bcc_role_with_full_content_access()) {
             // Show all site groups for full content access users
             return json_encode($roles_tag_groups);
         }
@@ -829,7 +829,7 @@ class BCC_Login_Visibility {
 
             // Filter blocks which user should have access to 
             //- users with "full access" will still not be able to see blocks they are not in a group for (even if they can see the post)
-            if (count(array_intersect($block_groups, $user_groups)) == 0) //&& count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0
+            if (count(array_intersect($block_groups, $user_groups)) == 0) //&& !$this->has_bcc_role_with_full_content_access()
             {
                 return '';
             }
