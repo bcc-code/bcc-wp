@@ -50,12 +50,6 @@ jobs:
             </pluginClass>
           </plugins>
         </psalm>
-        <!--
-          bootstrapFiles:
-            - plugins/bcc-login/bcc-login.php
-          ignoreErrors:
-            - '#Path in require\(\) "build/.+\.asset\.php" is not a file or it does not exist\.#'
-        -->
         EOF
 
     - name: Create stubs for dependency functions (e.g. other plugin funcions). If this grows too big it can be commited as a separate file
@@ -82,7 +76,7 @@ jobs:
 
     - name: Install Wordpress plugin for Psalm
       run: |
-        composer require humanmade/psalm-plugin-wordpress
+        composer require -dev humanmade/psalm-plugin-wordpress
 
     - name: Run Psalm
       uses: docker://ghcr.io/psalm/psalm-github-actions
