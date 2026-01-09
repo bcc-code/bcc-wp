@@ -21,9 +21,6 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
-    # - name: Validate composer.json and composer.lock
-    #   run: composer validate --strict
-
     # This config file gets auto-loaded by Psalm
     # !!!! The old bcc-signon plugin and the bcc-wp-proxy plugin are excluded from analysis!
     - name: Set Psalm config
@@ -83,12 +80,12 @@ jobs:
         function get_culture() {};
         EOF
 
-    - name: Install Psalm and Wordpress stubs
+    - name: Install Wordpress plugin for Psalm
       run: |
-        composer require --dev vimeo/psalm
-        composer require --dev humanmade/psalm-plugin-wordpress
-        ./vendor/bin/psalm-plugin enable humanmade/psalm-plugin-wordpress
+        composer require humanmade/psalm-plugin-wordpress
 
     - name: Run Psalm
-      run: ./vendor/bin/psalm --no-cache
+      uses: docker://ghcr.io/psalm/psalm-github-actions
+      with:
+        security_analysis: true
 
