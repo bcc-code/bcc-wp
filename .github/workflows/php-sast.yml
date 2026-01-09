@@ -24,30 +24,44 @@ jobs:
     # - name: Validate composer.json and composer.lock
     #   run: composer validate --strict
 
-    # This config file gets auto-loaded by PHPStan
+    # This config file gets auto-loaded by Psalm
     # !!!! The old bcc-signon plugin and the bcc-wp-proxy plugin are excluded from analysis!
-    - name: Set PHPStan config
+    - name: Set Psalm config
       run: |
-        cat <<'EOF' > phpstan.neon
-        parameters:
-          level: 1 # form 0 to 11 where 0 is the loosest and 11 the strictest
-          errorFormat: github
-          paths:
-            - plugins
-          scanFiles:
-            - custom-defs.stub
+        cat <<'EOF' > psalm.xml
+        <?xml version="1.0"?>
+        <!-- Psalm has levels of strictness (errorLevel) from 1 (most strict) to 8 (most lenient). -->
+        <psalm
+          xmlns="https://getpsalm.org/schema/config"
+          errorLevel="2"
+          threads=8
+          scanThreads=8
+        >
+          <projectFiles>
+            <directory name="plugins" />
+            <ignoreFiles>
+              <directory name="plugins/bcc-signon" />
+              <directory name="plugins/bcc-wp-proxy" />
+            </ignoreFiles>
+          </projectFiles>
+          <stubs>
+            <file name="custom-defs.stub" />
+          </stubs>
+          <plugins>
+            <pluginClass class="PsalmWordPress\Plugin">
+              <requireAllParams value="true" />
+            </pluginClass>
+          </plugins>
+        </psalm>
+        <!--
           bootstrapFiles:
             - plugins/bcc-login/bcc-login.php
           ignoreErrors:
             - '#Path in require\(\) "build/.+\.asset\.php" is not a file or it does not exist\.#'
-          excludePaths:
-            - plugins/bcc-signon/*
-            - plugins/bcc-wp-proxy/*
-        includes:
-          - vendor/szepeviktor/phpstan-wordpress/extension.neon
+        -->
         EOF
 
-    - name: Create custom stubs for plugin functions. If this grows too big it can be commited as a separate file
+    - name: Create stubs for dependency functions (e.g. other plugin funcions). If this grows too big it can be commited as a separate file
       run: |
         cat <<'EOF' > custom-defs.stub
         <?php
@@ -69,11 +83,12 @@ jobs:
         function get_culture() {};
         EOF
 
-    - name: Install PHPStan and Wordpress-stub
+    - name: Install Psalm and Wordpress stubs
       run: |
-        composer require --dev phpstan/phpstan
-        composer require --dev szepeviktor/phpstan-wordpress
+        composer require --dev vimeo/psalm
+        composer require --dev humanmade/psalm-plugin-wordpress
+        ./vendor/bin/psalm-plugin enable humanmade/psalm-plugin-wordpress
 
-    - name: Run PHPStan
-      run: vendor/bin/phpstan analyse --no-progress
+    - name: Run Psalm
+      run: ./vendor/bin/psalm --no-cache
 
