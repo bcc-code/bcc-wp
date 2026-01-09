@@ -31,8 +31,8 @@ jobs:
         <psalm
           xmlns="https://getpsalm.org/schema/config"
           errorLevel="2"
-          threads=8
-          scanThreads=8
+          threads="8"
+          scanThreads="8"
         >
           <projectFiles>
             <directory name="plugins" />
@@ -76,13 +76,12 @@ jobs:
 
     - name: Install Psalm and Wordpress stubs
       run: |
-        composer require --dev vimeo/psalm
+        #composer require --dev vimeo/psalm
         composer require --dev humanmade/psalm-plugin-wordpress
-        cat psalm.xml
-        ls
 
     - name: Run Psalm
       uses: psalm/psalm-github-actions@2.3.2
       with:
         security_analysis: true
+        composer_require_dev: true
 
