@@ -723,6 +723,11 @@ class BCC_Login_Visibility {
             return json_encode(array());
         }
 
+        if (count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) > 0) {
+            // Show all site groups for full content access users
+            return json_encode($roles_tag_groups);
+        }
+
         $user_site_groups = array();
 
         foreach ($roles_tag_groups as $group) {
