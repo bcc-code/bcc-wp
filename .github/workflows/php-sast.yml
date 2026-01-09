@@ -82,7 +82,7 @@ jobs:
         ls
 
     - name: Run Psalm
-      uses: docker://ghcr.io/psalm/psalm-github-actions
+      uses: psalm/psalm-github-actions@2.3.2
       with:
         security_analysis: true
 
