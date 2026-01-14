@@ -175,6 +175,14 @@ class BCC_Login_Visibility {
 
         $visited_url = add_query_arg( $wp->query_vars, home_url( $wp->request ) );
 
+        // Include magic link token from URL to the visited URL
+        $token_name = 'bcc_mt';
+        $param_token = isset($_GET[$token_name]) ? sanitize_text_field(wp_unslash($_GET[$token_name])) : '';
+
+        if ( $param_token ) {
+            $visited_url = add_query_arg( $token_name, $param_token, $visited_url );
+        }
+
         $session_is_valid = $this->_client->is_session_valid();
 
         // Initiate new login if session has expired
@@ -197,57 +205,6 @@ class BCC_Login_Visibility {
         }
 
         $post = $post_id ? get_post($post_id) : get_post();
-
-        // Magic link access (cookie / token -> redirect)
-        if ($post) {
-            $cookie_name = 'bcc_ml_' . (int) $post->ID;
-
-            // 1) If we already have a cookie, verify it and allow
-            $cookie_token = isset($_COOKIE[$cookie_name]) ? (string) $_COOKIE[$cookie_name] : '';
-
-            if ($cookie_token) {
-                $claims = $this->bcc_verify_magic_token($cookie_token);
-
-                if ($claims && $claims['post_id'] === (int) $post->ID) {
-                    return; // Allow access without needing the query arg
-                }
-            }
-
-            // 2) If token is present in URL, verify it, set cookie, then redirect to clean URL
-            $token = isset($_GET['bcc_token']) ? sanitize_text_field(wp_unslash($_GET['bcc_token'])) : '';
-            if ($token) {
-                $claims = $this->bcc_verify_magic_token($token);
-
-                if ($claims && $claims['post_id'] === (int) $post->ID) {
-                    if (!defined('DONOTCACHEPAGE')) define('DONOTCACHEPAGE', true);
-                    nocache_headers();
-
-                    $exp    = (int) $claims['exp'];
-                    $secure = is_ssl();
-
-                    // PHP 7.3+ supports options array (recommended)
-                    if (PHP_VERSION_ID >= 70300) {
-                        setcookie($cookie_name, $token, [
-                            'expires'  => $exp,
-                            'path'     => '/',
-                            'secure'   => $secure,
-                            'httponly' => true,
-                            'samesite' => 'Lax',
-                        ]);
-                    } else {
-                        // Fallback (no SameSite support here)
-                        setcookie($cookie_name, $token, $exp, '/', '', $secure, true);
-                    }
-
-                    wp_safe_redirect();
-                    exit;
-                }
-                else {
-                    return $this->incorrect_token_for_page();
-                }
-            }
-        }
-            
         $level      = $this->_client->get_current_user_level();
         $visibility = (int)$this->_settings->default_visibility;        
 
@@ -270,6 +227,62 @@ class BCC_Login_Visibility {
 
         if (!$post) {
             return;
+        }
+
+        // Magic link access (cookie / token -> redirect)
+
+        // 1) If we already have a cookie, verify it and allow
+        $cookie_name = $token_name . '_' . (int) $post->ID;
+        $cookie_token = isset($_COOKIE[$cookie_name]) ? (string) $_COOKIE[$cookie_name] : '';
+
+        if ($cookie_token) {
+            $claims = $this->bcc_verify_magic_token($cookie_token);
+
+            if ($claims && $claims['post_id'] === (int) $post->ID) {
+                if ($param_token) {
+                    // Clean URL if token is also present
+                    if (!defined('DONOTCACHEPAGE')) define('DONOTCACHEPAGE', true);
+                    nocache_headers();
+                
+                    wp_safe_redirect(remove_query_arg($token_name));
+                    exit;
+                }
+
+                return; // Allow access without needing the query arg
+            }
+        }
+
+        // 2) If token is present in URL, verify it, set cookie, then redirect to clean URL
+        if ($param_token) {
+            $claims = $this->bcc_verify_magic_token($param_token);
+
+            if ($claims && $claims['post_id'] === (int) $post->ID) {
+                if (!defined('DONOTCACHEPAGE')) define('DONOTCACHEPAGE', true);
+                nocache_headers();
+
+                $exp    = (int) $claims['exp'];
+                $secure = is_ssl();
+
+                // PHP 7.3+ supports options array (recommended)
+                if (PHP_VERSION_ID >= 70300) {
+                    setcookie($cookie_name, $param_token, [
+                        'expires'  => $exp,
+                        'path'     => '/',
+                        'secure'   => $secure,
+                        'httponly' => true,
+                        'samesite' => 'Lax',
+                    ]);
+                } else {
+                    // Fallback (no SameSite support here)
+                    setcookie($cookie_name, $param_token, $exp, '/', '', $secure, true);
+                }
+
+                wp_safe_redirect(remove_query_arg($token_name));
+                exit;
+            }
+            else {
+                return $this->incorrect_token_for_page();
+            }
         }
 
         if ( !empty($this->_settings->site_groups) ) {
@@ -430,8 +443,8 @@ class BCC_Login_Visibility {
         wp_die(
             sprintf(
                 '%s<br><br>%s<br><br><a href="%s">%s</a>',
-                __( 'Sorry, the token either expired or is incorrect.', 'bcc-login' ),
-                __( 'Make sure you are using the correct url or ask to get a new one.', 'bcc-login' ),
+                __( 'Sorry, the token for the magic link is either expired or incorrect.', 'bcc-login' ),
+                __( 'Make sure you are using the correct link or ask for a new one.', 'bcc-login' ),
                 site_url(),
                 __( 'Go to the front page', 'bcc-login' )
             ),
@@ -1308,7 +1321,7 @@ class BCC_Login_Visibility {
         $token = $this->bcc_make_magic_token($post_id, 60 * DAY_IN_SECONDS);
 
         $url = add_query_arg(
-            ['bcc_token' => $token],
+            ['bcc_mt' => $token],
             get_permalink($post_id)
         );
 
