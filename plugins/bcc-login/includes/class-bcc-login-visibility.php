@@ -12,6 +12,8 @@ class BCC_Login_Visibility {
     public const VISIBILITY_SUBSCRIBER = 2;
     public const VISIBILITY_MEMBER = 3;
 
+    private const POST_VISIBILITY_GROUPS_IMPLEMENTATION_DATE = '2025-12-15 20:00:00';
+
     // A mapping of role -> level.
     private $levels = array(
         'bcc-login-member' => self::VISIBILITY_MEMBER,
@@ -1178,10 +1180,15 @@ class BCC_Login_Visibility {
         $post_visibility_groups = array_slice($post_visibility_groups, 0, $attributes['limit']);
 
         $html = '';
+        $post_published_date = get_the_date('Y-m-d H:i:s', $post_id);
 
         if (count($post_target_groups)) {
             $html .= '<div class="bcc-target-groups">';
-                $html .= '<strong>' . __('Action required', 'bcc-login') . ':</strong>';
+                // Show label only if post was published after the post visibility groups functionality was implemented
+                if ($post_published_date > self::POST_VISIBILITY_GROUPS_IMPLEMENTATION_DATE) {
+                    $html .= '<strong>' . __('Action required', 'bcc-login') . ':</strong>';
+                }
+
                 foreach ($post_target_groups as $role) {
                     $link = $attributes['link'] . '?target-groups[]=' . $role->uid;
                     $html .= '<a href="'. $link . '"><span class="member-overview__role-badge">' . $role->name . '</span></a>';
@@ -1191,7 +1198,11 @@ class BCC_Login_Visibility {
 
         if (count($post_visibility_groups)) {
             $html .= '<div class="bcc-visibility-groups">';
-                $html .= '<strong>' . __('For information', 'bcc-login') . ':</strong>';
+                // Show label only if post was published after the post visibility groups functionality was implemented
+                if ($post_published_date > self::POST_VISIBILITY_GROUPS_IMPLEMENTATION_DATE) {
+                    $html .= '<strong>' . __('For information', 'bcc-login') . ':</strong>';
+                }
+
                 foreach ($post_visibility_groups as $role) {
                     $link = $attributes['link'] . '?target-groups[]=' . $role->uid;
                     $html .= '<a href="'. $link . '"><span class="member-overview__role-badge">' . $role->name . '</span></a>';
