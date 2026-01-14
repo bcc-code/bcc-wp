@@ -55,6 +55,16 @@ class BCC_Coreapi_Client
         return $this->_all_groups;
     }
 
+    function get_translated_all_groups() {
+        $all_groups = $this->get_all_groups();
+
+        foreach ($all_groups as $id => $group) {
+            $all_groups[$id]->name = __( $group->name, 'bcc-login' );
+        }
+
+        return $all_groups;
+    }
+
     function get_site_groups() {
         if (isset($this->_site_groups)) {
             return $this->_site_groups;

@@ -377,7 +377,7 @@ class BCC_Login_Settings_Provider {
         );
 
         if ($use_groups_settings) {
-            $all_groups = $this->_coreapi->get_all_groups();
+            $all_groups = $this->_coreapi->get_translated_all_groups();
 
             add_settings_field(
                 'bcc_site_group_tags',
@@ -786,9 +786,9 @@ class BCC_Login_Settings_Provider {
 			$set_uuid = chr(123)
 				.substr($set_charid, 0, 8).$set_hyphen
 				.substr($set_charid, 8, 4).$set_hyphen
-				.substr($set_charid,12, 4).$set_hyphen
-				.substr($set_charid,16, 4).$set_hyphen
-				.substr($set_charid,20,12)
+				.substr($set_charid, 12, 4).$set_hyphen
+				.substr($set_charid, 16, 4).$set_hyphen
+				.substr($set_charid, 20, 12)
 				.chr(125);
 				// "}"
 			return $set_uuid;
