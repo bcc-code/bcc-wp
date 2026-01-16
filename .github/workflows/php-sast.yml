@@ -77,7 +77,7 @@ jobs:
         composer require --dev humanmade/psalm-plugin-wordpress ~6.8.0
 
     - name: Run Psalm
-      uses: adelinn/psalm-github-actions@patch-1
+      uses: psalm/psalm-github-actions@26f175f4d1d9006ea675bb78831ae94126017b07
       with:
         security_analysis: true
         composer_require_dev: true
