@@ -25,15 +25,58 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
+  lint:
+    name: Lint PHP - validate code
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./plugins/bcc-login
+
+    steps:
+    - uses: actions/checkout@v6
+
+    # This config file gets auto-loaded by PHPStan
+    - name: Set PHPStan config
+      run: |
+        cat <<'EOF' > phpstan.neon
+        parameters:
+          level: 1 # form 0 to 11 where 0 is the loosest and 11 the strictest
+          errorFormat: github
+          paths:
+            - .
+          excludePaths:
+            - vendor
+          scanFiles:
+            - dependencies.stub
+          bootstrapFiles:
+            - bcc-login.php
+          ignoreErrors:
+            - '#Path in require\(\) "build/.+\.asset\.php" is not a file or it does not exist\.#'
+        includes:
+          - vendor/szepeviktor/phpstan-wordpress/extension.neon
+        EOF
+
+    - name: Install PHPStan and Wordpress-stub
+      run: |
+        composer require --dev phpstan/phpstan
+        composer require --dev szepeviktor/phpstan-wordpress
+
+    - name: Run PHPStan
+      run: vendor/bin/phpstan analyse --no-progress
+
   build:
+    needs: lint
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
 
       - name: Get Package Version
         id: version

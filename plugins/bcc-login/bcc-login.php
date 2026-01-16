@@ -3,10 +3,14 @@
 /**
  * Plugin Name: BCC Login
  * Description: Integration to BCC's Login System.
- * Version: 1.1.431
+ * Version: 1.1.433
  * Author: BCC IT
  * License: GPL2
  */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
 
 define( 'BCC_LOGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'BCC_LOGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -30,7 +34,7 @@ class BCC_Login {
      * The plugin instance.
      */
     private static $instance = null;
-    private $plugin_version = "1.1.431";
+    private $plugin_version = "1.1.433";
     private $plugin;
     private $plugin_slug;
     private $plugin_name = "BCC Login";
