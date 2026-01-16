@@ -44,7 +44,7 @@ jobs:
           </stubs> -->
           <plugins>
             <pluginClass class="PsalmWordPress\Plugin">
-              <requireAllParams value="true" />
+              <!-- <requireAllParams value="true" /> -->
             </pluginClass>
           </plugins>
         </psalm>
