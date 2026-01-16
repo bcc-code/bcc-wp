@@ -1,0 +1,12 @@
+<?php
+
+/**
+* @param mixed $post_id
+* @return mixed|null
+*/
+function get_field(
+    string $selector,
+    $post_id = false,
+    bool $format_value = true,
+    bool $escape_html = false
+) {};
