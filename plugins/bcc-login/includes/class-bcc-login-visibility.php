@@ -12,6 +12,8 @@ class BCC_Login_Visibility {
     public const VISIBILITY_SUBSCRIBER = 2;
     public const VISIBILITY_MEMBER = 3;
 
+    private const POST_VISIBILITY_GROUPS_IMPLEMENTATION_DATE = '2025-12-15 20:00:00';
+
     // A mapping of role -> level.
     private $levels = array(
         'bcc-login-member' => self::VISIBILITY_MEMBER,
@@ -60,6 +62,8 @@ class BCC_Login_Visibility {
         add_shortcode( 'post_group_tags_widget', array( $this, 'post_group_tags_widget' ) );
         add_shortcode( 'get_bcc_group_name', array( $this, 'get_bcc_group_name_by_id' ) );
         add_shortcode( 'bcc_my_roles', array( $this, 'bcc_my_roles' ) );
+        add_shortcode( 'has_bcc_role_with_full_content_access', array( $this, 'has_bcc_role_with_full_content_access' ) );
+        add_shortcode( 'bcc_magic_link', array( $this, 'bcc_magic_link' ) );
 
         add_action( 'add_meta_boxes', array( $this, 'add_visibility_meta_box_to_attachments' ) );
         add_action( 'attachment_updated', array( $this, 'save_visibility_to_attachments' ), 10, 3 );
@@ -173,6 +177,14 @@ class BCC_Login_Visibility {
 
         $visited_url = add_query_arg( $wp->query_vars, home_url( $wp->request ) );
 
+        // Include magic link token from URL to the visited URL
+        $token_name = 'bcc_mt';
+        $param_token = isset($_GET[$token_name]) ? sanitize_text_field(wp_unslash($_GET[$token_name])) : '';
+
+        if ( $param_token ) {
+            $visited_url = add_query_arg( $token_name, $param_token, $visited_url );
+        }
+
         $session_is_valid = $this->_client->is_session_valid();
 
         // Initiate new login if session has expired
@@ -204,7 +216,7 @@ class BCC_Login_Visibility {
             if ( $post_visibility ) {
                 $visibility = $post_visibility;
             }
-        }        
+        }
 
         if ( $visibility && $visibility > $level ) {                
             if ( is_user_logged_in() ) {
@@ -217,6 +229,62 @@ class BCC_Login_Visibility {
 
         if (!$post) {
             return;
+        }
+
+        // Magic link access (cookie / token -> redirect)
+
+        // 1) If we already have a cookie, verify it and allow
+        $cookie_name = $token_name . '_' . (int) $post->ID;
+        $cookie_token = isset($_COOKIE[$cookie_name]) ? (string) $_COOKIE[$cookie_name] : '';
+
+        if ($cookie_token) {
+            $claims = $this->bcc_verify_magic_token($cookie_token);
+
+            if ($claims && $claims['post_id'] === (int) $post->ID) {
+                if ($param_token) {
+                    // Clean URL if token is also present
+                    if (!defined('DONOTCACHEPAGE')) define('DONOTCACHEPAGE', true);
+                    nocache_headers();
+                
+                    wp_safe_redirect(remove_query_arg($token_name));
+                    exit;
+                }
+
+                return; // Allow access without needing the query arg
+            }
+        }
+
+        // 2) If token is present in URL, verify it, set cookie, then redirect to clean URL
+        if ($param_token) {
+            $claims = $this->bcc_verify_magic_token($param_token);
+
+            if ($claims && $claims['post_id'] === (int) $post->ID) {
+                if (!defined('DONOTCACHEPAGE')) define('DONOTCACHEPAGE', true);
+                nocache_headers();
+
+                $exp    = (int) $claims['exp'];
+                $secure = is_ssl();
+
+                // PHP 7.3+ supports options array (recommended)
+                if (PHP_VERSION_ID >= 70300) {
+                    setcookie($cookie_name, $param_token, [
+                        'expires'  => $exp,
+                        'path'     => '/',
+                        'secure'   => $secure,
+                        'httponly' => true,
+                        'samesite' => 'Lax',
+                    ]);
+                } else {
+                    // Fallback (no SameSite support here)
+                    setcookie($cookie_name, $param_token, $exp, '/', '', $secure, true);
+                }
+
+                wp_safe_redirect(remove_query_arg($token_name));
+                exit;
+            }
+            else {
+                return $this->incorrect_token_for_page();
+            }
         }
 
         if ( !empty($this->_settings->site_groups) ) {
@@ -363,6 +431,22 @@ class BCC_Login_Visibility {
                 __( 'Are you logged in with the correct user?', 'bcc-login' ),
                 wp_login_url($visited_url, true),
                 __( 'Login with your user', 'bcc-login' ),
+                site_url(),
+                __( 'Go to the front page', 'bcc-login' )
+            ),
+            __( 'Unauthorized' ),
+            array(
+                'response' => 401,
+            )
+        );
+    }
+
+    private function incorrect_token_for_page() {
+        wp_die(
+            sprintf(
+                '%s<br><br>%s<br><br><a href="%s">%s</a>',
+                __( 'Sorry, the token for the magic link is either expired or incorrect.', 'bcc-login' ),
+                __( 'Make sure you are using the correct link or ask for a new one.', 'bcc-login' ),
                 site_url(),
                 __( 'Go to the front page', 'bcc-login' )
             ),
@@ -568,7 +652,7 @@ class BCC_Login_Visibility {
         $user_groups = $this->get_current_user_groups();
 
         // Filter posts which user should have access to - except when user has full content access
-        if (empty($user_groups) || count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0) {
+        if (empty($user_groups) || !$this->has_bcc_role_with_full_content_access()) {
             $group_rules = array();
 
             // Use case when no group filters have been set
@@ -723,6 +807,11 @@ class BCC_Login_Visibility {
             return json_encode(array());
         }
 
+        if ($this->has_bcc_role_with_full_content_access()) {
+            // Show all site groups for full content access users
+            return json_encode($roles_tag_groups);
+        }
+
         $user_site_groups = array();
 
         foreach ($roles_tag_groups as $group) {
@@ -755,6 +844,20 @@ class BCC_Login_Visibility {
 
     public function bcc_my_roles() {
         return json_encode($this->get_user_groups_list());
+    }
+
+    public function has_bcc_role_with_full_content_access() {
+        $user_groups = $this->get_current_user_groups();
+
+        if (!$user_groups) {
+            return false;
+        }
+
+        if (count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) > 0) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -809,7 +912,7 @@ class BCC_Login_Visibility {
 
             // Filter blocks which user should have access to 
             //- users with "full access" will still not be able to see blocks they are not in a group for (even if they can see the post)
-            if (count(array_intersect($block_groups, $user_groups)) == 0) //&& count(array_intersect($this->_settings->full_content_access_groups, $user_groups)) == 0
+            if (count(array_intersect($block_groups, $user_groups)) == 0) //&& !$this->has_bcc_role_with_full_content_access()
             {
                 return '';
             }
@@ -1077,10 +1180,15 @@ class BCC_Login_Visibility {
         $post_visibility_groups = array_slice($post_visibility_groups, 0, $attributes['limit']);
 
         $html = '';
+        $post_published_date = get_the_date('Y-m-d H:i:s', $post_id);
 
         if (count($post_target_groups)) {
             $html .= '<div class="bcc-target-groups">';
-                $html .= '<strong>' . __('Action required', 'bcc-login') . ':</strong>';
+                // Show label only if post was published after the post visibility groups functionality was implemented
+                if ($post_published_date > self::POST_VISIBILITY_GROUPS_IMPLEMENTATION_DATE) {
+                    $html .= '<strong>' . __('Action required', 'bcc-login') . ':</strong>';
+                }
+
                 foreach ($post_target_groups as $role) {
                     $link = $attributes['link'] . '?target-groups[]=' . $role->uid;
                     $html .= '<a href="'. $link . '"><span class="member-overview__role-badge">' . $role->name . '</span></a>';
@@ -1090,7 +1198,11 @@ class BCC_Login_Visibility {
 
         if (count($post_visibility_groups)) {
             $html .= '<div class="bcc-visibility-groups">';
-                $html .= '<strong>' . __('For information', 'bcc-login') . ':</strong>';
+                // Show label only if post was published after the post visibility groups functionality was implemented
+                if ($post_published_date > self::POST_VISIBILITY_GROUPS_IMPLEMENTATION_DATE) {
+                    $html .= '<strong>' . __('For information', 'bcc-login') . ':</strong>';
+                }
+
                 foreach ($post_visibility_groups as $role) {
                     $link = $attributes['link'] . '?target-groups[]=' . $role->uid;
                     $html .= '<a href="'. $link . '"><span class="member-overview__role-badge">' . $role->name . '</span></a>';
@@ -1206,5 +1318,75 @@ class BCC_Login_Visibility {
 
         // Reindex
         return array_values( $out );
+    }
+
+    /**
+     * Magic token functions
+     */
+
+    public function bcc_magic_link() {
+        $post_id = get_the_ID();
+        if (!$post_id) return;
+
+        // Generate token valid for 60 days
+        $token = $this->bcc_make_magic_token($post_id, 60 * DAY_IN_SECONDS);
+
+        $url = add_query_arg(
+            ['bcc_mt' => $token],
+            get_permalink($post_id)
+        );
+
+        return $url;
+    }
+
+    private function bcc_base64url_encode(string $bin): string {
+        return rtrim(strtr(base64_encode($bin), '+/', '-_'), '=');
+    }
+
+    private function bcc_base64url_decode(string $str): string|false {
+        $pad = strlen($str) % 4;
+        if ($pad) $str .= str_repeat('=', 4 - $pad);
+        $out = base64_decode(strtr($str, '-_', '+/'), true);
+        return $out === false ? false : $out;
+    }
+
+    private function bcc_make_magic_token(int $post_id, int $ttl_seconds = 900): string {
+        $exp   = time() + $ttl_seconds;
+        $nonce = bin2hex(random_bytes(16)); // prevent deterministic tokens
+
+        // v1|postId|exp|nonce
+        $payload = implode('|', ['v1', (string)$post_id, (string)$exp, $nonce]);
+
+        // Uses keys/salts from wp-config.php (+ DB secret) via wp_salt
+        $secret = wp_salt('secure_auth');
+        $sig    = hash_hmac('sha256', $payload, $secret);
+
+        return $this->bcc_base64url_encode($payload . '|' . $sig);
+    }
+
+    private function bcc_verify_magic_token(string $token): array|false {
+        $raw = $this->bcc_base64url_decode($token);
+        if ($raw === false) return false;
+
+        $parts = explode('|', $raw);
+        // v1|postId|exp|nonce|sig  => 5 parts
+        if (count($parts) !== 5) return false;
+
+        [$v, $post_id, $exp, $nonce, $sig] = $parts;
+        if ($v !== 'v1') return false;
+
+        if (!ctype_digit($post_id) || !ctype_digit($exp)) return false;
+        if ((int)$exp < time()) return false;
+
+        $payload = implode('|', [$v, $post_id, $exp, $nonce]);
+        $secret  = wp_salt('secure_auth');
+        $calc    = hash_hmac('sha256', $payload, $secret);
+
+        if (!hash_equals($calc, $sig)) return false;
+
+        return [
+            'post_id' => (int)$post_id,
+            'exp'     => (int)$exp,
+        ];
     }
 }
