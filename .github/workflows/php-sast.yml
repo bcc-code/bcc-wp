@@ -39,9 +39,9 @@ jobs:
               <directory name="plugins/bcc-wp-proxy" />
             </ignoreFiles>
           </projectFiles>
-          <stubs>
+          <!-- <stubs>
             <file name="custom-defs.stub" />
-          </stubs>
+          </stubs> -->
           <plugins>
             <pluginClass class="PsalmWordPress\Plugin">
               <requireAllParams value="true" />
@@ -81,5 +81,4 @@ jobs:
       with:
         security_analysis: true
         composer_require_dev: true
-        psalm_version: "6.14.2"
 
