@@ -4,4 +4,3 @@
 * @return string
 */
 function get_culture() {};
-EOF
