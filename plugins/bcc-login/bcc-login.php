@@ -8,6 +8,10 @@
  * License: GPL2
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
 define( 'BCC_LOGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'BCC_LOGIN_URL', plugin_dir_url( __FILE__ ) );
 
