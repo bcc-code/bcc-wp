@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: read
+  security-events: write # Required to upload SARIF files
 
 jobs:
   scan:
