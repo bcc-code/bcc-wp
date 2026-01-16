@@ -48,6 +48,8 @@ jobs:
           errorFormat: github
           paths:
             - .
+          excludePaths:
+            - vendor
           scanFiles:
             - dependencies.stub
           ignoreErrors:
