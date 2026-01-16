@@ -3,7 +3,7 @@
  * Plugin Name: BCC – Keep translated posts' status same as original
  * Description: Ensures translated posts imported from Phrase (and any WPML saves) inherit the source post's status (e.g. draft, publish). This is done to avoid the use-case when an email is sent to post groups in e.g. English before Norwegian is ready to be published. In addition, this plugin creates a settings page where admins can see which translated posts have different post statuses than the original posts.
  * Author: BCC IT
- * Version: 1.6.10
+ * Version: 1.6.15
  */
 
 if ( !defined('ABSPATH') ) { exit; }
@@ -16,7 +16,7 @@ class BCC_Keep_Translated_Posts_Status_Same_As_Original {
      * The plugin instance.
      */
     private static $instance = null;
-    private $plugin_version = "1.6.10";
+    private $plugin_version = "1.6.15";
     private $plugin;
     private $plugin_slug;
     private $plugin_name = "BCC – Keep translated posts' status same as original";
