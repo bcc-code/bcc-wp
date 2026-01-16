@@ -74,7 +74,8 @@ jobs:
 
     - name: Install Psalm and Wordpress stubs
       run: |
-        composer require --dev humanmade/psalm-plugin-wordpress ~6.8.0
+        composer require --dev php-stubs/wordpress-stubs ~6.8.0
+        composer require --dev humanmade/psalm-plugin-wordpress
 
     - name: Run Psalm
       uses: psalm/psalm-github-actions@26f175f4d1d9006ea675bb78831ae94126017b07
