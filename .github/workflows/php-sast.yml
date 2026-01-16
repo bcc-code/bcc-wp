@@ -39,12 +39,12 @@ jobs:
               <directory name="plugins/bcc-wp-proxy" />
             </ignoreFiles>
           </projectFiles>
-          <!-- <stubs>
+          <stubs>
             <file name="custom-defs.stub" />
-          </stubs> -->
+          </stubs>
           <plugins>
             <pluginClass class="PsalmWordPress\Plugin">
-              <!-- <requireAllParams value="true" /> -->
+              <requireAllParams value="true" />
             </pluginClass>
           </plugins>
         </psalm>
@@ -74,7 +74,7 @@ jobs:
 
     - name: Install Psalm and Wordpress stubs
       run: |
-        composer require --dev humanmade/psalm-plugin-wordpress
+        composer require --dev humanmade/psalm-plugin-wordpress ~6.8.0
 
     - name: Run Psalm
       uses: adelinn/psalm-github-actions@patch-1
