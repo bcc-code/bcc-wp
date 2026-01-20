@@ -1339,23 +1339,33 @@ class BCC_Login_Visibility {
         return $url;
     }
 
-    private function bcc_base64url_encode(string $bin): string {
+    private function bcc_base64url_encode($bin) {
         return rtrim(strtr(base64_encode($bin), '+/', '-_'), '=');
     }
 
-    private function bcc_base64url_decode(string $str): string|false {
+    private function bcc_base64url_decode($str) {
         $pad = strlen($str) % 4;
-        if ($pad) $str .= str_repeat('=', 4 - $pad);
+        if ($pad) {
+            $str .= str_repeat('=', 4 - $pad);
+        }
+
         $out = base64_decode(strtr($str, '-_', '+/'), true);
-        return $out === false ? false : $out;
+
+        if ($out === false) {
+            return false;
+        }
+
+        return $out;
     }
 
-    private function bcc_make_magic_token(int $post_id, int $ttl_seconds = 900): string {
-        $exp   = time() + $ttl_seconds;
-        $nonce = bin2hex(random_bytes(16)); // prevent deterministic tokens
+    private function bcc_make_magic_token($post_id, $ttl_seconds = 900) {
+        $exp = time() + $ttl_seconds;
+
+        // prevents deterministic tokens (same post_id at same time)
+        $nonce = bin2hex(random_bytes(16));
 
         // v1|postId|exp|nonce
-        $payload = implode('|', ['v1', (string)$post_id, (string)$exp, $nonce]);
+        $payload = 'v1' . '|' . (string)$post_id . '|' . (string)$exp . '|' . $nonce;
 
         // Uses keys/salts from wp-config.php (+ DB secret) via wp_salt
         $secret = wp_salt('secure_auth');
@@ -1364,29 +1374,49 @@ class BCC_Login_Visibility {
         return $this->bcc_base64url_encode($payload . '|' . $sig);
     }
 
-    private function bcc_verify_magic_token(string $token): array|false {
+    private function bcc_verify_magic_token($token) {
         $raw = $this->bcc_base64url_decode($token);
-        if ($raw === false) return false;
+        if ($raw === false) {
+            return false;
+        }
 
         $parts = explode('|', $raw);
+
         // v1|postId|exp|nonce|sig  => 5 parts
-        if (count($parts) !== 5) return false;
+        if (count($parts) !== 5) {
+            return false;
+        }
 
-        [$v, $post_id, $exp, $nonce, $sig] = $parts;
-        if ($v !== 'v1') return false;
+        $v       = $parts[0];
+        $post_id = $parts[1];
+        $exp     = $parts[2];
+        $nonce   = $parts[3];
+        $sig     = $parts[4];
 
-        if (!ctype_digit($post_id) || !ctype_digit($exp)) return false;
-        if ((int)$exp < time()) return false;
+        if ($v !== 'v1') {
+            return false;
+        }
 
-        $payload = implode('|', [$v, $post_id, $exp, $nonce]);
-        $secret  = wp_salt('secure_auth');
-        $calc    = hash_hmac('sha256', $payload, $secret);
+        if (!ctype_digit($post_id) || !ctype_digit($exp)) {
+            return false;
+        }
 
-        if (!hash_equals($calc, $sig)) return false;
+        if ((int)$exp < time()) {
+            return false;
+        }
 
-        return [
+        $payload = $v . '|' . $post_id . '|' . $exp . '|' . $nonce;
+
+        $secret = wp_salt('secure_auth');
+        $calc   = hash_hmac('sha256', $payload, $secret);
+
+        if (!hash_equals($calc, $sig)) {
+            return false;
+        }
+
+        return array(
             'post_id' => (int)$post_id,
             'exp'     => (int)$exp,
-        ];
+        );
     }
 }
