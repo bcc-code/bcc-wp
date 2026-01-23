@@ -75,7 +75,7 @@ class BCC_Login_Client {
         $state = $_GET['state'];
 
         if ( ! empty( $_GET['error'] ) ) {
-            echo $_GET['error'];
+            echo esc_html( $_GET['error'] );
             exit;
         }
 
