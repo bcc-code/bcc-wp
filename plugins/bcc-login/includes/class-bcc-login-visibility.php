@@ -196,6 +196,15 @@ class BCC_Login_Visibility {
 
         // Show everything to editors
         if ( current_user_can( 'edit_posts' ) ) {
+            if ($param_token) {
+                // Clean URL if token is also present
+                if (!defined('DONOTCACHEPAGE')) define('DONOTCACHEPAGE', true);
+                nocache_headers();
+
+                wp_safe_redirect(remove_query_arg($token_name));
+                exit;
+            }
+
             return;
         }
 
