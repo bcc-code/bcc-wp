@@ -228,8 +228,9 @@ class BCC_Login_Feed {
 
                 foreach ($translations as $lang_code => $details) {
                     if ($details->element_id == $post_id) {
-                        break; //Current post is original
+                        continue; // Current translation is the original language
                     }
+
                     if ($details->original == "1") {
                         // Another language is original
                         $original_post = get_post($details->element_id); // Get post object by ID
