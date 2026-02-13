@@ -136,6 +136,10 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
             >
                 <p>{__('Status', 'bcc-login')}: {status === 'publish' ? <Tag icon="dashicons dashicons-yes" severity="success" value={__('Published', 'bcc-login')} /> : <Tag icon="dashicons dashicons-warning" severity="warning" value={__('NOT published', 'bcc-login')} />}</p>
 
+                {status === 'draft' && (
+                    <p className='bcc-send-notifications__info'>* {__('Draft info articles are only accessible to WP Admins & Sentral redaksjon.', 'bcc-login')}</p>
+                )}
+
                 {isOriginalPost === false && (
                     <p>
                         <Tag icon="dashicons dashicons-no" severity="danger" value={__('This is a translation. Notifications should be sent from the original post.', 'bcc-login')}></Tag>
@@ -198,7 +202,7 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
 
                 <p>{__('Changes', 'bcc-login')}: {isDirty ? <Tag icon="dashicons dashicons-warning" severity="warning" value={__('Unsaved changes', 'bcc-login')}></Tag> : <Tag icon="dashicons dashicons-yes" severity="success" value={__('Saved', 'bcc-login')}></Tag>}</p>
 
-                <Button type="button" label={__('Send', 'bcc-login')} onClick={() => sendNotifications()} disabled={status !== 'publish' || (targetGroupsCount === 0 && visibilityGroupsCount === 0) || isNotificationDryRun || isDirty || isAutoSaving || !isOriginalPost} />
+                <Button type="button" label={__('Send', 'bcc-login')} onClick={() => sendNotifications()} disabled={!['publish', 'draft'].includes(status) || (targetGroupsCount === 0 && visibilityGroupsCount === 0) || isNotificationDryRun || isDirty || isAutoSaving || !isOriginalPost} />
             </Dialog>
 
             <Toast ref={toast} position="bottom-right" />
