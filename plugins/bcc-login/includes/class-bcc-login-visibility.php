@@ -802,6 +802,24 @@ class BCC_Login_Visibility {
         return $roles_tag_groups;
     }
 
+    // Get only BCC Norge Key Roles
+    private function get_groups_of_the_norway_tag() {
+        $site_groups = $this->_coreapi->get_translated_site_groups();
+        $norway_key_roles = array();
+
+        // Take site groups belonging to "BCC Norge" group tag
+        foreach ($site_groups as $site_group) {
+            if (in_array('BCC Norge', $site_group->tags)) {
+                $norway_key_roles[] = $site_group;
+            }
+        }
+
+        // Sort by name
+        usort($norway_key_roles, fn($a, $b) => $a->name <=> $b->name);
+
+        return $norway_key_roles;
+    }
+
     public function get_filtering_groups_list() {
         $roles_tag_groups = $this->get_groups_of_the_roles_tag();
 
@@ -1159,6 +1177,7 @@ class BCC_Login_Visibility {
         $post_visibility_groups_uids = get_post_meta($post_id, 'bcc_visibility_groups', false);
 
         $central_key_roles = $this->get_groups_of_the_roles_tag();
+        $norway_key_roles = $this->get_groups_of_the_norway_tag();
 
         // If only_user_groups is set, filter out groups which the current user is not in
         if ($only_user_groups) {
@@ -1174,13 +1193,29 @@ class BCC_Login_Visibility {
         $post_target_groups = array();
         $post_visibility_groups = array();
 
-        // Get only post groups which are in Central Key Roles
+        // Get post groups which are in Central Key Roles
+        // + Norwegian roles if the Global corresponding ones are not present
         foreach ($central_key_roles as $role) {
+            // Target groups
             if (in_array($role->uid, $post_target_groups_uids)) {
                 $post_target_groups[] = $role;
             }
+            else {
+                $norway_role = $this->get_corresponding_role_for_norway($role->uid, $norway_key_roles);
+                if ($norway_role && in_array($norway_role->uid, $post_target_groups_uids)) {
+                    $post_target_groups[] = $norway_role;
+                }
+            }
+
+            // Visibility groups
             if (in_array($role->uid, $post_visibility_groups_uids)) {
                 $post_visibility_groups[] = $role;
+            }
+            else {
+                $norway_role = $this->get_corresponding_role_for_norway($role->uid, $norway_key_roles);
+                if ($norway_role && in_array($norway_role->uid, $post_visibility_groups_uids)) {
+                    $post_visibility_groups[] = $norway_role;
+                }
             }
         }
 
@@ -1220,6 +1255,42 @@ class BCC_Login_Visibility {
         }
 
         return $html;
+    }
+
+    private function get_corresponding_role_for_norway($role_uid, $norway_key_roles) {
+        if ($role_uid == '5dabf96b-0a5c-42d4-aa67-3df3a43257cc') { // Board Member
+            return $this->get_role_by_uid($norway_key_roles, '50a624ea-fbc3-4ffb-9891-53ab6bbd7f6f'); // Board Member - Norway
+        }
+        else if ($role_uid == '65360793-95f6-442d-9afc-a1c9da3a74ae') { // Chairman of the Board
+            return $this->get_role_by_uid($norway_key_roles, '3c0cb369-a497-4b23-9ae8-75f230292064'); // Chairman of the Board - Norway
+        }
+        else if ($role_uid == '184d4e81-0cb6-4133-8397-6e7803846328') { // Communications Contact
+            return $this->get_role_by_uid($norway_key_roles, 'd9a47fde-ca8f-46c6-8e28-95ad343e5800'); // Communications Contact - Norway
+        }
+        else if ($role_uid == '2ae8f8c7-c319-4d03-978b-bd82017819c0') { // Donation Model Contact
+            return $this->get_role_by_uid($norway_key_roles, 'e7aac0bc-4038-4d50-8947-3f848af2fa74'); // Donation Model Contact - Norway
+        }
+        else if ($role_uid == 'c4039ef3-1a93-4699-9c3d-63f148c1f019') { // Finance Manager
+            return $this->get_role_by_uid($norway_key_roles, '6e906efa-4515-44ab-a959-4961e436c02b'); // Finance Manager - Norway
+        }
+        else if ($role_uid == '95b99360-198c-43ff-9dd4-28c2bce362c2') { // Local Church Elder
+            return $this->get_role_by_uid($norway_key_roles, 'da1d210b-742e-4fd0-ba7b-4ce1cb800d18'); // Local Church Elder - Norway
+        }
+        else if ($role_uid == 'acc1b388-3df1-46b2-9ed4-f8808e04d8b5') { // Member Admin
+            return $this->get_role_by_uid($norway_key_roles, '5abfa57b-7dc0-4c83-ad9c-c8047ce20061'); // Member Admin - Norway
+        }
+
+        return null;
+    }
+
+    private function get_role_by_uid($roles, $uid) {
+        foreach ($roles as $role) {
+            if ($role->uid === $uid) {
+                return $role;
+            }
+        }
+
+        return null;
     }
 
     function get_bcc_group_name_by_id($atts) {
