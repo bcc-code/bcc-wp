@@ -66,6 +66,7 @@ class BCC_Login_Settings_Provider {
     private BCC_Login_Settings $_settings;
     private BCC_Coreapi_Client $_coreapi;
     private BCC_Storage $_storage;
+    private bool $_use_groups_settings = false;
 
     protected $option_name = 'bcc_login_settings';
     protected $options_page = 'bcc_login';
@@ -289,6 +290,7 @@ class BCC_Login_Settings_Provider {
             $this->_settings->client_secret,
             $this->_settings->coreapi_audience
         );
+        $this->_use_groups_settings = $use_groups_settings;
         $use_notification_settings = $use_groups_settings; // Tie notification settings to groupsettings for now
 
         add_settings_section( 'general', '', null, $this->options_page );
@@ -586,10 +588,58 @@ class BCC_Login_Settings_Provider {
                 <?php do_settings_sections( $this->options_page ); ?>
                 <?php submit_button(); ?>
             </form>
+            <?php $this->render_flush_groups_cache_button( ); ?>
+            <?php settings_errors('groups_cache_flushed'); ?>
             <?php $this->render_delete_subscribers_button( ); ?>
             <?php settings_errors('subscribers_deleted'); ?>
         </div>
         <?php
+    }
+
+    /**
+     * Renders a button for flushing groups cache
+     */
+    function render_flush_groups_cache_button() {
+        if ( ! current_user_can('manage_options') || ! $this->_use_groups_settings )
+            return;
+        ?>
+            <hr>
+            <h2><?php _e( 'Groups Cache', 'bcc-login' ); ?></h2>
+            <p><?php _e( 'Flush the cached groups data. This will force groups to be re-fetched from the API on the next page load.', 'bcc-login') ?></p>
+            <form method="post">
+                <?php wp_nonce_field( 'flush_groups_cache', 'flush_groups_cache_nonce' ); ?>
+                <input type="hidden" name="flush_groups_cache" value="true">
+                <?php submit_button( __( 'Flush Groups Cache', 'bcc-login' ), 'secondary', 'flush_groups_cache_btn', false ); ?>
+            </form>
+        <?php
+        $this->flush_groups_cache_handler();
+    }
+
+    /**
+     * Handles flushing groups cache
+     */
+    function flush_groups_cache_handler() {
+        if ( ! isset( $_POST['flush_groups_cache'] ) || $_POST['flush_groups_cache'] !== 'true' ) {
+            return;
+        }
+
+        if ( ! isset( $_POST['flush_groups_cache_nonce'] ) || ! wp_verify_nonce( $_POST['flush_groups_cache_nonce'], 'flush_groups_cache' ) ) {
+            return;
+        }
+
+        if ( ! current_user_can('manage_options') ) {
+            return;
+        }
+
+        delete_transient('coreapi_groups');
+        delete_transient('coreapi_all_groups');
+
+        add_settings_error(
+            'groups_cache_flushed',
+            'groups_cache_flushed',
+            __( 'Groups cache has been flushed successfully.', 'bcc-login' ),
+            'success'
+        );
     }
 
     /**
