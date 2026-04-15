@@ -107,19 +107,28 @@ class BCC_Coreapi_Client
 
         $qry = json_encode($qry);
 
-        $response = wp_remote_get( str_replace("https://", "https://core.", $this->_settings->coreapi_base_url) . "/groups?limit=1000&fields=uid,name,tags&filter=$qry", array(
-            "headers" => array(
-                "Authorization" => "Bearer ".$token
-            )
-        ) );
+        $limit = 1000;
+        $offset = 0;
+        $all_data = [];
 
-        if ( is_wp_error( $response ) ) {
-            wp_die( $response->get_error_message() );
-        }
+        do {
+            $response = wp_remote_get( str_replace("https://", "https://core.", $this->_settings->coreapi_base_url) . "/groups?limit=$limit&offset=$offset&fields=uid,name,tags&filter=$qry", array(
+                "headers" => array(
+                    "Authorization" => "Bearer ".$token
+                )
+            ) );
 
-        $body = json_decode($response['body']);
+            if ( is_wp_error( $response ) ) {
+                wp_die( $response->get_error_message() );
+            }
 
-        return $body->data;
+            $body = json_decode($response['body']);
+            $data = $body->data;
+            $all_data = array_merge($all_data, $data);
+            $offset += $limit;
+        } while (count($data) === $limit);
+
+        return $all_data;
     }
 
     function fetch_groups_by_tags($tags) {
@@ -150,19 +159,28 @@ class BCC_Coreapi_Client
 
         $qry = json_encode($qry);
 
-        $response = wp_remote_get( str_replace("https://", "https://core.", $this->_settings->coreapi_base_url) . "/groups?limit=1000&fields=uid,name,tags&filter=$qry", array(
-            "headers" => array(
-                "Authorization" => "Bearer ".$token
-            )
-        ) );
+        $limit = 1000;
+        $offset = 0;
+        $all_data = [];
 
-        if ( is_wp_error( $response ) ) {
-            wp_die( $response->get_error_message() );
-        }
+        do {
+            $response = wp_remote_get( str_replace("https://", "https://core.", $this->_settings->coreapi_base_url) . "/groups?limit=$limit&offset=$offset&fields=uid,name,tags&filter=$qry", array(
+                "headers" => array(
+                    "Authorization" => "Bearer ".$token
+                )
+            ) );
 
-        $body = json_decode($response['body']);
+            if ( is_wp_error( $response ) ) {
+                wp_die( $response->get_error_message() );
+            }
 
-        return $body->data;
+            $body = json_decode($response['body']);
+            $data = $body->data;
+            $all_data = array_merge($all_data, $data);
+            $offset += $limit;
+        } while (count($data) === $limit);
+
+        return $all_data;
     }
 
     function get_groups_for_user($user_uid) {
