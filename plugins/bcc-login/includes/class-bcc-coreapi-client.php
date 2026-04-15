@@ -107,7 +107,7 @@ class BCC_Coreapi_Client
 
         $qry = json_encode($qry);
 
-        $limit = 1000;
+        $limit = 500;
         $offset = 0;
         $all_data = [];
 
@@ -159,7 +159,7 @@ class BCC_Coreapi_Client
 
         $qry = json_encode($qry);
 
-        $limit = 1000;
+        $limit = 500;
         $offset = 0;
         $all_data = [];
 
