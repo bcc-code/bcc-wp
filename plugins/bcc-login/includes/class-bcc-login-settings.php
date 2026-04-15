@@ -66,6 +66,7 @@ class BCC_Login_Settings_Provider {
     private BCC_Login_Settings $_settings;
     private BCC_Coreapi_Client $_coreapi;
     private BCC_Storage $_storage;
+    private bool $_use_groups_settings = false;
 
     protected $option_name = 'bcc_login_settings';
     protected $options_page = 'bcc_login';
@@ -289,6 +290,7 @@ class BCC_Login_Settings_Provider {
             $this->_settings->client_secret,
             $this->_settings->coreapi_audience
         );
+        $this->_use_groups_settings = $use_groups_settings;
         $use_notification_settings = $use_groups_settings; // Tie notification settings to groupsettings for now
 
         add_settings_section( 'general', '', null, $this->options_page );
@@ -598,7 +600,7 @@ class BCC_Login_Settings_Provider {
      * Renders a button for flushing groups cache
      */
     function render_flush_groups_cache_button() {
-        if ( ! current_user_can('administrator') )
+        if ( ! current_user_can('manage_options') || ! $this->_use_groups_settings )
             return;
         ?>
             <hr>
@@ -625,7 +627,7 @@ class BCC_Login_Settings_Provider {
             return;
         }
 
-        if ( ! current_user_can('administrator') ) {
+        if ( ! current_user_can('manage_options') ) {
             return;
         }
 
