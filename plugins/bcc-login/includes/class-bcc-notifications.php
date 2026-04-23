@@ -93,6 +93,7 @@ class BCC_Notifications
         if (!empty($notification_groups)) {
             // 2. Get default language and url for site
             $site_language = get_bloginfo('language'); //E.g. "en-US"
+            $site_language_code = strtolower(strtok($site_language, '-'));
             $site_url = get_site_url();
 
             // 3. Define array of content to send
@@ -134,9 +135,9 @@ class BCC_Notifications
                             $default_local = apply_filters('wpml_current_language', null);
                             $translation = get_post($details->element_id);
                             $language_details = apply_filters('wpml_post_language_details', NULL, $translation->ID);
-                            $locale = $language_details["locale"];
+                            $locale = $language_details["locale"] ?? str_replace('-', '_', $site_language);
                             $language = str_replace('_', '-', $locale);
-                            $language_code = $language_details["language_code"];
+                            $language_code = $language_details["language_code"] ?? strtolower(strtok($language, '-'));
                             $excerpt = get_the_excerpt($translation);
 
                             do_action('wpml_switch_language', $language_code);
@@ -174,6 +175,7 @@ class BCC_Notifications
                     'post' => $post,
                     'title' => $post->post_title,
                     'language' => $site_language,
+                    'language_code' => $site_language_code,
                     'excerpt' => $excerpt,
                     'url' => get_permalink($post) ?? ($site_url . '/?p=' . $post->ID),
                     'image_url' => get_the_post_thumbnail_url($post->ID, 'large'),
@@ -187,11 +189,13 @@ class BCC_Notifications
 
                 foreach ($payload as $item) {
                     $default_local = apply_filters('wpml_current_language', null);
-                    $wp_lang = str_replace('-', '_', $item["language"]);
+                    $item_language = $item["language"] ?? $site_language;
+                    $item_language_code = $item["language_code"] ?? strtolower(strtok($item_language, '-'));
+                    $wp_lang = str_replace('-', '_', $item_language);
                     switch_to_locale($wp_lang);
 
-                    if ($wpml_installed && isset($item["language_code"])) {
-                        do_action('wpml_switch_language', $item["language_code"]);
+                    if ($wpml_installed && !empty($item_language_code)) {
+                        do_action('wpml_switch_language', $item_language_code);
                     }
 
                     $templates = array_key_exists($wp_lang, $this->settings->notification_templates)
@@ -201,11 +205,11 @@ class BCC_Notifications
                             : null);
 
                     if ($templates) {
-                        $payload_lang = str_replace('nb-NO', 'no-NO', $item["language"]);
+                        $payload_lang = str_replace('nb-NO', 'no-NO', $item_language);
 
                         $inapp_payload[] = [
                             "language" => $payload_lang,
-                            "language_code" => $item["language_code"],
+                            "language_code" => $item_language_code,
                             "title" => $item["title"],
                             "content" => $item["excerpt"] . '<br> [cta text="' . __('Read more', 'bcc-login') . '" link="' . $item["url"] . '"]',
                             "notification" => $item["excerpt"] . '<br> [cta text="' . __('Read more', 'bcc-login') . '" link="' . $item["url"] . '"]' //obsolete
@@ -217,7 +221,7 @@ class BCC_Notifications
 
                         $email_payload[] = apply_filters('bcc_notification_email_payload', array(
                             "language" => $payload_lang,
-                            "language_code" => $item["language_code"],
+                            "language_code" => $item_language_code,
                             "subject" => $email_subject,
                             "banner" => $item["image_url"] !== false ? $item["image_url"] : null,
                             "title" => $email_title,
@@ -242,13 +246,15 @@ class BCC_Notifications
                     
                     // Modify email subject to include "Action required"
                     foreach ($email_payload as $email_item) {
-                        $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'Action required', 'bcc-login', 'Action required', $email_item["language_code"] ) . ': ' . $email_item['subject'];
+                        $email_item_language_code = $email_item["language_code"] ?? $site_language_code;
+                        $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'Action required', 'bcc-login', 'Action required', $email_item_language_code ) . ': ' . $email_item['subject'];
                         $requires_action_email_payload[] = $email_item;
                     }
 
                     // Modify notification title to include "Action required"
                     foreach ($inapp_payload as $inapp_item) {
-                        $inapp_item['title'] = apply_filters( 'wpml_translate_single_string', 'Action required', 'bcc-login', 'Action required', $inapp_item["language_code"] ) . ': ' . $inapp_item['title'];
+                        $inapp_item_language_code = $inapp_item["language_code"] ?? $site_language_code;
+                        $inapp_item['title'] = apply_filters( 'wpml_translate_single_string', 'Action required', 'bcc-login', 'Action required', $inapp_item_language_code ) . ': ' . $inapp_item['title'];
                         $requires_action_inapp_payload[] = $inapp_item;
                     }
 
@@ -265,13 +271,15 @@ class BCC_Notifications
 
                     // Modify email subject to include "For information"
                     foreach ($email_payload as $email_item) {
-                        $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'For information', 'bcc-login', 'For information', $email_item["language_code"] ) . ': ' . $email_item['subject'];
+                        $email_item_language_code = $email_item["language_code"] ?? $site_language_code;
+                        $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'For information', 'bcc-login', 'For information', $email_item_language_code ) . ': ' . $email_item['subject'];
                         $for_information_email_payload[] = $email_item;
                     }
 
                     // Modify notification title to include "For information"
                     foreach ($inapp_payload as $inapp_item) {
-                        $inapp_item['title'] = apply_filters( 'wpml_translate_single_string', 'For information', 'bcc-login', 'For information', $inapp_item["language_code"] ) . ': ' . $inapp_item['title'];
+                        $inapp_item_language_code = $inapp_item["language_code"] ?? $site_language_code;
+                        $inapp_item['title'] = apply_filters( 'wpml_translate_single_string', 'For information', 'bcc-login', 'For information', $inapp_item_language_code ) . ': ' . $inapp_item['title'];
                         $for_information_inapp_payload[] = $inapp_item;
                     }
 
