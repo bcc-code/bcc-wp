@@ -1,0 +1,28 @@
+{
+	"private": true,
+	"name": "bcc-image-ocr-with-openai",
+	"version": "1.3.0",
+	"slug": "bcc-image-ocr-with-openai",
+	"author": "<a href='https://github.com/bcc-code'>BCC Code</a>",
+	"author_profile": "https://github.com/bcc-code",
+	"requires": "6.0",
+	"tested": "6.8",
+	"requires_php": "8.0",
+	"last_updated": "2026-04-27 00:00:00",
+	"sections": {
+		"description": "BCC – Image OCR with OpenAI: adds a button on the attachment edit screen that uses OpenAI Vision to extract visible text from an image and fill the Description, Alternative Text and Caption fields. Also enriches images in RSS feeds with alt text, caption and description.",
+		"installation": "Activate the plugin and configure your OpenAI API key under Settings → BCC – Image OCR with OpenAI.",
+		"changelog": ""
+	},
+	"banners": {
+		"low": "",
+		"high": ""
+	},
+	"scripts": {
+		"start": "rimraf build && wp-scripts start",
+		"build": "rimraf build && wp-scripts build"
+	},
+	"dependencies": {
+		"rimraf": "^5.0.5"
+	}
+}

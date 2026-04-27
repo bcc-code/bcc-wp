@@ -1,0 +1,133 @@
+# Release workflow for the BCC – Image OCR with OpenAI plugin
+
+name: bcc-image-ocr-with-openai plugin
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+    paths:
+      - plugins/bcc-image-ocr-with-openai/**
+      - .github/workflows/bcc-image-ocr-with-openai-plugin-release.yml
+    tags-ignore:
+      - '**'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - plugins/bcc-image-ocr-with-openai/**
+      - .github/workflows/bcc-image-ocr-with-openai-plugin-release.yml
+    tags-ignore:
+      - '**'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  lint:
+    name: Lint PHP - validate code
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./plugins/bcc-image-ocr-with-openai
+
+    steps:
+    - uses: actions/checkout@v6
+
+    # This config file gets auto-loaded by PHPStan
+    - name: Set PHPStan config
+      run: |
+        cat <<'EOF' > phpstan.neon
+        parameters:
+          level: 1 # form 0 to 11 where 0 is the loosest and 11 the strictest
+          errorFormat: github
+          paths:
+            - .
+          excludePaths:
+            - vendor
+          scanFiles:
+            - dependencies.stub
+        includes:
+          - vendor/szepeviktor/phpstan-wordpress/extension.neon
+        EOF
+
+    - name: Install PHPStan and Wordpress-stub
+      run: |
+        composer require --dev phpstan/phpstan
+        composer require --dev szepeviktor/phpstan-wordpress
+
+    - name: Run PHPStan
+      run: vendor/bin/phpstan analyse --no-progress
+
+  build:
+    needs: lint
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v6
+
+      - name: Get Package Version
+        id: version
+        uses: notiz-dev/github-action-json-property@release
+        with:
+            path: 'plugins/bcc-image-ocr-with-openai/package.json'
+            prop_path: 'version'
+
+      - name: Get Previous Updated
+        id: lastupdated
+        uses: notiz-dev/github-action-json-property@release
+        with:
+            path: 'plugins/bcc-image-ocr-with-openai/package.json'
+            prop_path: 'last_updated'
+
+      # Runs a set of commands using the runners shell
+      - id: build-and-zip
+        name: Build and Zip Plugin
+        run: |
+          # Build javascript
+          yarn install --frozen-lockfile
+          cd plugins/bcc-image-ocr-with-openai
+          yarn build
+
+          # Get package version
+          package_version=${{steps.version.outputs.prop}}
+          previous_date="${{steps.lastupdated.outputs.prop}}"
+          current_date=$(date -u +'%Y-%m-%d %H:%M:%S')
+
+          build_version="$(echo $package_version | sed -re 's/([0-9]+\.[0-9]+\.)[0-9]+/\1/')${GITHUB_RUN_NUMBER}"
+
+
+          sed -i "s|$package_version|$build_version|g" package.json
+          sed -i "s|$previous_date|$current_date|g" package.json
+          sed -i "s|<VERSION>|$build_version|g" bcc-image-ocr-with-openai.php
+          sed -i "s|$package_version|$build_version|g" bcc-image-ocr-with-openai.php
+
+
+          git config user.name "bcc-bot"
+          git config user.email "<>"
+          git tag "version-bump-v${build_version}"
+          git commit -am "Released bcc-image-ocr-with-openai plugin v${build_version}"
+          git push
+
+          cd ..
+          zip -r bcc-image-ocr-with-openai.zip bcc-image-ocr-with-openai
+          cd ..
+
+          echo "::set-output name=tag_name::bcc-image-ocr-with-openai-v${build_version}"
+
+
+
+      - uses: ncipollo/release-action@v1
+        name: Create Release
+        with:
+          artifacts: "plugins/bcc-image-ocr-with-openai.zip"
+          tag: ${{steps.build-and-zip.outputs.tag_name}}
+          token: ${{ secrets.GITHUB_TOKEN }}
