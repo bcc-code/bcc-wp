@@ -434,3 +434,177 @@ add_filter( 'render_block_core/image', function ( $block_content, $block ) {
 
     return $block_content;
 }, 10, 2 );
+
+/**
+ * Enrich images rendered by visual editors / page builders (e.g. Flatsome
+ * UX Builder) in RSS feeds.
+ *
+ * Many builders output `<img>` tags inside their own wrappers (e.g.
+ * `<div class="img"> … <img …> … </div>`) instead of using `core/image`
+ * blocks, so the `render_block_core/image` filter above never fires for them.
+ *
+ * This filter runs on the final feed content and:
+ *   1. Skips `<img>` elements that are inside a `<figure>` (already handled
+ *      by the block filter above).
+ *   2. Resolves the attachment ID from `wp-image-{ID}` class or, as a
+ *      fallback, by URL lookup.
+ *   3. Fills empty `alt`, then inserts a caption + description after the
+ *      image's nearest block-level wrapper (so we don't end up nested inside
+ *      an `<a>` lightbox link).
+ */
+add_filter( 'the_content_feed', __NAMESPACE__ . '\\enrich_non_block_feed_images', 20 );
+add_filter( 'the_excerpt_rss',  __NAMESPACE__ . '\\enrich_non_block_feed_images', 20 );
+
+function enrich_non_block_feed_images( string $content ): string {
+    if ( ! is_feed() ) {
+        return $content;
+    }
+
+    $settings = get_settings();
+    if ( empty( $settings['enrich_feed_images'] ) ) {
+        return $content;
+    }
+
+    if ( $content === '' || stripos( $content, '<img' ) === false ) {
+        return $content;
+    }
+
+    $previous = libxml_use_internal_errors( true );
+    $dom      = new \DOMDocument();
+    $loaded   = $dom->loadHTML(
+        '<?xml encoding="UTF-8"?><div id="bcc-ocr-feed-root">' . $content . '</div>',
+        LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+    );
+    libxml_clear_errors();
+    libxml_use_internal_errors( $previous );
+
+    if ( ! $loaded ) {
+        return $content;
+    }
+
+    $root = $dom->getElementById( 'bcc-ocr-feed-root' );
+    if ( ! $root ) {
+        return $content;
+    }
+
+    $imgs = iterator_to_array( $dom->getElementsByTagName( 'img' ) );
+    foreach ( $imgs as $img ) {
+        // Skip images that are already inside a <figure> – they were enriched
+        // by render_block_core/image above (or by the theme's own figure).
+        if ( has_ancestor( $img, 'figure', $root ) ) {
+            continue;
+        }
+
+        $attachment_id = resolve_attachment_id_from_img( $img );
+        if ( ! $attachment_id ) {
+            continue;
+        }
+
+        $alt         = trim( (string) get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) );
+        $caption     = trim( (string) wp_get_attachment_caption( $attachment_id ) );
+        $description = trim( (string) get_post_field( 'post_content', $attachment_id ) );
+
+        // 1) Fill empty alt.
+        if ( $alt !== '' && trim( $img->getAttribute( 'alt' ) ) === '' ) {
+            $img->setAttribute( 'alt', $alt );
+        }
+
+        if ( $caption === '' && $description === '' ) {
+            continue;
+        }
+
+        // 2) Pick a sane insertion point: the closest block-level ancestor
+        // (the page-builder wrapper). This keeps the appended caption /
+        // description out of any surrounding <a> lightbox link.
+        $insertion_after = $img;
+        $walker          = $img->parentNode;
+        $block_tags      = [ 'div', 'figure', 'section', 'article', 'p', 'li' ];
+        while ( $walker && $walker !== $root ) {
+            if ( in_array( strtolower( $walker->nodeName ), $block_tags, true ) ) {
+                $insertion_after = $walker;
+                break;
+            }
+            $walker = $walker->parentNode;
+        }
+
+        $next_sibling = $insertion_after->nextSibling;
+        $parent       = $insertion_after->parentNode;
+        if ( ! $parent ) {
+            continue;
+        }
+
+        // 3) Caption (italic, like a typical figcaption).
+        if ( $caption !== '' ) {
+            $cap_p = $dom->createElement( 'p' );
+            $cap_p->setAttribute( 'class', 'bcc-image-caption' );
+            $cap_em = $dom->createElement( 'em' );
+            $cap_em->appendChild( $dom->createTextNode( $caption ) );
+            $cap_p->appendChild( $cap_em );
+            $parent->insertBefore( $cap_p, $next_sibling );
+        }
+
+        // 4) Long description.
+        if ( $description !== '' ) {
+            $desc_p = $dom->createElement( 'p' );
+            $desc_p->setAttribute( 'class', 'bcc-image-description' );
+
+            $strong = $dom->createElement( 'strong' );
+            $strong->appendChild( $dom->createTextNode(
+                __( 'Image description:', 'bcc-image-ocr-with-openai' ) . ' '
+            ) );
+            $desc_p->appendChild( $strong );
+
+            // Allow basic HTML in the description (matches the block filter).
+            $desc_p->appendChild( $dom->createTextNode( wp_strip_all_tags( $description ) ) );
+
+            $parent->insertBefore( $desc_p, $next_sibling );
+        }
+    }
+
+    // Serialize back the inner HTML of our wrapper.
+    $html = '';
+    foreach ( $root->childNodes as $child ) {
+        $html .= $dom->saveHTML( $child );
+    }
+
+    return $html;
+}
+
+/**
+ * Walk up the DOM looking for an ancestor with the given tag name,
+ * stopping at $stop (exclusive).
+ */
+function has_ancestor( \DOMNode $node, string $tag, \DOMNode $stop ): bool {
+    $tag = strtolower( $tag );
+    $p   = $node->parentNode;
+    while ( $p && $p !== $stop ) {
+        if ( strtolower( $p->nodeName ) === $tag ) {
+            return true;
+        }
+        $p = $p->parentNode;
+    }
+    return false;
+}
+
+/**
+ * Try to resolve the attachment ID for an `<img>` element, first via the
+ * `wp-image-{ID}` class, then by URL lookup as a fallback (slower).
+ */
+function resolve_attachment_id_from_img( \DOMElement $img ): int {
+    $class = $img->getAttribute( 'class' );
+    if ( $class !== '' && preg_match( '/wp-image-(\d+)/', $class, $m ) ) {
+        return (int) $m[1];
+    }
+
+    $src = $img->getAttribute( 'src' );
+    if ( $src === '' ) {
+        return 0;
+    }
+
+    // Strip query string and resolve `-WIDTHxHEIGHT` resized variants back to
+    // the original to maximize hit rate against the media library.
+    $url = strtok( $src, '?' ) ?: $src;
+    $url = preg_replace( '/-\d+x\d+(\.[a-zA-Z0-9]+)$/', '$1', $url );
+
+    return (int) attachment_url_to_postid( $url );
+}
