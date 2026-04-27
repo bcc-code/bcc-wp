@@ -2,7 +2,7 @@
 /**
  * Plugin Name: BCC – Image OCR with OpenAI
  * Description: Adds a button to the attachment edit screen that uses OpenAI Vision to extract all visible text from an image and fill the Description, Alternative Text and Caption fields in a single request.
- * Version:     1.3.0
+ * Version:     1.3.1
  * Author:      BCC IT
  * License:     GPL-2.0-or-later
  * Requires at least: 6.0
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const VERSION      = '1.3.0';
+const VERSION      = '1.3.1';
 const OPTION_KEY   = 'bcc_image_ocr_with_openai_settings';
 const AJAX_ACTION  = 'bcc_image_ocr_with_openai_extract';
 const NONCE_ACTION = 'bcc_image_ocr_with_openai';
