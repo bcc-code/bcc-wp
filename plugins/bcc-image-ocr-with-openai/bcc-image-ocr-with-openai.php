@@ -75,15 +75,72 @@ function get_settings(): array {
 }
 
 /**
- * Enqueue the admin JS on the attachment edit screen.
+ * Resolve the current admin language code (e.g. "en", "no", "nb_NO").
+ *
+ * Order:
+ *   1. ?lang= from the current request URL.
+ *   2. WPML's `wpml_current_language` filter (covers admin top-bar selection).
+ *   3. The `ICL_LANGUAGE_CODE` constant (set early by WPML).
+ *   4. Polylang's `pll_current_language()`.
+ *   5. WordPress `determine_locale()` as a final fallback.
+ */
+function detect_admin_language(): string {
+	if ( isset( $_GET['lang'] ) && is_string( $_GET['lang'] ) && $_GET['lang'] !== '' ) {
+		$lang = sanitize_text_field( wp_unslash( $_GET['lang'] ) );
+		if ( $lang !== 'all' ) {
+			return $lang;
+		}
+	}
+
+	if ( has_filter( 'wpml_current_language' ) ) {
+		$wpml = apply_filters( 'wpml_current_language', null );
+		if ( is_string( $wpml ) && $wpml !== '' ) {
+			return $wpml;
+		}
+	}
+
+	if ( defined( 'ICL_LANGUAGE_CODE' ) ) {
+		$icl = (string) constant( 'ICL_LANGUAGE_CODE' );
+		if ( $icl !== '' ) {
+			return $icl;
+		}
+	}
+
+	if ( function_exists( 'pll_current_language' ) ) {
+		$pll = \pll_current_language();
+		if ( is_string( $pll ) && $pll !== '' ) {
+			return $pll;
+		}
+	}
+
+	return (string) determine_locale();
+}
+
+/**
+ * Enqueue the admin JS on:
+ *   - the attachment edit screen (`post.php` for an attachment), and
+ *   - any admin screen where the Media Library modal (`#wp-media-modal`) can
+ *     be opened (Media Library page + post/page editors).
  */
 add_action( 'admin_enqueue_scripts', static function ( string $hook ): void {
-	if ( $hook !== 'post.php' || get_post_type() !== 'attachment' ) {
+	$is_attachment_edit = ( $hook === 'post.php' && get_post_type() === 'attachment' );
+	$is_media_library   = ( $hook === 'upload.php' );
+	$is_post_editor     = in_array( $hook, [ 'post.php', 'post-new.php' ], true );
+
+	if ( ! $is_attachment_edit && ! $is_media_library && ! $is_post_editor ) {
 		return;
 	}
-	$post = get_post();
-	if ( ! $post || ! wp_attachment_is_image( $post->ID ) ) {
-		return;
+
+	$attachment_id = 0;
+	if ( $is_attachment_edit ) {
+		$post = get_post();
+		if ( ! $post || ! wp_attachment_is_image( $post->ID ) ) {
+			// Edit screen for a non-image attachment – still allow the modal
+			// usage on the same screen, just don't pre-bind an ID.
+			$attachment_id = 0;
+		} else {
+			$attachment_id = (int) $post->ID;
+		}
 	}
 
 	wp_enqueue_script(
@@ -98,13 +155,15 @@ add_action( 'admin_enqueue_scripts', static function ( string $hook ): void {
 		'ajax_url'      => admin_url( 'admin-ajax.php' ),
 		'nonce'         => wp_create_nonce( NONCE_ACTION ),
 		'action'        => AJAX_ACTION,
-		'attachment_id' => $post->ID,
+		'attachment_id' => $attachment_id,
+		'current_lang'  => detect_admin_language(),
 		'i18n'          => [
 			'button'       => __( 'Extract text with AI', 'bcc-image-ocr-with-openai' ),
 			'working'      => __( 'Extracting…', 'bcc-image-ocr-with-openai' ),
 			'done'         => __( 'Fields filled. Remember to click Update.', 'bcc-image-ocr-with-openai' ),
 			'failed'       => __( 'OCR failed:', 'bcc-image-ocr-with-openai' ),
 			'confirm_over' => __( 'Overwrite the existing Description, Alt text and Caption with AI-generated values?', 'bcc-image-ocr-with-openai' ),
+			'no_id'        => __( 'Could not determine the selected attachment.', 'bcc-image-ocr-with-openai' ),
 		],
 	] );
 } );
