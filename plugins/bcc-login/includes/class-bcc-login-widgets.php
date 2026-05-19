@@ -143,7 +143,7 @@ class BCC_Login_Widgets {
                 . '></bcc-hidden-treasures>';
             $html .= '</div>';
 
-            $html .= '<script src="http://localhost:3100/scripts/main.js" type="module"></script>';
+            $html .= '<script src="https://widgets.bcc.no/scripts/main.js" type="module"></script>';
 
             return $html . PHP_EOL;
         } );
