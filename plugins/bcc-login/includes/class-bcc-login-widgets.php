@@ -133,6 +133,20 @@ class BCC_Login_Widgets {
         
             return $html . PHP_EOL;
         } );
+
+        add_shortcode( 'bcc-hidden-treasures', function () {
+            $html =  '<div id="bcc-hidden-treasures">';
+            $html .= '<bcc-hidden-treasures'
+                . ' language="' . esc_attr(get_culture()) . '"'
+                . ' authentication-type="webapp"'
+                . ' authentication-location="' . site_url( '?bcc-login=access-token' ) . '"'
+                . '></bcc-hidden-treasures>';
+            $html .= '</div>';
+
+            $html .= '<script src="http://localhost:3100/scripts/main.js" type="module"></script>';
+
+            return $html . PHP_EOL;
+        } );
     }
 
     function add_fields_for_topbar_search() {
