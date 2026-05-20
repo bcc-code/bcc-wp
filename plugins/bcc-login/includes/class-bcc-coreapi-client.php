@@ -350,9 +350,8 @@ class BCC_Coreapi_Client
         $token = $this->get_coreapi_token();
 
         //$request_url =  $this->_settings->coreapi_base_url . "/notifications/notification?createSubscribers=false&pushNotifications=true";
-        $request_url =  str_replace("https://", "https://notifications.", $this->_settings->coreapi_base_url) . "/notifications/notification/". $type ."?createSubscribers=true&pushNotifications=" . ($this->_settings->notification_dry_run ? "false" : "true");
+        $request_url =  str_replace("https://", "https://notifications.", $this->_settings->coreapi_base_url) . "/notifications/notification/". $type ."?dryRun=" . ($this->_settings->notification_dry_run ? "true" : "false");
         $request_body = array(
-            "workflowId" => $workflow,
             "groupUids" => array_values($group_uids), 
             "notificationPayload" => $payload
         );

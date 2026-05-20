@@ -211,8 +211,7 @@ class BCC_Notifications
                             "language" => $payload_lang,
                             "language_code" => $item_language_code,
                             "title" => $item["title"],
-                            "content" => $item["excerpt"] . '<br> [cta text="' . __('Read more', 'bcc-login') . '" link="' . $item["url"] . '"]',
-                            "notification" => $item["excerpt"] . '<br> [cta text="' . __('Read more', 'bcc-login') . '" link="' . $item["url"] . '"]' //obsolete
+                            "content" => $item["excerpt"] . '<br> [cta text="' . __('Read more', 'bcc-login') . '" link="' . $item["url"] . '"]'
                         ];
 
                         $email_subject = $this->replace_notification_params($templates["email_subject"] ?? "[postTitle]", $item["post"], $wp_lang);
@@ -225,8 +224,7 @@ class BCC_Notifications
                             "subject" => $email_subject,
                             "banner" => $item["image_url"] !== false ? $item["image_url"] : null,
                             "title" => $email_title,
-                            "content" => $email_body,
-                            "body" => $email_body, //obsolete
+                            "content" => $email_body
                         ), $post_id);
                     }
 
