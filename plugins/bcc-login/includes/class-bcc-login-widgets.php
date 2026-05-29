@@ -138,12 +138,11 @@ class BCC_Login_Widgets {
             $html =  '<div id="bcc-hidden-treasures">';
             $html .= '<bcc-hidden-treasures'
                 . ' language="' . esc_attr(get_culture()) . '"'
-                . ' authentication-type="webapp"'
+                . ' authentication-type="WebApp"'
                 . ' authentication-location="' . site_url( '?bcc-login=access-token' ) . '"'
                 . '></bcc-hidden-treasures>';
             $html .= '</div>';
-
-            $html .= '<script src="https://widgets.bcc.no/scripts/main.js" type="module"></script>';
+            $html .= '<script src="'.$this->settings->widgets_base_url.'/widgets/HiddenTreasuresJs" defer></script>';
 
             return $html . PHP_EOL;
         } );
