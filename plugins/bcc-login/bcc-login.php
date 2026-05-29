@@ -3,7 +3,7 @@
 /**
  * Plugin Name: BCC Login
  * Description: Integration to BCC's Login System.
- * Version: 1.1.450
+ * Version: 1.1.451
  * Author: BCC IT
  * License: GPL2
  */
@@ -34,7 +34,7 @@ class BCC_Login {
      * The plugin instance.
      */
     private static $instance = null;
-    private $plugin_version = "1.1.450";
+    private $plugin_version = "1.1.451";
     private $plugin;
     private $plugin_slug;
     private $plugin_name = "BCC Login";
