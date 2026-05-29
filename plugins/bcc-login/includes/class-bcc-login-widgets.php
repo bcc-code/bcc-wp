@@ -135,14 +135,10 @@ class BCC_Login_Widgets {
         } );
 
         add_shortcode( 'bcc-hidden-treasures', function () {
-            $html =  '<div id="bcc-hidden-treasures">';
-            $html .= '<bcc-hidden-treasures'
-                . ' language="' . esc_attr(get_culture()) . '"'
-                . ' authentication-type="WebApp"'
-                . ' authentication-location="' . site_url( '?bcc-login=access-token' ) . '"'
-                . '></bcc-hidden-treasures>';
-            $html .= '</div>';
-            $html .= '<script src="'.$this->settings->widgets_base_url.'/widgets/HiddenTreasuresJs" defer></script>';
+            $html =  '<div id="bcc-hidden-treasures"></div>';
+            $html .= '<script id="script-bcc-hidden-treasures" data-authentication-type="WebApp" data-authentication-location="' . site_url( '?bcc-login=access-token' ) . '" ';
+            $html .= 'data-language="' . esc_attr(get_culture()) . '" ';
+            $html .= 'src="'.$this->settings->widgets_base_url.'/widgets/HiddenTreasuresJs" defer></script>';
 
             return $html . PHP_EOL;
         } );
