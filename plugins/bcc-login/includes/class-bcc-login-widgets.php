@@ -128,9 +128,10 @@ class BCC_Login_Widgets {
         } );
 
         add_shortcode( 'bcc-newsfeed-public', function () {
-            $html = '<bcc-newsfeed-public language="' . get_culture() . '"></bcc-newsfeed-public>';
-            $html .= '<script src="https://widgets.bcc.no/scripts/main.js" type="module"></script>';
-        
+            $html =  '<div id="bcc-newsfeed-public"></div>';
+            $html .= '<script id="script-bcc-newsfeed-public" data-language="' . esc_attr(get_culture()) . '" ';
+            $html .= 'src="'.$this->settings->widgets_base_url.'/widgets/NewsFeedPublicJs" defer></script>';
+
             return $html . PHP_EOL;
         } );
 
