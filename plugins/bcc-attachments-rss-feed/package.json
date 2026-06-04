@@ -1,14 +1,14 @@
 {
 	"private": true,
 	"name": "bcc-attachments-rss-feed",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"slug": "bcc-attachments-rss-feed",
 	"author": "<a href='https://github.com/bcc-code'>BCC Code</a>",
 	"author_profile": "https://github.com/bcc-code",
 	"requires": "3.0",
 	"tested": "6.8",
 	"requires_php": "5.3",
-	"last_updated": "2026-06-04 00:00:00",
+	"last_updated": "2026-06-04 09:07:52",
 	"sections": {
 		"description": "BCC – Attachments RSS Feed",
 		"installation": "Remember to activate the plugin after installation. It registers a paginated RSS2 feed at /feed/attachments. If the feed returns a 404, visit Settings → Permalinks and click Save to flush rewrite rules.",
