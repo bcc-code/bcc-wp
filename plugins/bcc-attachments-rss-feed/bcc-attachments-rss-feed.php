@@ -116,9 +116,19 @@ class BCC_Attachments_RSS_Feed {
 
 		add_filter( 'posts_where', array( $this, 'filter_where' ), 10, 2 );
 
+		// Flag this secondary query as a feed query (is_feed = true) so access-control
+		// plugins (e.g. BCC Login) recognize it as a feed and apply their feed-key
+		// bypass. Without this, the query is treated as a normal archive query and the
+		// content-access visibility filter hides any attachment that isn't explicitly
+		// set to "Public" — even when a valid feed key is supplied.
+		//
+		// WordPress overrides 'posts_per_page' with 'posts_per_rss' for feed queries
+		// (see WP_Query::get_posts), so 'posts_per_rss' must be set to preserve PER_PAGE.
 		$query = new WP_Query( array(
 			'post_type'      => 'attachment',
 			'post_status'    => 'inherit',
+			'feed'           => self::FEED_SLUG,
+			'posts_per_rss'  => self::PER_PAGE,
 			'posts_per_page' => self::PER_PAGE,
 			'paged'          => $paged,
 			'orderby'        => 'date',
