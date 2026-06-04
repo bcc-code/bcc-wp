@@ -220,13 +220,34 @@ class BCC_Attachments_RSS_Feed {
 	/**
 	 * Escape a string for safe inclusion inside a CDATA block.
 	 *
-	 * A literal ']]>' sequence would terminate the CDATA section early and
-	 * produce invalid XML, so split it into two adjacent CDATA blocks.
+	 * Performs two things:
+	 *  1. Removes characters that are illegal in XML 1.0 (e.g. NUL 0x00 and
+	 *     other control characters). These are invalid even inside CDATA and
+	 *     would make the whole feed unparseable. Extracted document text
+	 *     (searchwp_content) frequently contains such bytes.
+	 *  2. Splits any literal ']]>' sequence so it cannot terminate the CDATA
+	 *     section early.
 	 *
 	 * @param mixed $string The value to escape.
 	 * @return string
 	 */
 	private function cdata( $string ) {
+		$string = (string) $string;
+
+		// Strip characters that are not allowed in XML 1.0.
+		// Allowed: #x9, #xA, #xD, #x20-#xD7FF, #xE000-#xFFFD, #x10000-#x10FFFF.
+		$string = preg_replace(
+			'/[^\x09\x0A\x0D\x20-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]/u',
+			'',
+			$string
+		);
+
+		// If the input was not valid UTF-8, preg_replace() with the /u flag
+		// returns null. Fall back to stripping low control bytes only.
+		if ( null === $string ) {
+			$string = preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', (string) func_get_arg( 0 ) );
+		}
+
 		return str_replace( ']]>', ']]]]><![CDATA[>', (string) $string );
 	}
 
