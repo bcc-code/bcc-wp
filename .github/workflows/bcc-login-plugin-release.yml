@@ -54,8 +54,6 @@ jobs:
             - dependencies.stub
           bootstrapFiles:
             - bcc-login.php
-          ignoreErrors:
-            - '#Path in require\(\) "build/.+\.asset\.php" is not a file or it does not exist\.#'
         includes:
           - vendor/szepeviktor/phpstan-wordpress/extension.neon
         EOF
