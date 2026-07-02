@@ -68,29 +68,30 @@ jobs:
 
   build:
     needs: lint
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: true
+          fetch-depth: 0
 
       - name: Get Package Version
         id: version
         uses: notiz-dev/github-action-json-property@release
-        with: 
-            path: 'plugins/bcc-login/package.json'
-            prop_path: 'version'
-      
+        with:
+          path: 'plugins/bcc-login/package.json'
+          prop_path: 'version'
+
       - name: Get Previous Updated
         id: lastupdated
         uses: notiz-dev/github-action-json-property@release
-        with: 
-            path: 'plugins/bcc-login/package.json'
-            prop_path: 'last_updated'
+        with:
+          path: 'plugins/bcc-login/package.json'
+          prop_path: 'last_updated'
 
-      # Runs a set of commands using the runners shell
       - id: build-and-zip
         name: Build and Zip Plugin
         run: |
@@ -103,15 +104,13 @@ jobs:
           package_version=${{steps.version.outputs.prop}}
           previous_date="${{steps.lastupdated.outputs.prop}}"
           current_date=$(date -u +'%Y-%m-%d %H:%M:%S')
-      
-          build_version="$(echo $package_version | sed -re 's/([0-9]+\.[0-9]+\.)[0-9]+/\1/')${GITHUB_RUN_NUMBER}"
 
+          build_version="$(echo $package_version | sed -re 's/([0-9]+\.[0-9]+\.)[0-9]+/\1/')${GITHUB_RUN_NUMBER}"
 
           sed -i "s|$package_version|$build_version|g" package.json
           sed -i "s|$previous_date|$current_date|g" package.json
           sed -i "s|<VERSION>|$build_version|g" bcc-login.php
           sed -i "s|$package_version|$build_version|g" bcc-login.php
-
 
           git config user.name "bcc-bot"
           git config user.email "<>"
@@ -125,12 +124,9 @@ jobs:
 
           echo "::set-output name=tag_name::bcc-login-v${build_version}"
 
-
-
       - uses: ncipollo/release-action@v1
         name: Create Release
         with:
           artifacts: "plugins/bcc-login.zip"
           tag: ${{steps.build-and-zip.outputs.tag_name}}
           token: ${{ secrets.GITHUB_TOKEN }}
-
