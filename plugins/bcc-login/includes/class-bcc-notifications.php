@@ -10,8 +10,14 @@ class BCC_Notifications
         $this->settings = $settings;
         $this->core_api = $core_api;
 
+        add_action('init', array($this, 'register_wpml_strings'));
         add_action('rest_api_init', array($this, 'register_send_notifications_endpoint'));
         add_action('rest_api_init', array($this, 'register_wpml_translations_endpoint'));
+    }
+
+    public function register_wpml_strings() {
+        do_action('wpml_register_single_string', 'bcc-login', 'Action required', 'Action required');
+        do_action('wpml_register_single_string', 'bcc-login', 'For information', 'For information');
     }
 
     public function register_send_notifications_endpoint() {
@@ -51,9 +57,9 @@ class BCC_Notifications
         ));
     }
 
-    public function replace_notification_params($text, $post, $language) {
+    public function replace_notification_params($text, $post, $language, $excerpt = null) {
         $text = str_replace('[postTitle]', $post->post_title, $text);
-        $text = str_replace('[postExcerpt]', get_the_excerpt($post), $text);
+        $text = str_replace('[postExcerpt]', $excerpt !== null ? $excerpt : get_the_excerpt($post), $text);
         $text = str_replace('[postUrl]', get_permalink($post) ?? (get_site_url() . '/?p=' . $post->ID . (isset($language) ? '&lang=' . $language : '')), $text);
         $text = str_replace('[postImageUrl]', get_the_post_thumbnail_url($post->ID, 'large'), $text);
 
@@ -134,6 +140,11 @@ class BCC_Notifications
                         foreach ($translations as $lang => $details) {
                             $default_local = apply_filters('wpml_current_language', null);
                             $translation = get_post($details->element_id);
+
+                            if (!$translation) {
+                                continue;
+                            }
+
                             $language_details = apply_filters('wpml_post_language_details', NULL, $translation->ID);
                             $locale = $language_details["locale"] ?? str_replace('-', '_', $site_language);
                             $language = str_replace('_', '-', $locale);
@@ -214,18 +225,26 @@ class BCC_Notifications
                             "content" => $item["excerpt"] . '<br> [cta text="' . __('Read more', 'bcc-login') . '" link="' . $item["url"] . '"]'
                         ];
 
-                        $email_subject = $this->replace_notification_params($templates["email_subject"] ?? "[postTitle]", $item["post"], $wp_lang);
-                        $email_title = $this->replace_notification_params($templates["email_title"] ?? "", $item["post"], $wp_lang);
-                        $email_body = $this->replace_notification_params($templates["email_body"] ?? "", $item["post"], $wp_lang);
+                        $excerpt = $item["excerpt"];
 
-                        $email_payload[] = apply_filters('bcc_notification_email_payload', array(
-                            "language" => $payload_lang,
-                            "language_code" => $item_language_code,
-                            "subject" => $email_subject,
-                            "banner" => $item["image_url"] !== false ? $item["image_url"] : null,
-                            "title" => $email_title,
-                            "content" => $email_body
-                        ), $post_id);
+                        // Skip if the template has no meaningful content configured
+                        $has_content = !empty($templates["email_title"]) || !empty($templates["email_body"]);
+                        if (!$has_content) {
+                            error_log('DEBUG: ' . __METHOD__ . ' - Skipping email payload for ' . $wp_lang . ': template has no title or body configured.');
+                        } else {
+                            $email_subject = $this->replace_notification_params($templates["email_subject"] ?: "[postTitle]", $item["post"], $wp_lang, $excerpt);
+                            $email_title = $this->replace_notification_params($templates["email_title"] ?: "", $item["post"], $wp_lang, $excerpt);
+                            $email_body = $this->replace_notification_params($templates["email_body"] ?: "", $item["post"], $wp_lang, $excerpt);
+
+                            $email_payload[] = apply_filters('bcc_notification_email_payload', array(
+                                "language" => $payload_lang,
+                                "language_code" => $item_language_code,
+                                "subject" => $email_subject,
+                                "banner" => $item["image_url"] !== false ? $item["image_url"] : null,
+                                "title" => $email_title,
+                                "content" => $email_body,
+                            ), $post_id);
+                        }
                     }
 
                     if ($wpml_installed) {
