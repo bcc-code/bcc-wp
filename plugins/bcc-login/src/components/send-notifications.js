@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
+import { InputText } from 'primereact/inputtext';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
 import { Badge } from 'primereact/badge';
@@ -12,6 +13,8 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
     const [nonce, setNonce] = useState(null);
     const [translations, setTranslations] = useState(null);
     const [isOriginalPost, setIsOriginalPost] = useState(null);
+    const [showTestSection, setShowTestSection] = useState(false);
+    const [testPersonUid, setTestPersonUid] = useState('');
 
     useEffect(() => {
         const wpNonce = window?.wpApiSettings?.nonce || window?.bccLoginNonce;
@@ -29,6 +32,41 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
         toast.current.remove(messages.info);
 
         toast.current.show(messages[status]);
+    };
+
+    const closeDialog = () => {
+        setVisible(false);
+        setShowTestSection(false);
+        setTestPersonUid('');
+    };
+
+    const sendTestNotification = async () => {
+        if (!testPersonUid.trim()) return;
+
+        try {
+            showToast('info');
+
+            const response = await fetch('/wp-json/bcc-login/v1/send-notifications', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-WP-Nonce': nonce
+                },
+                body: JSON.stringify({ postId: postId || 0, testPersonUid: testPersonUid.trim() })
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                showToast('error');
+                throw new Error(`Request failed (${response.status}): ${text}`);
+            }
+
+            showToast('success');
+        } catch (error) {
+            console.error('Error sending test notification:', error);
+            showToast('error');
+        }
     };
 
     const sendNotifications = async () => {
@@ -127,10 +165,10 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
         <div className="bcc-notifications">
             <Button type="button" label={label} onClick={() => setVisible(true)} />
 
-            <Dialog 
+            <Dialog
                 header={label}
-                visible={visible} 
-                onHide={() => setVisible(false)}
+                visible={visible}
+                onHide={closeDialog}
                 loading={true}
                 className="bcc-send-notifications__dialog"
             >
@@ -202,7 +240,26 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
 
                 <p>{__('Changes', 'bcc-login')}: {isDirty ? <Tag icon="dashicons dashicons-warning" severity="warning" value={__('Unsaved changes', 'bcc-login')}></Tag> : <Tag icon="dashicons dashicons-yes" severity="success" value={__('Saved', 'bcc-login')}></Tag>}</p>
 
-                <Button type="button" label={__('Send', 'bcc-login')} onClick={() => sendNotifications()} disabled={!['publish', 'draft'].includes(status) || (targetGroupsCount === 0 && visibilityGroupsCount === 0) || isNotificationDryRun || isDirty || isAutoSaving || !isOriginalPost} />
+                <Button type="button" className="bcc-send-notifications__send-btn" label={__('Send', 'bcc-login')} onClick={() => sendNotifications()} disabled={!['publish', 'draft'].includes(status) || (targetGroupsCount === 0 && visibilityGroupsCount === 0) || isNotificationDryRun || isDirty || isAutoSaving || !isOriginalPost} />
+
+                <hr className="bcc-send-notifications__divider" />
+
+                {!showTestSection ? (
+                    <p>
+                        <a href="#" className="bcc-send-notifications__test-link" onClick={(e) => { e.preventDefault(); setShowTestSection(true); }}>
+                            {__('Want to first send a test notification?', 'bcc-login')}
+                        </a>
+                    </p>
+                ) : (
+                    <div className="bcc-send-notifications__test">
+                        <InputText
+                            value={testPersonUid}
+                            onChange={(e) => setTestPersonUid(e.target.value)}
+                            placeholder={__('Person UID', 'bcc-login')}
+                        />
+                        <Button type="button" label={__('Send test notification', 'bcc-login')} onClick={() => sendTestNotification()} disabled={!testPersonUid.trim()} />
+                    </div>
+                )}
             </Dialog>
 
             <Toast ref={toast} position="bottom-right" />

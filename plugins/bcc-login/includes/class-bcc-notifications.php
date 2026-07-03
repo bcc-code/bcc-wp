@@ -10,7 +10,7 @@ class BCC_Notifications
         $this->settings = $settings;
         $this->core_api = $core_api;
 
-        add_action('init', array($this, 'register_wpml_strings'));
+        add_action('admin_init', array($this, 'register_wpml_strings'));
         add_action('rest_api_init', array($this, 'register_send_notifications_endpoint'));
         add_action('rest_api_init', array($this, 'register_wpml_translations_endpoint'));
     }
@@ -31,7 +31,8 @@ class BCC_Notifications
                         return new WP_REST_Response(array('error' => 'This post type is not allowed to sent notifications'), 400);
                     }
 
-                    $this->send_notification($post_id);
+                    $test_person_uid = $request->get_param('testPersonUid') ?: null;
+                    $this->send_notification($post_id, $test_person_uid);
 
                     return new WP_REST_Response(null, 200);
                 } else {
@@ -66,7 +67,7 @@ class BCC_Notifications
         return $text;
     }
 
-    public function send_notification($post_id) {
+    public function send_notification($post_id, $test_person_uid = null) {
         error_log('DEBUG: ' . __METHOD__ . ' - Sending notification for post: ' . $post_id);
 
         // Fetch the post object since only the ID is passed through scheduling.
@@ -264,19 +265,25 @@ class BCC_Notifications
                     // Modify email subject to include "Action required"
                     foreach ($email_payload as $email_item) {
                         $email_item_language_code = $email_item["language_code"] ?? $site_language_code;
-                        $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'Action required', 'bcc-login', 'Action required', $email_item_language_code ) . ': ' . $email_item['subject'];
+                        if ($wpml_installed) do_action('wpml_switch_language', $email_item_language_code);
+                        $email_item['subject'] = apply_filters('wpml_translate_single_string', 'Action required', 'bcc-login', 'Action required') . ': ' . $email_item['subject'];
+                        if ($wpml_installed) do_action('wpml_switch_language', null);
                         $requires_action_email_payload[] = $email_item;
                     }
 
                     // Modify notification title to include "Action required"
                     foreach ($inapp_payload as $inapp_item) {
                         $inapp_item_language_code = $inapp_item["language_code"] ?? $site_language_code;
-                        $inapp_item['title'] = apply_filters( 'wpml_translate_single_string', 'Action required', 'bcc-login', 'Action required', $inapp_item_language_code ) . ': ' . $inapp_item['title'];
+                        if ($wpml_installed) do_action('wpml_switch_language', $inapp_item_language_code);
+                        $inapp_item['title'] = apply_filters('wpml_translate_single_string', 'Action required', 'bcc-login', 'Action required') . ': ' . $inapp_item['title'];
+                        if ($wpml_installed) do_action('wpml_switch_language', null);
                         $requires_action_inapp_payload[] = $inapp_item;
                     }
 
-                    $this->core_api->send_notification($post_target_groups, 'email', 'simpleemail', $requires_action_email_payload);
-                    $this->core_api->send_notification($post_target_groups, 'inapp', 'simpleinapp', $requires_action_inapp_payload);
+                    $this->core_api->send_notification($post_target_groups, 'email', 'simpleemail', $requires_action_email_payload, $test_person_uid);
+                    if (!$test_person_uid) {
+                        $this->core_api->send_notification($post_target_groups, 'inapp', 'simpleinapp', $requires_action_inapp_payload);
+                    }
 
                     error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($post_target_groups) . ' target groups.');
                 }
@@ -289,25 +296,33 @@ class BCC_Notifications
                     // Modify email subject to include "For information"
                     foreach ($email_payload as $email_item) {
                         $email_item_language_code = $email_item["language_code"] ?? $site_language_code;
-                        $email_item['subject'] = apply_filters( 'wpml_translate_single_string', 'For information', 'bcc-login', 'For information', $email_item_language_code ) . ': ' . $email_item['subject'];
+                        if ($wpml_installed) do_action('wpml_switch_language', $email_item_language_code);
+                        $email_item['subject'] = apply_filters('wpml_translate_single_string', 'For information', 'bcc-login', 'For information') . ': ' . $email_item['subject'];
+                        if ($wpml_installed) do_action('wpml_switch_language', null);
                         $for_information_email_payload[] = $email_item;
                     }
 
                     // Modify notification title to include "For information"
                     foreach ($inapp_payload as $inapp_item) {
                         $inapp_item_language_code = $inapp_item["language_code"] ?? $site_language_code;
-                        $inapp_item['title'] = apply_filters( 'wpml_translate_single_string', 'For information', 'bcc-login', 'For information', $inapp_item_language_code ) . ': ' . $inapp_item['title'];
+                        if ($wpml_installed) do_action('wpml_switch_language', $inapp_item_language_code);
+                        $inapp_item['title'] = apply_filters('wpml_translate_single_string', 'For information', 'bcc-login', 'For information') . ': ' . $inapp_item['title'];
+                        if ($wpml_installed) do_action('wpml_switch_language', null);
                         $for_information_inapp_payload[] = $inapp_item;
                     }
 
-                    $this->core_api->send_notification($post_visibility_groups, 'email', 'simpleemail', $for_information_email_payload);
-                    $this->core_api->send_notification($post_visibility_groups, 'inapp', 'simpleinapp', $for_information_inapp_payload);
+                    $this->core_api->send_notification($post_visibility_groups, 'email', 'simpleemail', $for_information_email_payload, $test_person_uid);
+                    if (!$test_person_uid) {
+                        $this->core_api->send_notification($post_visibility_groups, 'inapp', 'simpleinapp', $for_information_inapp_payload);
+                    }
 
                     error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($post_visibility_groups) . ' visibility groups.');
                 }
 
-                // Store sent notification data
-                $this->save_notification_data($post_id, $notification_groups);
+                // Store sent notification data (skipped for test sends)
+                if (!$test_person_uid) {
+                    $this->save_notification_data($post_id, $notification_groups);
+                }
 
                 error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($email_payload) . ' languages.');
 

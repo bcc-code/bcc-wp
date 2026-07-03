@@ -346,15 +346,14 @@ class BCC_Coreapi_Client
     //   }
 
     // Type = email, sms, inapp
-    public function send_notification($group_uids, $type, $workflow, $payload) {
+    public function send_notification($group_uids, $type, $workflow, $payload, $test_person_uid = null) {
         $token = $this->get_coreapi_token();
 
         //$request_url =  $this->_settings->coreapi_base_url . "/notifications/notification?createSubscribers=false&pushNotifications=true";
         $request_url =  str_replace("https://", "https://notifications.", $this->_settings->coreapi_base_url) . "/notifications/notification/". $type ."?dryRun=" . ($this->_settings->notification_dry_run ? "true" : "false");
-        $request_body = array(
-            "groupUids" => array_values($group_uids), 
-            "notificationPayload" => $payload
-        );
+        $request_body = $test_person_uid
+            ? array("personUid" => $test_person_uid, "notificationPayload" => $payload)
+            : array("groupUids" => array_values($group_uids), "notificationPayload" => $payload);
 
         $response = wp_remote_post($request_url, array(
             "body" => wp_json_encode( $request_body ),

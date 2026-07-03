@@ -171,7 +171,7 @@ class BCC_Login_Settings_Provider {
             $settings->notification_templates[ $language ]['language'] = $language;
 
             $email_body_option = get_option('bcc_notification_' . $language . '_email_body');
-            $settings->notification_templates[ $language ]['email_body'] = $email_body_option ? $email_body_option : ''; 
+            $settings->notification_templates[ $language ]['email_body'] = $email_body_option ? $email_body_option : '';
             
             $email_subject_option = get_option('bcc_notification_' . $language . '_email_subject');
             $settings->notification_templates[ $language ]['email_subject'] = $email_subject_option ? $email_subject_option : '';  
@@ -521,6 +521,7 @@ class BCC_Login_Settings_Provider {
                         'description' => 'Email body template for ' . $language . '. Use parameters like [firstName], [lastName], [cta link="" text=""], [postTitle], [postExcerpt], [postUrl], [postImageUrl]'
                     )
                 );
+
             }
         }
 
