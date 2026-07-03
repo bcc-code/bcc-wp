@@ -357,7 +357,7 @@ class BCC_Coreapi_Client
 
         if ($test_person_uid) {
             error_log('TEST SEND - POST ' . $request_url);
-            error_log('TEST SEND - Request body: ' . json_encode($request_body, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            error_log('TEST SEND - Request body: ' . json_encode($request_body, JSON_UNESCAPED_UNICODE));
         }
 
         $response = wp_remote_post($request_url, array(

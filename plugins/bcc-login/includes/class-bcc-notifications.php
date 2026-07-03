@@ -230,6 +230,10 @@ class BCC_Notifications
 
                         // Skip if the template has no meaningful content configured
                         $has_content = !empty($templates["email_title"]) || !empty($templates["email_body"]);
+                        if ($test_person_uid) {
+                            error_log('TEST SEND - Templates for locale "' . $wp_lang . '": ' . json_encode($templates, JSON_UNESCAPED_UNICODE));
+                            error_log('TEST SEND - has_content: ' . ($has_content ? 'true' : 'false'));
+                        }
                         if (!$has_content) {
                             error_log('DEBUG: ' . __METHOD__ . ' - Skipping email payload for ' . $wp_lang . ': template has no title or body configured.');
                         } else {
@@ -256,6 +260,9 @@ class BCC_Notifications
                 }
 
                 error_log('DEBUG: ' . __METHOD__ . ' - Sending notifications for ' . count($email_payload) . ' languages.');
+                if ($test_person_uid) {
+                    error_log('TEST SEND - Full email payload (' . count($email_payload) . ' items): ' . json_encode($email_payload, JSON_UNESCAPED_UNICODE));
+                }
 
                 // Send notifications to target groups
                 if ($send_email_to_target_groups) {
