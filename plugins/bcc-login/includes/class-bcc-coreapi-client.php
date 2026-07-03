@@ -355,6 +355,11 @@ class BCC_Coreapi_Client
             ? array("personUid" => $test_person_uid, "notificationPayload" => $payload)
             : array("groupUids" => array_values($group_uids), "notificationPayload" => $payload);
 
+        if ($test_person_uid) {
+            error_log('TEST SEND - POST ' . $request_url);
+            error_log('TEST SEND - Request body: ' . json_encode($request_body, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        }
+
         $response = wp_remote_post($request_url, array(
             "body" => wp_json_encode( $request_body ),
             "headers" => array(
@@ -367,10 +372,14 @@ class BCC_Coreapi_Client
             wp_die( $response->get_error_message() );
         }
 
+        if ($test_person_uid) {
+            error_log('TEST SEND - Response (' . $response['response']['code'] . '): ' . $response['body']);
+        }
+
         if ($response['response']['code'] != 200) {
             wp_die("Could not send notification: " . print_r($response, true));
         }
-    } 
+    }
 
     public function get_coreapi_token() {
         $cached_token = $this->_storage->get('coreapi_token');
