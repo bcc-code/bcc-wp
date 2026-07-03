@@ -252,11 +252,20 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
                     </p>
                 ) : (
                     <div className="bcc-send-notifications__test">
-                        <InputText
-                            value={testPersonUid}
-                            onChange={(e) => setTestPersonUid(e.target.value)}
-                            placeholder={__('Person UID', 'bcc-login')}
-                        />
+                        <div className="bcc-send-notifications__test-input-group">
+                            <InputText
+                                value={testPersonUid}
+                                onChange={(e) => setTestPersonUid(e.target.value)}
+                                placeholder={__('Person UID', 'bcc-login')}
+                            />
+                            <Button
+                                type="button"
+                                label={__('Add myself', 'bcc-login')}
+                                onClick={() => setTestPersonUid(window.bccLoginCurrentPersonUid || '')}
+                                disabled={!window.bccLoginCurrentPersonUid}
+                                className="bcc-send-notifications__myself-btn"
+                            />
+                        </div>
                         <Button type="button" label={__('Send test notification', 'bcc-login')} onClick={() => sendTestNotification()} disabled={!testPersonUid.trim()} />
                     </div>
                 )}

@@ -307,12 +307,37 @@ ul.p-treenode-children .p-treenode-content {
     margin-bottom: 0 !important;
 }
 
-.bcc-send-notifications__test .p-inputtext {
+.bcc-send-notifications__test > .p-button {
+    align-self: flex-end;
+}
+
+.bcc-send-notifications__test-input-group {
+    display: flex;
     width: 100%;
 }
 
-.bcc-send-notifications__test .p-button {
-    align-self: flex-end;
+.bcc-send-notifications__test-input-group .p-inputtext {
+    flex: 1;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-right: none;
+}
+
+.bcc-send-notifications__myself-btn {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    width: auto !important;
+    white-space: nowrap;
+    font-size: 0.8125rem;
+    padding-inline: 0.75rem;
+    color: rgba(0,0,0,.6) !important;
+    background: transparent !important;
+    border: 1px solid rgba(0,0,0,.2) !important;
+}
+
+.bcc-send-notifications__myself-btn:hover:not(:disabled) {
+    background: rgba(0,0,0,.05) !important;
+    color: rgba(0,0,0,.8) !important;
 }
 
 /* React Prime */

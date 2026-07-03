@@ -573,6 +573,13 @@ class BCC_Login_Visibility {
             'var bccLoginNotificationPostTypes = ' . json_encode($this->_settings->notification_post_types),
             'before'
         );
+
+        $current_person_uid = $this->_client->get_current_user_person_uid();
+        wp_add_inline_script(
+            $script_handle,
+            'var bccLoginCurrentPersonUid = ' . json_encode($current_person_uid ?: null),
+            'before'
+        );
     }
 
     /**
