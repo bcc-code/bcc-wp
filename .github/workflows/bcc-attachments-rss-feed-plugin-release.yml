@@ -76,6 +76,8 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Get Package Version
         id: version
@@ -105,13 +107,26 @@ jobs:
           previous_date="${{steps.lastupdated.outputs.prop}}"
           current_date=$(date -u +'%Y-%m-%d %H:%M:%S')
       
-          build_version="$(echo $package_version | sed -re 's/([0-9]+\.[0-9]+\.)[0-9]+/\1/')${GITHUB_RUN_NUMBER}"
+          # Patch version = 1 + highest existing patch for this major.minor (0 if none), so bumping
+          # major.minor in package.json resets the patch instead of continuing the global run number.
+          major_minor="$(echo $package_version | sed -re 's/^([0-9]+\.[0-9]+)\..*/\1/')"
+          last_patch=-1
+          for t in $(git tag -l "bcc-attachments-rss-feed-v${major_minor}.*"); do
+            patch="${t##*.}"
+            if [ "$patch" -gt "$last_patch" ]; then
+              last_patch=$patch
+            fi
+          done
+          build_version="${major_minor}.$((last_patch + 1))"
 
 
           sed -i "s|$package_version|$build_version|g" package.json
           sed -i "s|$previous_date|$current_date|g" package.json
           sed -i "s|<VERSION>|$build_version|g" bcc-attachments-rss-feed.php
-          sed -i "s|$package_version|$build_version|g" bcc-attachments-rss-feed.php
+          # Target the version header/field directly instead of matching the old package_version
+          # string, so a one-off drift between package.json and the plugin file can't persist forever.
+          sed -i -E "s/(\*[[:space:]]*Version:[[:space:]]*)[0-9]+\.[0-9]+\.[0-9]+/\1${build_version}/" bcc-attachments-rss-feed.php
+          sed -i -E "s/(\\\$plugin_version[[:space:]]*=[[:space:]]*\")[0-9]+\.[0-9]+\.[0-9]+(\")/\1${build_version}\2/" bcc-attachments-rss-feed.php
 
 
           git config user.name "bcc-bot"
