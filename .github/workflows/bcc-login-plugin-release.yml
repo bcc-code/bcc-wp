@@ -120,7 +120,10 @@ jobs:
           sed -i "s|$package_version|$build_version|g" package.json
           sed -i "s|$previous_date|$current_date|g" package.json
           sed -i "s|<VERSION>|$build_version|g" bcc-login.php
-          sed -i "s|$package_version|$build_version|g" bcc-login.php
+          # Target the version header/field directly instead of matching the old package_version
+          # string, so a one-off drift between package.json and the plugin file can't persist forever.
+          sed -i -E "s/(\*[[:space:]]*Version:[[:space:]]*)[0-9]+\.[0-9]+\.[0-9]+/\1${build_version}/" bcc-login.php
+          sed -i -E "s/(\\\$plugin_version[[:space:]]*=[[:space:]]*\")[0-9]+\.[0-9]+\.[0-9]+(\")/\1${build_version}\2/" bcc-login.php
 
           git config user.name "bcc-bot"
           git config user.email "<>"
