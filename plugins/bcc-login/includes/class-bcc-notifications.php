@@ -31,8 +31,8 @@ class BCC_Notifications
                         return new WP_REST_Response(array('error' => 'This post type is not allowed to sent notifications'), 400);
                     }
 
-                    $test_person_uid = $request->get_param('testPersonUid') ?: null;
-                    $this->send_notification($post_id, $test_person_uid);
+                    $test_email_address = $request->get_param('testEmailAddress') ?: null;
+                    $this->send_notification($post_id, $test_email_address);
 
                     return new WP_REST_Response(null, 200);
                 } else {
@@ -67,7 +67,7 @@ class BCC_Notifications
         return $text;
     }
 
-    public function send_notification($post_id, $test_person_uid = null) {
+    public function send_notification($post_id, $test_email_address = null) {
         error_log('DEBUG: ' . __METHOD__ . ' - Sending notification for post: ' . $post_id);
 
         // Fetch the post object since only the ID is passed through scheduling.
@@ -230,7 +230,7 @@ class BCC_Notifications
 
                         // Skip if the template has no meaningful content configured
                         $has_content = !empty($templates["email_title"]) || !empty($templates["email_body"]);
-                        if ($test_person_uid) {
+                        if ($test_email_address) {
                             error_log('TEST SEND - Templates for locale "' . $wp_lang . '": ' . json_encode($templates, JSON_UNESCAPED_UNICODE));
                             error_log('TEST SEND - has_content: ' . ($has_content ? 'true' : 'false'));
                         }
@@ -260,7 +260,7 @@ class BCC_Notifications
                 }
 
                 error_log('DEBUG: ' . __METHOD__ . ' - Sending notifications for ' . count($email_payload) . ' languages.');
-                if ($test_person_uid) {
+                if ($test_email_address) {
                     error_log('TEST SEND - Full email payload (' . count($email_payload) . ' items): ' . json_encode($email_payload, JSON_UNESCAPED_UNICODE));
                 }
 
@@ -287,8 +287,8 @@ class BCC_Notifications
                         $requires_action_inapp_payload[] = $inapp_item;
                     }
 
-                    $this->core_api->send_notification($post_target_groups, 'email', 'simpleemail', $requires_action_email_payload, $test_person_uid);
-                    if (!$test_person_uid) {
+                    $this->core_api->send_notification($post_target_groups, 'email', 'simpleemail', $requires_action_email_payload, $test_email_address);
+                    if (!$test_email_address) {
                         $this->core_api->send_notification($post_target_groups, 'inapp', 'simpleinapp', $requires_action_inapp_payload);
                     }
 
@@ -318,8 +318,8 @@ class BCC_Notifications
                         $for_information_inapp_payload[] = $inapp_item;
                     }
 
-                    $this->core_api->send_notification($post_visibility_groups, 'email', 'simpleemail', $for_information_email_payload, $test_person_uid);
-                    if (!$test_person_uid) {
+                    $this->core_api->send_notification($post_visibility_groups, 'email', 'simpleemail', $for_information_email_payload, $test_email_address);
+                    if (!$test_email_address) {
                         $this->core_api->send_notification($post_visibility_groups, 'inapp', 'simpleinapp', $for_information_inapp_payload);
                     }
 
@@ -327,7 +327,7 @@ class BCC_Notifications
                 }
 
                 // Store sent notification data (skipped for test sends)
-                if (!$test_person_uid) {
+                if (!$test_email_address) {
                     $this->save_notification_data($post_id, $notification_groups);
                 }
 

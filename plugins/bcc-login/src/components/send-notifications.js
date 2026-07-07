@@ -14,7 +14,7 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
     const [translations, setTranslations] = useState(null);
     const [isOriginalPost, setIsOriginalPost] = useState(null);
     const [showTestSection, setShowTestSection] = useState(false);
-    const [testPersonUid, setTestPersonUid] = useState('');
+    const [testEmailAddress, setTestEmailAddress] = useState('');
 
     useEffect(() => {
         const wpNonce = window?.wpApiSettings?.nonce || window?.bccLoginNonce;
@@ -37,11 +37,11 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
     const closeDialog = () => {
         setVisible(false);
         setShowTestSection(false);
-        setTestPersonUid('');
+        setTestEmailAddress('');
     };
 
     const sendTestNotification = async () => {
-        if (!testPersonUid.trim()) return;
+        if (!testEmailAddress.trim()) return;
 
         try {
             showToast('info');
@@ -53,7 +53,7 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
                     'Content-Type': 'application/json',
                     'X-WP-Nonce': nonce
                 },
-                body: JSON.stringify({ postId: postId || 0, testPersonUid: testPersonUid.trim() })
+                body: JSON.stringify({ postId: postId || 0, testEmailAddress: testEmailAddress.trim() })
             });
 
             if (!response.ok) {
@@ -254,19 +254,19 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
                     <div className="bcc-send-notifications__test">
                         <div className="bcc-send-notifications__test-input-group">
                             <InputText
-                                value={testPersonUid}
-                                onChange={(e) => setTestPersonUid(e.target.value)}
-                                placeholder={__('Person UID', 'bcc-login')}
+                                value={testEmailAddress}
+                                onChange={(e) => setTestEmailAddress(e.target.value)}
+                                placeholder={__('Email address', 'bcc-login')}
                             />
                             <Button
                                 type="button"
                                 label={__('Add myself', 'bcc-login')}
-                                onClick={() => setTestPersonUid(window.bccLoginCurrentPersonUid || '')}
-                                disabled={!window.bccLoginCurrentPersonUid}
+                                onClick={() => setTestEmailAddress(window.bccLoginCurrentUserEmail || '')}
+                                disabled={!window.bccLoginCurrentUserEmail}
                                 className="bcc-send-notifications__myself-btn"
                             />
                         </div>
-                        <Button type="button" label={__('Send test notification', 'bcc-login')} onClick={() => sendTestNotification()} disabled={!testPersonUid.trim()} />
+                        <Button type="button" label={__('Send test notification', 'bcc-login')} onClick={() => sendTestNotification()} disabled={!testEmailAddress.trim()} />
                     </div>
                 )}
             </Dialog>

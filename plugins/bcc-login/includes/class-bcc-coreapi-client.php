@@ -346,18 +346,23 @@ class BCC_Coreapi_Client
     //   }
 
     // Type = email, sms, inapp
-    public function send_notification($group_uids, $type, $workflow, $payload, $test_person_uid = null) {
+    public function send_notification($group_uids, $type, $workflow, $payload, $test_email_address = null) {
         $token = $this->get_coreapi_token();
 
-        //$request_url =  $this->_settings->coreapi_base_url . "/notifications/notification?createSubscribers=false&pushNotifications=true";
-        $request_url =  str_replace("https://", "https://notifications.", $this->_settings->coreapi_base_url) . "/notifications/notification/". $type ."?dryRun=" . ($this->_settings->notification_dry_run ? "true" : "false");
-        $request_body = $test_person_uid
-            ? array("personUid" => $test_person_uid, "notificationPayload" => $payload)
-            : array("groupUids" => array_values($group_uids), "notificationPayload" => $payload);
+        $notifications_base = str_replace("https://", "https://notifications.", $this->_settings->coreapi_base_url);
 
-        if ($test_person_uid) {
+        if ($test_email_address) {
+            $request_url = $notifications_base . "/notifications/notification/email/direct";
+            $request_body = array(
+                "email" => $test_email_address,
+                "notificationPayload" => is_array($payload) && !empty($payload) ? $payload[0] : $payload,
+            );
+
             error_log('TEST SEND - POST ' . $request_url);
             error_log('TEST SEND - Request body: ' . json_encode($request_body, JSON_UNESCAPED_UNICODE));
+        } else {
+            $request_url = $notifications_base . "/notifications/notification/" . $type . "?dryRun=" . ($this->_settings->notification_dry_run ? "true" : "false");
+            $request_body = array("groupUids" => array_values($group_uids), "notificationPayload" => $payload);
         }
 
         $response = wp_remote_post($request_url, array(
@@ -372,7 +377,7 @@ class BCC_Coreapi_Client
             wp_die( $response->get_error_message() );
         }
 
-        if ($test_person_uid) {
+        if ($test_email_address) {
             error_log('TEST SEND - Response (' . $response['response']['code'] . '): ' . $response['body']);
         }
 

@@ -574,10 +574,10 @@ class BCC_Login_Visibility {
             'before'
         );
 
-        $current_person_uid = $this->_client->get_current_user_person_uid();
+        $current_user = wp_get_current_user();
         wp_add_inline_script(
             $script_handle,
-            'var bccLoginCurrentPersonUid = ' . json_encode($current_person_uid ?: null),
+            'var bccLoginCurrentUserEmail = ' . json_encode($current_user->user_email ?: null),
             'before'
         );
     }
