@@ -58,26 +58,6 @@ class BCC_Notifications
         ));
     }
 
-    private function ensure_img_alt($html, $fallback_alt = '') {
-        if (empty($fallback_alt)) {
-            return $html;
-        }
-
-        return preg_replace_callback('/<img\b([^>]*)>/i', function ($matches) use ($fallback_alt) {
-            $attrs = $matches[1];
-
-            // Already has a non-empty alt value — leave it alone
-            if (preg_match('/\balt\s*=\s*"[^"]+"/i', $attrs) || preg_match("/\\balt\\s*=\\s*'[^']+'/i", $attrs)) {
-                return $matches[0];
-            }
-
-            // Strip any existing empty (alt="", alt='') or bare (alt) attribute
-            $attrs = preg_replace('/\s*\balt\b(\s*=\s*["\']["\'])?/i', '', $attrs);
-
-            return '<img' . rtrim($attrs) . ' alt="' . esc_attr($fallback_alt) . '">';
-        }, $html);
-    }
-
     public function replace_notification_params($text, $post, $language, $excerpt = null) {
         $text = str_replace('[postTitle]', $post->post_title, $text);
         $text = str_replace('[postExcerpt]', $excerpt !== null ? $excerpt : get_the_excerpt($post), $text);
@@ -258,8 +238,8 @@ class BCC_Notifications
                             error_log('DEBUG: ' . __METHOD__ . ' - Skipping email payload for ' . $wp_lang . ': template has no title or body configured.');
                         } else {
                             $email_subject = $this->replace_notification_params($templates["email_subject"] ?: "[postTitle]", $item["post"], $wp_lang, $excerpt);
-                            $email_title = $this->ensure_img_alt($this->replace_notification_params($templates["email_title"] ?: "", $item["post"], $wp_lang, $excerpt), $item["title"]);
-                            $email_body = $this->ensure_img_alt($this->replace_notification_params($templates["email_body"] ?: "", $item["post"], $wp_lang, $excerpt), $item["title"]);
+                            $email_title = $this->replace_notification_params($templates["email_title"] ?: "", $item["post"], $wp_lang, $excerpt);
+                            $email_body = $this->replace_notification_params($templates["email_body"] ?: "", $item["post"], $wp_lang, $excerpt);
 
                             $email_payload[] = apply_filters('bcc_notification_email_payload', array(
                                 "language" => $payload_lang,
