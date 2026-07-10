@@ -195,8 +195,13 @@ function handle_generate( \WP_REST_Request $request ): \WP_REST_Response|\WP_Err
 		);
 	}
 
+	// Strip any existing AI summary blocks so they don't pollute the input when regenerating.
+	$blocks          = parse_blocks( $post->post_content );
+	$filtered_blocks = array_filter( $blocks, fn( $b ) => $b['blockName'] !== 'bcc-generate-summary-with-ai/generate-summary' );
+	$filtered_post   = serialize_blocks( array_values( $filtered_blocks ) );
+
 	// Render blocks to HTML, then strip tags for clean plain-text input to OpenAI.
-	$content = wp_strip_all_tags( apply_filters( 'the_content', $post->post_content ) );
+	$content = wp_strip_all_tags( apply_filters( 'the_content', $filtered_post ) );
 	$content = trim( (string) preg_replace( '/\s+/', ' ', $content ) );
 
 	if ( $content === '' ) {
