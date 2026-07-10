@@ -324,16 +324,18 @@ Article:
 {$content}
 PROMPT;
 
+	// o-series and gpt-5+ use max_completion_tokens and reject temperature.
+	$is_new_api = (bool) preg_match( '/^(o\d|gpt-5)/', $settings['model'] );
+
 	$body = [
-		'model'      => $settings['model'],
-		'messages'   => [
+		'model'    => $settings['model'],
+		'messages' => [
 			[ 'role' => 'user', 'content' => $prompt ],
 		],
-		'max_tokens' => 300,
+		$is_new_api ? 'max_completion_tokens' : 'max_tokens' => 300,
 	];
 
-	// Reasoning models (o-series, gpt-5 family) reject the temperature parameter.
-	if ( ! preg_match( '/^(o\d|gpt-5)/', $settings['model'] ) ) {
+	if ( ! $is_new_api ) {
 		$body['temperature'] = 0.5;
 	}
 
