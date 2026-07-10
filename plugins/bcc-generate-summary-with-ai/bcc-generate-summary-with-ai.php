@@ -330,6 +330,7 @@ Article:
 PROMPT;
 
 	// o-series and gpt-5+ use max_completion_tokens and reject temperature.
+	// Reasoning models spend tokens on chain-of-thought before output, so they need a larger budget.
 	$is_new_api = (bool) preg_match( '/^(o\d|gpt-5)/', $settings['model'] );
 
 	$body = [
@@ -337,7 +338,7 @@ PROMPT;
 		'messages' => [
 			[ 'role' => 'user', 'content' => $prompt ],
 		],
-		$is_new_api ? 'max_completion_tokens' : 'max_tokens' => 300,
+		$is_new_api ? 'max_completion_tokens' : 'max_tokens' => $is_new_api ? 10000 : 300,
 	];
 
 	if ( ! $is_new_api ) {
@@ -366,8 +367,23 @@ PROMPT;
 		return new \WP_Error( 'openai_http', $msg );
 	}
 
-	$summary = $json['choices'][0]['message']['content'] ?? '';
+	$message = $json['choices'][0]['message'] ?? [];
+	$summary = $message['content'] ?? '';
+
 	if ( ! is_string( $summary ) || trim( $summary ) === '' ) {
+		// Log the raw response so it can be inspected in the PHP error log.
+		error_log( 'BCC Generate Summary – unexpected OpenAI response: ' . $raw );
+
+		$refusal = $message['refusal'] ?? null;
+		if ( is_string( $refusal ) && $refusal !== '' ) {
+			return new \WP_Error( 'openai_refusal', $refusal );
+		}
+
+		$finish_reason = $json['choices'][0]['finish_reason'] ?? '';
+		if ( $finish_reason === 'length' ) {
+			return new \WP_Error( 'openai_empty', __( 'The model ran out of tokens before producing output. Try a shorter article or switch to a non-reasoning model.', 'bcc-generate-summary-with-ai' ) );
+		}
+
 		return new \WP_Error( 'openai_empty', __( 'Empty response from OpenAI.', 'bcc-generate-summary-with-ai' ) );
 	}
 
