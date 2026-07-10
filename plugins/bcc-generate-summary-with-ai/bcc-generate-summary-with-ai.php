@@ -2,7 +2,7 @@
 /**
  * Plugin Name: BCC – Generate summary with AI
  * Description: Adds a panel to the Gutenberg post editor that generates a short summary of the post content using OpenAI.
- * Version:     1.1.0
+ * Version:     1.1.1
  * Author:      BCC IT
  * License:     GPL-2.0-or-later
  * Requires at least: 6.5
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const VERSION   = '1.1.0';
+const VERSION   = '1.1.1';
 const OPTION_KEY = 'bcc_generate_summary_with_ai_settings';
 const REST_NS   = 'bcc-generate-summary-with-ai/v1';
 
