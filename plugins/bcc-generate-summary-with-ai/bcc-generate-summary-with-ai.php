@@ -321,7 +321,7 @@ function call_openai( array $settings, string $content, string $language = 'Engl
 	}
 
 	$prompt = <<<PROMPT
-Summarize the following article as a list, max 5 items (100-150 words, between 700-1000 characters), which contains some words about the topic, target audience, and the most important points for the reader.
+Write a short summary of 50-80 words describing the main theme of the following article as a list of max 4 points. Keep the most important names, themes, and terms relevant for search and understanding, but omit details, examples, and repetitions. The summary should read like an editorial lead-in, not a recap of the entire article. Prioritize the main message over details. Omit examples, work processes, and repetitions if they are not necessary.
 Write in {$language}.
 Return ONLY the summary — no introductory phrase, no quotes, no labels.
 
