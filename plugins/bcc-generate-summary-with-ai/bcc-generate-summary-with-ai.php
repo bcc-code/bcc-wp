@@ -2,7 +2,7 @@
 /**
  * Plugin Name: BCC – Generate summary with AI
  * Description: Adds a panel to the Gutenberg post editor that generates a short summary of the post content using OpenAI.
- * Version:     1.1.2
+ * Version:     1.1.3
  * Author:      BCC IT
  * License:     GPL-2.0-or-later
  * Requires at least: 6.5
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const VERSION   = '1.1.2';
+const VERSION   = '1.1.3';
 const OPTION_KEY = 'bcc_generate_summary_with_ai_settings';
 const REST_NS   = 'bcc-generate-summary-with-ai/v1';
 
@@ -321,7 +321,7 @@ function call_openai( array $settings, string $content, string $language = 'Engl
 	}
 
 	$prompt = <<<PROMPT
-Summarize the following article as a list, max 5 items (100-150 words, between 700-1000 characters), which contains some words about the topic, target audience, and the most important points for the reader.
+Write a short summary of 50-80 words describing the main theme of the following article as a list of max 4 points. Keep the most important names, themes, and terms relevant for search and understanding, but omit details, examples, and repetitions. The summary should read like an editorial lead-in, not a recap of the entire article. Prioritize the main message over details. Omit examples, work processes, and repetitions if they are not necessary.
 Write in {$language}.
 Return ONLY the summary — no introductory phrase, no quotes, no labels.
 
