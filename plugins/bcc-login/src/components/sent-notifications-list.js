@@ -1,29 +1,120 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { __ } from '@wordpress/i18n';
+import { Button } from 'primereact/button';
+import { Toast } from 'primereact/toast';
 
-const SentNotificationsList = ({ sentNotifications }) => {
-    const [optimistic, setOptimistic] = useState([]);
+const SentNotificationsList = ({ sentNotifications, postId }) => {
+    const [notifications, setNotifications] = useState(sentNotifications);
+    const [nonce, setNonce] = useState(null);
+    const toast = useRef(null);
 
     useEffect(() => {
-        const handler = (ev) => {
-            const { date, no_of_groups } = ev.detail || {};
-            setOptimistic(prev => [{ date, no_of_groups }, ...prev]);
+        function handler(notifications) {
+            setNotifications(notifications.detail);
         };
 
-        window.addEventListener('bcc:notificationSent', handler);
-        return () => window.removeEventListener('bcc:notificationSent', handler);
+        window.addEventListener('bcc:notificationsUpdated', handler);
+        return () => window.removeEventListener('bcc:notificationsUpdated', handler);
     }, []);
 
-    const allNotifications = [...optimistic, ...(sentNotifications || [])];
+    useEffect(() => {
+        const wpNonce = window?.wpApiSettings?.nonce || window?.bccLoginNonce;
+        setNonce(wpNonce || null);
+    }, []);
+
+    async function refreshStatistics(notificationId) {
+        try {
+            showToast('info');
+
+            const response = await fetch('/wp-json/bcc-login/v1/refresh-notification-statistics', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-WP-Nonce': nonce
+                },
+                body: JSON.stringify({ postId: postId || 0, notificationId })
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(`Request failed (${response.status}): ${text}`);
+            }
+
+            const newNotifications = await response.json()
+            setNotifications(newNotifications)
+            showToast('success');
+        } catch (error) {
+            console.error('Error refreshing notification statistics:', error);
+            showToast('error');
+        }
+    }
+
+    function showToast(status){
+        const messages = {
+            success: { severity: 'success', summary: __('Success', 'bcc-login'), detail: __('Refreshed notification statistics!', 'bcc-login'), life: 5000 },
+            error: { severity: 'error', summary: __('Error', 'bcc-login'), detail: __('Error refreshing notification statistics.', 'bcc-login'), sticky: true },
+            info: { severity: 'info', summary: __('Info', 'bcc-login'), detail: __('Refreshing notification statistics...', 'bcc-login'), sticky: true },
+        };
+        toast.current.remove(messages.info);
+        toast.current.show(messages[status]);
+    };
+
+    const fomrattedNotifications = notifications
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .map(notification => ({
+          date: (new Date(notification.date)).toLocaleString(),
+          refresh_date: notification.refresh_date && (new Date(notification.refresh_date)).toLocaleString(),
+          no_of_groups: notification.notification_groups?.length,
+          id: notification.id,
+          type: formatNotificationType(notification.type),
+          total: notification.total,
+          sent: notification.sent,
+          delivered: notification.delivered,
+          error: notification.error
+        }));
+
+    function formatNotificationType(type) {
+        if(type === 'target_groups') return __("Action required", "bcc-login")
+        if(type === 'visibility_groups') return __("For information", "bcc-login")
+        return undefined
+    }
+
+    const notificationFields = {
+        'date': 'Sent on',
+        'type': 'Type',
+        'no_of_groups': 'No. of groups',
+        'refresh_date': 'Refreshed on',
+    }
 
     return (
-        <div className="bcc-sent-notifications-list">
-            <DataTable value={allNotifications} emptyMessage={__("No notifications sent yet.", "bcc-login")}>
-                <Column field="date" header={__("Sent on", "bcc-login")}></Column>
-                <Column field="no_of_groups" header={__("No. of groups", "bcc-login")} headerStyle={{ textAlign: 'center' }} bodyStyle={{ textAlign: 'center' }}></Column>
-            </DataTable>
+        <div className="bcc-sent-notifications-list" style={{ width: "100%"}}>
+            {fomrattedNotifications.map(notification => 
+            <div style={{ borderBottom: '1px solid gray', width: "100%"}}>
+                <ul>
+                    {Object.entries(notificationFields).map(([key, value]) => {
+                        if(notification[key] != undefined) {
+                            return <li><b>{__(value, "bcc-login")}: </b>{notification[key]}</li>
+                        }
+                    })}
+                    <div style={{display: notification.id ? 'block' : 'none'}} >
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                            <h4 style={{margin: "0px"}}>{__("Delivery statistics", "bcc-login")}</h4>
+                            <Button text label={__("Refresh", "bcc-login")} onClick={() => refreshStatistics(notification.id)} />
+                        </div>
+
+                        <DataTable value={[notification]} style={{marginBottom: '1rem'}}>
+                            <Column field="total" header={__("Total", "bcc-login")} bodyStyle={{ textAlign: 'center' }}></Column>
+                            <Column field="sent" header={__("Sent", "bcc-login")} bodyStyle={{ textAlign: 'center' }}></Column>
+                            <Column field="delivered" header={__("Delivered", "bcc-login")} bodyStyle={{ textAlign: 'center' }}></Column>
+                            <Column field="error" header={__("Error", "bcc-login")} bodyStyle={{ textAlign: 'center' }}></Column>
+                        </DataTable>
+                    </div>
+                </ul>
+            </div>)}
+            <Toast ref={toast} position="bottom-right" />
         </div>
     );
 };

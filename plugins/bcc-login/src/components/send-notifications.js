@@ -95,11 +95,9 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
                 throw new Error(`Request failed (${response.status}): ${text}`);
             }
 
-            window.dispatchEvent(new CustomEvent('bcc:notificationSent', {
-                detail: {
-                    date: new Date().toLocaleString(),
-                    no_of_groups: targetGroupsCount + visibilityGroupsCount
-                }
+            const responseBody = await response.json()
+            window.dispatchEvent(new CustomEvent('bcc:notificationsUpdated', {
+                detail: responseBody
             }));
 
             showToast('success');

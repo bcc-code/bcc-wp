@@ -384,6 +384,33 @@ class BCC_Coreapi_Client
         if ($response['response']['code'] != 200) {
             wp_die("Could not send notification: " . print_r($response, true));
         }
+
+        $response_body = json_decode( wp_remote_retrieve_body( $response ) );
+        return $response_body;
+    }
+
+    public function get_notification($notification_id) {
+        $token = $this->get_coreapi_token();
+
+        $notifications_base = str_replace("https://", "https://notifications.", $this->_settings->coreapi_base_url);
+        $request_url = $notifications_base . "/notifications/notification/" . $notification_id;
+    
+        $response = wp_remote_get($request_url, array(
+            "headers" => array(
+                "Authorization" => "Bearer " . $token,
+            )
+        ));
+
+        if ( is_wp_error( $response ) ) {
+            wp_die( $response->get_error_message() );
+        }
+
+        if ($response['response']['code'] != 200) {
+            wp_die("Could not get notification: " . print_r($response, true));
+        }
+
+        $notification = json_decode( wp_remote_retrieve_body( $response ) );
+        return $notification;
     }
 
     public function get_coreapi_token() {

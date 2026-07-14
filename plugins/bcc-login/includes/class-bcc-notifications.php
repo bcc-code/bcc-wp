@@ -12,6 +12,7 @@ class BCC_Notifications
 
         add_action('admin_init', array($this, 'register_wpml_strings'));
         add_action('rest_api_init', array($this, 'register_send_notifications_endpoint'));
+        add_action('rest_api_init', array($this, 'register_refresh_notification_statistics_endpoint'));
         add_action('rest_api_init', array($this, 'register_wpml_translations_endpoint'));
     }
 
@@ -32,12 +33,38 @@ class BCC_Notifications
                     }
 
                     $test_email_address = $request->get_param('testEmailAddress') ?: null;
-                    $this->send_notification($post_id, $test_email_address);
+                    $updated_notifications = $this->send_notification($post_id, $test_email_address);
 
-                    return new WP_REST_Response(null, 200);
+                    return new WP_REST_Response($updated_notifications, 200);
                 } else {
                     return new WP_REST_Response(array('error' => 'postId parameter is required'), 400);
                 }
+            },
+            'permission_callback' => function () {
+                return current_user_can('edit_posts');
+            },
+        ));
+    }
+
+    public function register_refresh_notification_statistics_endpoint() {
+        register_rest_route('bcc-login/v1', '/refresh-notification-statistics', array(
+            'methods' => 'POST',
+            'callback' => function (WP_REST_Request $request) {
+                $post_id = $request->get_param('postId');
+                $notification_id = $request->get_param('notificationId');
+
+                if (!$post_id || !$notification_id) {
+                    return new WP_REST_Response(array('error' => 'postId parameter is required'), 400);
+                }
+
+                if (!in_array(get_post_type($post_id), $this->settings->notification_post_types)) {
+                    return new WP_REST_Response(array('error' => 'This post type is not allowed to sent notifications'), 400);
+                }
+
+                $notification = $this->core_api->get_notification($notification_id);
+                $updated_notifications = $this->update_notification_statistics($post_id, $notification);
+
+                return new WP_REST_Response($updated_notifications, 200);
             },
             'permission_callback' => function () {
                 return current_user_can('edit_posts');
@@ -95,6 +122,8 @@ class BCC_Notifications
         if ($send_email_to_visibility_groups) {
             $notification_groups = $this->settings->array_union($notification_groups, $post_visibility_groups);
         }
+
+        $updated_notifications = null;
 
         // Notification logic goes here
         if (!empty($notification_groups)) {
@@ -287,8 +316,9 @@ class BCC_Notifications
                         $requires_action_inapp_payload[] = $inapp_item;
                     }
 
-                    $this->core_api->send_notification($post_target_groups, 'email', 'simpleemail', $requires_action_email_payload, $test_email_address);
+                    $sent_notification = $this->core_api->send_notification($post_target_groups, 'email', 'simpleemail', $requires_action_email_payload, $test_email_address);
                     if (!$test_email_address) {
+                        $updated_notifications = $this->save_notification_data($post_id, $sent_notification, "target_groups");
                         $this->core_api->send_notification($post_target_groups, 'inapp', 'simpleinapp', $requires_action_inapp_payload);
                     }
 
@@ -318,17 +348,13 @@ class BCC_Notifications
                         $for_information_inapp_payload[] = $inapp_item;
                     }
 
-                    $this->core_api->send_notification($post_visibility_groups, 'email', 'simpleemail', $for_information_email_payload, $test_email_address);
+                    $sent_notification = $this->core_api->send_notification($post_visibility_groups, 'email', 'simpleemail', $for_information_email_payload, $test_email_address);
                     if (!$test_email_address) {
+                        $updated_notifications = $this->save_notification_data($post_id, $sent_notification, "visibility_groups");
                         $this->core_api->send_notification($post_visibility_groups, 'inapp', 'simpleinapp', $for_information_inapp_payload);
                     }
 
                     error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($post_visibility_groups) . ' visibility groups.');
-                }
-
-                // Store sent notification data (skipped for test sends)
-                if (!$test_email_address) {
-                    $this->save_notification_data($post_id, $notification_groups);
                 }
 
                 error_log('DEBUG: ' . __METHOD__ . ' - Sent notifications for ' . count($email_payload) . ' languages.');
@@ -340,30 +366,53 @@ class BCC_Notifications
         else {
             error_log('DEBUG: ' . __METHOD__ . ' - No notification groups found for post: ' . $post_id);
         }
+
+        return $updated_notifications;
     }
 
     // Save the date and the notification groups of the notification
-    public function save_notification_data($post_id, $notification_groups = array()) {
-        // Ensure array of strings (UIDs)
-        $group_uids = array_values(array_filter((array) $notification_groups, function($uid) {
-            return is_string($uid) && $uid !== '';
-        }));
-
-        // Load current meta; normalize to array
+    public function save_notification_data($post_id, $response, $type) {
         $sent_notifications = get_post_meta($post_id, 'sent_notifications', true);
         if (!is_array($sent_notifications)) {
             $sent_notifications = [];
         }
 
-        // Append new record that matches the REST schema
         $sent_notifications[] = array(
-            'date' => gmdate('c'), // ISO-8601 UTC
-            'notification_groups' => $group_uids,
+            'id' => $response->id,
+            'type' => $type,
+            'date' => gmdate('c'),
+            'total' => $response->deliveryStatistics->total,
+            'sent' => $response->deliveryStatistics->sent,
+            'delivered' => $response->deliveryStatistics->delivered,
+            'error' => $response->deliveryStatistics->error
         );
 
-        // Reindex and save
         $sent_notifications = array_values($sent_notifications);
         update_post_meta($post_id, 'sent_notifications', $sent_notifications);
+
+        return $sent_notifications;
+    }
+
+    public function update_notification_statistics($post_id, $notification_response) {
+        $sent_notifications = get_post_meta($post_id, 'sent_notifications', true);
+        if (!is_array($sent_notifications)) {
+            $sent_notifications = [];
+        }
+
+        foreach($sent_notifications as $key => $notification ) {
+            if (array_key_exists('id', $notification) && $notification['id'] == $notification_response->id) {
+                $notification['total'] = $notification_response->deliveryStatistics->total;
+                $notification['sent'] = $notification_response->deliveryStatistics->sent;
+                $notification['delivered'] = $notification_response->deliveryStatistics->delivered;
+                $notification['error'] = $notification_response->deliveryStatistics->error;
+                $notification['refresh_date'] = gmdate('c');
+                $sent_notifications[$key] = $notification;
+            }
+        }
+
+        $sent_notifications = array_values($sent_notifications);
+        update_post_meta($post_id, 'sent_notifications', $sent_notifications);
+        return $sent_notifications;
     }
 
     public function bcc_get_wpml_post_translations($post_id) {
