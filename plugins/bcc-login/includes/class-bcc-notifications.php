@@ -54,7 +54,7 @@ class BCC_Notifications
                 $notification_id = $request->get_param('notificationId');
 
                 if (!$post_id || !$notification_id) {
-                    return new WP_REST_Response(array('error' => 'postId parameter is required'), 400);
+                    return new WP_REST_Response(array('error' => 'postId or notificationId parameter is required'), 400);
                 }
 
                 if (!in_array(get_post_type($post_id), $this->settings->notification_post_types)) {

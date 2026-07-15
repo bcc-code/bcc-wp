@@ -96,9 +96,11 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
             }
 
             const responseBody = await response.json()
-            window.dispatchEvent(new CustomEvent('bcc:notificationsUpdated', {
-                detail: responseBody
-            }));
+            if(responseBody) {
+                window.dispatchEvent(new CustomEvent('bcc:notificationsUpdated', {
+                    detail: responseBody
+                }));
+            }
 
             showToast('success');
         } catch (error) {

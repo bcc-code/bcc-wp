@@ -62,8 +62,9 @@ const SentNotificationsList = ({ sentNotifications, postId }) => {
         toast.current.show(messages[status]);
     };
 
+    const sortedNotifications = notifications.sor
     const fomrattedNotifications = notifications
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .toSorted((a, b) => new Date(b.date) - new Date(a.date))
         .map(notification => ({
           date: (new Date(notification.date)).toLocaleString(),
           refresh_date: notification.refresh_date && (new Date(notification.refresh_date)).toLocaleString(),
@@ -92,27 +93,27 @@ const SentNotificationsList = ({ sentNotifications, postId }) => {
     return (
         <div className="bcc-sent-notifications-list" style={{ width: "100%"}}>
             {fomrattedNotifications.map(notification => 
-            <div style={{ borderBottom: '1px solid gray', width: "100%"}}>
+            <div key={notification.id} style={{ borderBottom: '1px solid gray', width: "100%"}}>
                 <ul>
                     {Object.entries(notificationFields).map(([key, value]) => {
                         if(notification[key] != undefined) {
-                            return <li><b>{__(value, "bcc-login")}: </b>{notification[key]}</li>
+                            return <li key={key}><b>{__(value, "bcc-login")}: </b>{notification[key]}</li>
                         }
                     })}
-                    <div style={{display: notification.id ? 'block' : 'none'}} >
-                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                            <h4 style={{margin: "0px"}}>{__("Delivery statistics", "bcc-login")}</h4>
-                            <Button text label={__("Refresh", "bcc-login")} onClick={() => refreshStatistics(notification.id)} />
-                        </div>
-
-                        <DataTable value={[notification]} style={{marginBottom: '1rem'}}>
-                            <Column field="total" header={__("Total", "bcc-login")} bodyStyle={{ textAlign: 'center' }}></Column>
-                            <Column field="sent" header={__("Sent", "bcc-login")} bodyStyle={{ textAlign: 'center' }}></Column>
-                            <Column field="delivered" header={__("Delivered", "bcc-login")} bodyStyle={{ textAlign: 'center' }}></Column>
-                            <Column field="error" header={__("Error", "bcc-login")} bodyStyle={{ textAlign: 'center' }}></Column>
-                        </DataTable>
-                    </div>
                 </ul>
+                <div style={{display: notification.id ? 'block' : 'none'}} >
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                        <h4 style={{margin: "0px"}}>{__("Delivery statistics", "bcc-login")}</h4>
+                        <Button text label={__("Refresh", "bcc-login")} onClick={() => refreshStatistics(notification.id)} />
+                    </div>
+
+                    <DataTable value={[notification]} style={{marginBottom: '1rem'}}>
+                        <Column field="total" header={__("Total", "bcc-login")} bodyStyle={{ textAlign: 'center' }}></Column>
+                        <Column field="sent" header={__("Sent", "bcc-login")} bodyStyle={{ textAlign: 'center' }}></Column>
+                        <Column field="delivered" header={__("Delivered", "bcc-login")} bodyStyle={{ textAlign: 'center' }}></Column>
+                        <Column field="error" header={__("Error", "bcc-login")} bodyStyle={{ textAlign: 'center' }}></Column>
+                    </DataTable>
+                </div>
             </div>)}
             <Toast ref={toast} position="bottom-right" />
         </div>
