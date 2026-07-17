@@ -62,8 +62,7 @@ const SentNotificationsList = ({ sentNotifications, postId }) => {
         toast.current.show(messages[status]);
     };
 
-    const sortedNotifications = notifications.sor
-    const fomrattedNotifications = notifications
+    const formattedNotifications = notifications
         .toSorted((a, b) => new Date(b.date) - new Date(a.date))
         .map(notification => ({
           date: (new Date(notification.date)).toLocaleString(),
@@ -92,7 +91,7 @@ const SentNotificationsList = ({ sentNotifications, postId }) => {
 
     return (
         <div className="bcc-sent-notifications-list" style={{ width: "100%"}}>
-            {fomrattedNotifications.map(notification => 
+            {formattedNotifications.map(notification => 
             <div key={notification.id} style={{ borderBottom: '1px solid gray', width: "100%"}}>
                 <ul>
                     {Object.entries(notificationFields).map(([key, value]) => {
