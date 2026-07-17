@@ -89,30 +89,36 @@ const SentNotificationsList = ({ sentNotifications, postId }) => {
         'refresh_date': 'Refreshed on',
     }
 
+    const deliveryStatistics = {
+        total: 'Total',
+        sent: 'Sent',
+        delivered: 'Delivered',
+        error: 'Error'
+    }
+
     return (
         <div className="bcc-sent-notifications-list" style={{ width: "100%"}}>
             {formattedNotifications.map(notification => 
-            <div key={notification.id} style={{ borderBottom: '1px solid gray', width: "100%"}}>
+            <div key={notification.id} style={{ borderBottom: '1px solid rgba(0,0,0,.133)', width: "100%"}}>
                 <ul>
                     {Object.entries(notificationFields).map(([key, value]) => {
                         if(notification[key] != undefined) {
                             return <li key={key}><b>{__(value, "bcc-login")}: </b>{notification[key]}</li>
                         }
                     })}
-                </ul>
-                <div style={{display: notification.id ? 'block' : 'none'}} >
-                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                        <h4 style={{margin: "0px"}}>{__("Delivery statistics", "bcc-login")}</h4>
-                        <Button text label={__("Refresh", "bcc-login")} onClick={() => refreshStatistics(notification.id)} />
-                    </div>
+                    <li style={{display: notification.id ? 'block' : 'none'}} >
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                            <h4 style={{margin: "0px"}}>{__("Delivery statistics", "bcc-login")}</h4>
+                            <Button style={{paddingBlock: 0}} text label={__("Refresh", "bcc-login")} onClick={() => refreshStatistics(notification.id)} />
+                        </div>
 
-                    <DataTable value={[notification]} style={{marginBottom: '1rem'}}>
-                        <Column field="total" header={__("Total", "bcc-login")} bodyStyle={{ textAlign: 'center' }}></Column>
-                        <Column field="sent" header={__("Sent", "bcc-login")} bodyStyle={{ textAlign: 'center' }}></Column>
-                        <Column field="delivered" header={__("Delivered", "bcc-login")} bodyStyle={{ textAlign: 'center' }}></Column>
-                        <Column field="error" header={__("Error", "bcc-login")} bodyStyle={{ textAlign: 'center' }}></Column>
-                    </DataTable>
-                </div>
+                        <DataTable value={[notification]} style={{marginBottom: '1rem'}}>
+                            {Object.entries(deliveryStatistics).map(([key, value]) => (
+                                <Column key={key} field={key} header={__(value, "bcc-login")} bodyStyle={{ textAlign: 'center', border: 'none', paddingBottom: 0 }}></Column>
+                            ))}
+                        </DataTable>
+                    </li>
+                </ul>
             </div>)}
             <Toast ref={toast} position="bottom-right" />
         </div>
