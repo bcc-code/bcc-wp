@@ -69,6 +69,9 @@ function sanitize_settings( $input ): array {
 	$model = isset( $input['model'] ) ? sanitize_text_field( (string) $input['model'] ) : 'gpt-4o-mini';
 
 	$allowed_models = [
+		'gpt-5.6-sol',
+		'gpt-5.6-terra',
+		'gpt-5.6-luna',
 		'gpt-5',
 		'gpt-5-mini',
 		'gpt-5-nano',
@@ -101,14 +104,17 @@ function field_api_key(): void {
 function field_model(): void {
 	$settings = get_settings();
 	$models   = [
-		'gpt-5'        => 'gpt-5 (best quality, slower & most expensive)',
-		'gpt-5-mini'   => 'gpt-5-mini (great quality, balanced cost)',
-		'gpt-5-nano'   => 'gpt-5-nano (fastest & cheapest in the GPT-5 family)',
-		'gpt-4.1'      => 'gpt-4.1',
-		'gpt-4.1-mini' => 'gpt-4.1-mini',
-		'gpt-4.1-nano' => 'gpt-4.1-nano',
-		'gpt-4o'       => 'gpt-4o (legacy)',
-		'gpt-4o-mini'  => 'gpt-4o-mini (legacy, cheapest)',
+		'gpt-5.6-sol'   => 'gpt-5.6-sol (newest flagship, best quality, slower & most expensive)',
+		'gpt-5.6-terra' => 'gpt-5.6-terra (newest, balanced quality & cost)',
+		'gpt-5.6-luna'  => 'gpt-5.6-luna (newest, fastest & cheapest in the GPT-5.6 family)',
+		'gpt-5'         => 'gpt-5 (previous flagship)',
+		'gpt-5-mini'    => 'gpt-5-mini (great quality, balanced cost)',
+		'gpt-5-nano'    => 'gpt-5-nano (fastest & cheapest in the GPT-5 family)',
+		'gpt-4.1'       => 'gpt-4.1',
+		'gpt-4.1-mini'  => 'gpt-4.1-mini',
+		'gpt-4.1-nano'  => 'gpt-4.1-nano',
+		'gpt-4o'        => 'gpt-4o (legacy)',
+		'gpt-4o-mini'   => 'gpt-4o-mini (legacy, cheapest)',
 	];
 	echo '<select name="' . esc_attr( OPTION_KEY ) . '[model]">';
 	foreach ( $models as $value => $label ) {
