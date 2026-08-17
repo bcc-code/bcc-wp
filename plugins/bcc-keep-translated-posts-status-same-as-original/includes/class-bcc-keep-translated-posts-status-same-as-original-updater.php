@@ -34,6 +34,12 @@ class BCC_Keep_Translated_Posts_Status_Same_As_Original_Updater {
 
 	public function request(){
 
+		// A recent failed/empty check is cached briefly so a GitHub outage
+		// doesn't turn into a check-on-every-request loop.
+		if( get_transient( $this->cache_key . '_failed' ) ) {
+			return false;
+		}
+
 		$remote = get_transient( $this->cache_key );
 
 		if( false === $remote || ! $this->cache_allowed ) {
@@ -53,6 +59,7 @@ class BCC_Keep_Translated_Posts_Status_Same_As_Original_Updater {
 				|| 200 !== wp_remote_retrieve_response_code( $remote )
 				|| empty( wp_remote_retrieve_body( $remote ) )
 			) {
+				set_transient( $this->cache_key . '_failed', 1, HOUR_IN_SECONDS );
 				return false;
 			}
 
@@ -162,6 +169,7 @@ class BCC_Keep_Translated_Posts_Status_Same_As_Original_Updater {
 		) {
 			// just clean the cache when new plugin version is installed
 			delete_transient( $this->cache_key );
+			delete_transient( $this->cache_key . '_failed' );
 		}
 
 	}
