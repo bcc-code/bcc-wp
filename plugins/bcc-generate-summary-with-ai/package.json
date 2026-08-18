@@ -1,14 +1,14 @@
 {
 	"private": true,
 	"name": "bcc-generate-summary-with-ai",
-	"version": "1.1.5",
+	"version": "1.1.6",
 	"slug": "bcc-generate-summary-with-ai",
 	"author": "<a href='https://github.com/bcc-code'>BCC Code</a>",
 	"author_profile": "https://github.com/bcc-code",
 	"requires": "6.5",
 	"tested": "7.0",
 	"requires_php": "8.0",
-	"last_updated": "2026-08-18 06:06:05",
+	"last_updated": "2026-08-18 07:29:26",
 	"sections": {
 		"description": "BCC – Generate summary with AI: adds a panel to the Gutenberg post editor that generates a short summary of the post content using OpenAI. The generated summary can be used directly as the post excerpt.",
 		"installation": "Activate the plugin and configure your OpenAI API key under Settings → BCC – Generate summary with AI.",
