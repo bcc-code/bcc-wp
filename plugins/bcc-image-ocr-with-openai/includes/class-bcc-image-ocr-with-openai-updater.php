@@ -24,11 +24,14 @@ class BCC_Image_OCR_With_OpenAI_Updater {
 		$this->plugin_slug   = $slug;
 		$this->version       = $version;
 		$this->cache_key     = $slug . '_updater';
-		$this->cache_allowed = false;
+		$this->cache_allowed = true;
 
 		add_filter( 'plugins_api', array( $this, 'info' ), 20, 3 );
 		add_filter( 'site_transient_update_plugins', array( $this, 'update' ) );
 		add_action( 'upgrader_process_complete', array( $this, 'purge' ), 10, 2 );
+		add_filter( 'plugin_row_meta', array( $this, 'plugin_row_meta' ), 10, 2 );
+		add_action( 'load-plugins.php', array( $this, 'maybe_force_check' ) );
+		add_action( 'admin_notices', array( $this, 'update_checked_notice' ) );
 
 	}
 
@@ -63,7 +66,9 @@ class BCC_Image_OCR_With_OpenAI_Updater {
 				return false;
 			}
 
-			set_transient( $this->cache_key, $remote, HOUR_IN_SECONDS );
+			// Check GitHub at most twice a day; the "Check for updates" row
+			// link below bypasses this by clearing the transient on demand.
+			set_transient( $this->cache_key, $remote, 12 * HOUR_IN_SECONDS );
 
 		}
 
@@ -168,6 +173,54 @@ class BCC_Image_OCR_With_OpenAI_Updater {
 			delete_transient( $this->cache_key );
 			delete_transient( $this->cache_key . '_failed' );
 		}
+
+	}
+
+	public function plugin_row_meta( $links, $file ) {
+
+		if ( $file !== $this->plugin || ! current_user_can( 'update_plugins' ) ) {
+			return $links;
+		}
+
+		$url = wp_nonce_url(
+			add_query_arg( 'bcc-check-update', $this->plugin_slug, self_admin_url( 'plugins.php' ) ),
+			'bcc-check-update-' . $this->plugin_slug
+		);
+
+		$links[] = '<a href="' . esc_url( $url ) . '">Check for updates</a>';
+
+		return $links;
+
+	}
+
+	public function maybe_force_check() {
+
+		$requested = isset( $_GET['bcc-check-update'] ) ? sanitize_text_field( wp_unslash( $_GET['bcc-check-update'] ) ) : '';
+
+		if ( $this->plugin_slug !== $requested || ! current_user_can( 'update_plugins' ) ) {
+			return;
+		}
+
+		check_admin_referer( 'bcc-check-update-' . $this->plugin_slug );
+
+		delete_transient( $this->cache_key );
+		delete_transient( $this->cache_key . '_failed' );
+		delete_site_transient( 'update_plugins' );
+
+		wp_safe_redirect( add_query_arg( 'bcc-update-checked', $this->plugin_slug, self_admin_url( 'plugins.php' ) ) );
+		exit;
+
+	}
+
+	public function update_checked_notice() {
+
+		$checked = isset( $_GET['bcc-update-checked'] ) ? sanitize_text_field( wp_unslash( $_GET['bcc-update-checked'] ) ) : '';
+
+		if ( $this->plugin_slug !== $checked ) {
+			return;
+		}
+
+		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( sprintf( 'Checked GitHub for a new version of %s.', $this->name ) ) . '</p></div>';
 
 	}
 
