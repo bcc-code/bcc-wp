@@ -3,7 +3,7 @@
  * Plugin Name: BCC – Attachments RSS Feed
  * Description: Registers a paginated RSS2 feed for media attachments at /feed/attachments. Each item maps the attachment's alt text + caption to the <description> and the attachment's description (post_content) + searchwp_content meta to <content:encoded>. Only attachments that have at least one of those fields are included.
  * Author: BCC IT
- * Version: 1.0.3
+ * Version: 1.0.4
  */
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -16,7 +16,7 @@ class BCC_Attachments_RSS_Feed {
 	 * The plugin instance.
 	 */
 	private static $instance = null;
-	private $plugin_version = "1.0.3";
+	private $plugin_version = "1.0.4";
 	private $plugin;
 	private $plugin_slug;
 	private $plugin_name = "BCC – Attachments RSS Feed";
