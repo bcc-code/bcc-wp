@@ -1,14 +1,14 @@
 {
 	"private": true,
 	"name": "bcc-keep-translated-posts-status-same-as-original",
-	"version": "1.6.16",
+	"version": "1.6.17",
 	"slug": "bcc-keep-translated-posts-status-same-as-original",
 	"author": "<a href='https://github.com/bcc-code'>BCC Code</a>",
 	"author_profile": "https://github.com/bcc-code",
 	"requires": "3.0",
 	"tested": "6.8",
 	"requires_php": "5.3",
-	"last_updated": "2026-07-07 15:59:52",
+	"last_updated": "2026-08-18 07:37:39",
 	"sections": {
 		"description": "BCC – Keep translated posts' status same as original",
 		"installation": "Remember to activate the plugin after installation. Under Settings you'll find a page called Post status mismatch. Use that to find pages which have different post statuses than in the original language.",
