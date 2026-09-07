@@ -787,7 +787,7 @@ class BCC_Login_Visibility {
         // Build the rules against an aliased copy of the posts table, so the
         // generated postmeta joins stay scoped to the subquery and can't collide
         // with the joins of the query we're filtering.
-        $meta_query = new WP_Meta_Query( $rules );
+        $meta_query = new WP_Meta_Query( array( $rules ) );
         $clauses    = $meta_query->get_sql( 'post', 'bcc_visibility_posts', 'ID', $query );
 
         $subquery = "{$wpdb->posts}.ID IN ("
