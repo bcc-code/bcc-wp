@@ -47,6 +47,7 @@ class BCC_Login_Visibility {
         add_action( 'updated_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
         add_action( 'enqueue_block_editor_assets', array( $this, 'on_block_editor_assets' ) );
         add_action( 'pre_get_posts', array( $this, 'filter_pre_get_posts' ) );
+        add_filter( 'posts_where', array( $this, 'filter_posts_where' ), 10, 2 );
         add_filter( 'wp_get_nav_menu_items', array( $this, 'filter_menu_items' ), 20 );
         add_filter( 'render_block', array( $this, 'on_render_block' ), 10, 2 );
 
@@ -613,7 +614,9 @@ class BCC_Login_Visibility {
             }
         }
 
-        if ( current_user_can( 'edit_posts' ) || $query->is_singular ) {
+        // Single post views are handled in 'on_template_redirect()'. Secondary
+        // queries for a single post (e.g. 'p' => 123) still need filtering.
+        if ( current_user_can( 'edit_posts' ) || ( $query->is_singular && $query->is_main_query() ) ) {
             return;
         }
 
@@ -658,8 +661,10 @@ class BCC_Login_Visibility {
             );
         }
 
-        // Default: just the visibility clause
-        $visibility_rules = $visibility_clause;
+        // Default: just the visibility clause, wrapped as a clause group.
+        // Every branch below keeps $rules a group: WP_Meta_Query expects one and
+        // silently drops a bare clause, which would leave a query unfiltered.
+        $visibility_rules = array( $visibility_clause );
 
         // Include also posts where visibility isn't specified based on the Default Content Access
         if ( $user_level >= $this->_settings->default_visibility ) {
@@ -730,6 +735,24 @@ class BCC_Login_Visibility {
         // Indicate that this set of rules is for the visibility filter
         $query->set('bcc_login_visibility_filter_added', 1);
 
+        $unsupported_post_types = $this->get_unsupported_post_types( $query );
+
+        // The rules are normally added as a subquery in 'filter_posts_where()'.
+        // That keeps them out of the caller's own meta query, lets post types
+        // without visibility support skip them - those never store
+        // 'bcc_login_visibility', so the rules would otherwise hide all of them -
+        // and avoids the joins and GROUP BY that a merged meta query adds, which
+        // measured about twice as fast on a post archive.
+        //
+        // 'posts_where' is skipped for queries using 'suppress_filters' (as
+        // get_posts() does), so those fall back to the meta query rather than
+        // being left unfiltered. Unsupported post types are hidden in that case.
+        if ( ! $query->get('suppress_filters') ) {
+            $query->set('bcc_login_visibility_rules', $rules);
+            $query->set('bcc_login_unsupported_post_types', $unsupported_post_types);
+            return;
+        }
+
         // Add all the rules to the meta query
         $meta_query = array(
             'relation' => 'AND',
@@ -739,6 +762,61 @@ class BCC_Login_Visibility {
 
         // Set the meta query to the complete, altered query
         $query->set('meta_query', $meta_query);
+    }
+
+    /**
+     * Applies the visibility rules to queries that also span post types without
+     * visibility support, leaving those post types visible.
+     *
+     * The rules are added as a subquery rather than merged into the meta query,
+     * both so they can be skipped per post type and so they don't leak into the
+     * conditions the caller asked for.
+     *
+     * @param string   $where
+     * @param WP_Query $query
+     * @return string
+     */
+    function filter_posts_where( $where, $query ) {
+        $rules                  = $query->get('bcc_login_visibility_rules');
+        $unsupported_post_types = (array) $query->get('bcc_login_unsupported_post_types');
+
+        if ( empty( $rules ) ) {
+            return $where;
+        }
+
+        global $wpdb;
+
+        // 'filter_pre_get_posts()' always builds a clause group, but guard anyway:
+        // WP_Meta_Query expects a group and silently drops a bare clause, which
+        // would leave the query unfiltered. Same test as its own
+        // WP_Meta_Query::is_first_order_clause().
+        if ( isset( $rules['key'] ) || isset( $rules['value'] ) ) {
+            $rules = array( $rules );
+        }
+
+        // Build the rules against an aliased copy of the posts table, so the
+        // generated postmeta joins stay scoped to the subquery and can't collide
+        // with the joins of the query we're filtering.
+        $meta_query = new WP_Meta_Query( $rules );
+        $clauses    = $meta_query->get_sql( 'post', 'bcc_visibility_posts', 'ID', $query );
+
+        $subquery = "{$wpdb->posts}.ID IN ("
+            . " SELECT bcc_visibility_posts.ID FROM {$wpdb->posts} AS bcc_visibility_posts"
+            . " {$clauses['join']} WHERE 1=1 {$clauses['where']}"
+        . ' )';
+
+        // Post types without visibility support skip the rules entirely.
+        if ( ! empty( $unsupported_post_types ) ) {
+            $placeholders = implode( ', ', array_fill( 0, count( $unsupported_post_types ), '%s' ) );
+            $escape       = $wpdb->prepare(
+                "{$wpdb->posts}.post_type IN ( {$placeholders} )",
+                $unsupported_post_types
+            );
+
+            return $where . " AND ( {$escape} OR {$subquery} )";
+        }
+
+        return $where . " AND ( {$subquery} )";
     }
 
     /**
@@ -1321,10 +1399,43 @@ class BCC_Login_Visibility {
     }
 
     function supports_visibility_filter($query) {
-        if (!array_key_exists('post_type', $query->query)){
+        $post_types = array_key_exists('post_type', $query->query) ? $query->query['post_type'] : null;
+
+        // No post type given: WP_Query defaults to 'post', which we do filter.
+        // 'any' spans the public post types, so it needs filtering as well.
+        if ( empty( $post_types ) || 'any' === $post_types ) {
             return true;
         }
-        return in_array($query->query['post_type'], $this->visibility_post_types) && $query->query['post_type'] != 'nav_menu_item';
+
+        // Menu items are handled in 'filter_menu_items()'.
+        $post_types = array_diff( (array) $post_types, array( 'nav_menu_item' ) );
+
+        return (bool) array_intersect( $post_types, $this->visibility_post_types );
+    }
+
+    /**
+     * Returns the queried post types that don't support visibility.
+     *
+     * @param WP_Query $query
+     * @return string[]
+     */
+    private function get_unsupported_post_types($query) {
+        $post_types = array_key_exists('post_type', $query->query) ? $query->query['post_type'] : null;
+
+        // No post type given: WP_Query defaults to 'post', which is supported.
+        if ( empty( $post_types ) ) {
+            return array();
+        }
+
+        // 'any' resolves to the post types WP_Query itself searches.
+        if ( 'any' === $post_types ) {
+            $post_types = array_keys( get_post_types( array( 'exclude_from_search' => false ) ) );
+        }
+
+        // Menu items are handled separately in 'filter_menu_items()'.
+        $post_types = array_diff( (array) $post_types, array( 'nav_menu_item' ) );
+
+        return array_values( array_diff( (array) $post_types, $this->visibility_post_types ) );
     }
 
     function supports_target_groups_filtering($query) {
