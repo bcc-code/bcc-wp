@@ -661,8 +661,10 @@ class BCC_Login_Visibility {
             );
         }
 
-        // Default: just the visibility clause
-        $visibility_rules = $visibility_clause;
+        // Default: just the visibility clause, wrapped as a clause group.
+        // Every branch below keeps $rules a group: WP_Meta_Query expects one and
+        // silently drops a bare clause, which would leave a query unfiltered.
+        $visibility_rules = array( $visibility_clause );
 
         // Include also posts where visibility isn't specified based on the Default Content Access
         if ( $user_level >= $this->_settings->default_visibility ) {
@@ -784,10 +786,18 @@ class BCC_Login_Visibility {
 
         global $wpdb;
 
+        // 'filter_pre_get_posts()' always builds a clause group, but guard anyway:
+        // WP_Meta_Query expects a group and silently drops a bare clause, which
+        // would leave the query unfiltered. Same test as its own
+        // WP_Meta_Query::is_first_order_clause().
+        if ( isset( $rules['key'] ) || isset( $rules['value'] ) ) {
+            $rules = array( $rules );
+        }
+
         // Build the rules against an aliased copy of the posts table, so the
         // generated postmeta joins stay scoped to the subquery and can't collide
         // with the joins of the query we're filtering.
-        $meta_query = new WP_Meta_Query( array( $rules ) );
+        $meta_query = new WP_Meta_Query( $rules );
         $clauses    = $meta_query->get_sql( 'post', 'bcc_visibility_posts', 'ID', $query );
 
         $subquery = "{$wpdb->posts}.ID IN ("
