@@ -1422,6 +1422,9 @@ class BCC_Login_Visibility {
             $post_types = array_keys( get_post_types( array( 'exclude_from_search' => false ) ) );
         }
 
+        // Menu items are handled separately in 'filter_menu_items()'.
+        $post_types = array_diff( (array) $post_types, array( 'nav_menu_item' ) );
+
         return array_values( array_diff( (array) $post_types, $this->visibility_post_types ) );
     }
 
