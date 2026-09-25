@@ -33,6 +33,12 @@ class BCC_Login_Visibility {
     private $visibility_post_types = array( 'post', 'page', 'attachment', 'nav_menu_item' );
     private $post_types_allowing_filtering = array( 'post', 'page' );
 
+    /** @var int|null Per-request cache for the visitor's level. */
+    private $_request_user_level = null;
+
+    /** @var string[]|null Per-request cache for the visitor's groups. */
+    private $_request_user_groups = null;
+
     function __construct( BCC_Login_Settings $settings, BCC_Login_Client $client, BCC_Coreapi_Client $groups ) {
         $this->_settings = $settings;
         $this->_client = $client;
@@ -48,6 +54,7 @@ class BCC_Login_Visibility {
         add_action( 'enqueue_block_editor_assets', array( $this, 'on_block_editor_assets' ) );
         add_action( 'pre_get_posts', array( $this, 'filter_pre_get_posts' ) );
         add_filter( 'posts_where', array( $this, 'filter_posts_where' ), 10, 2 );
+        add_filter( 'the_posts', array( $this, 'filter_the_posts' ), 20, 2 );
         add_filter( 'wp_get_nav_menu_items', array( $this, 'filter_menu_items' ), 20 );
         add_filter( 'render_block', array( $this, 'on_render_block' ), 10, 2 );
 
@@ -227,7 +234,18 @@ class BCC_Login_Visibility {
             $post_id =  get_option('page_on_front');
         }
 
-        $post = $post_id ? get_post($post_id) : get_post();
+        // Only a singular view has a post of its own. On an archive or a search
+        // page 'get_post()' returns the first row of the result set, which the
+        // visitor never asked for - gating on it sent anonymous searchers
+        // straight to the login screen whenever a restricted article happened
+        // to rank first. Archives fall back to the site's default visibility.
+        if ( $post_id ) {
+            $post = get_post( $post_id );
+        } elseif ( is_singular() ) {
+            $post = get_post();
+        } else {
+            $post = null;
+        }
         $level      = $this->_client->get_current_user_level();
         $visibility = (int)$this->_settings->default_visibility;        
 
@@ -750,6 +768,26 @@ class BCC_Login_Visibility {
         if ( ! $query->get('suppress_filters') ) {
             $query->set('bcc_login_visibility_rules', $rules);
             $query->set('bcc_login_unsupported_post_types', $unsupported_post_types);
+
+            // Search is the one place where another plugin routinely takes the
+            // query over: a search integration (SearchWP, for one) answers
+            // 'posts_pre_query' with its own result set, so the SQL above -
+            // and the visibility subquery in it - never runs. Such
+            // integrations do read 'meta_query' off the query vars, so the
+            // rules are published there as well for searches. Whoever ends up
+            // executing the search then applies them, which keeps the result
+            // count and the paging honest; 'filter_the_posts()' remains the
+            // backstop for anything that honours neither.
+            if ( $query->is_search ) {
+                $meta_query = array_filter( array(
+                    'relation' => 'AND',
+                    ! empty( $meta_query ) ? $meta_query : null,
+                    $rules,
+                ) );
+
+                $query->set( 'meta_query', $meta_query );
+            }
+
             return;
         }
 
@@ -762,6 +800,164 @@ class BCC_Login_Visibility {
 
         // Set the meta query to the complete, altered query
         $query->set('meta_query', $meta_query);
+    }
+
+    /**
+     * Removes posts the visitor may not see from a result set.
+     *
+     * 'filter_posts_where()' normally does this in SQL, but an integration can
+     * hand WP_Query its results directly through 'posts_pre_query', in which
+     * case the SQL - and the visibility subquery inside it - is never run.
+     * SearchWP does exactly that for site searches, which is how restricted
+     * articles ended up in search results for logged-out visitors.
+     *
+     * This is the backstop for that whole class of bypass, not for SearchWP
+     * specifically: whatever produced the rows, they are checked here.
+     *
+     * @param WP_Post[] $posts
+     * @param WP_Query $query
+     * @return WP_Post[]
+     */
+    function filter_the_posts( $posts, $query ) {
+        if ( empty( $posts ) || ! is_array( $posts ) ) {
+            return $posts;
+        }
+
+        if ( $this->should_skip_auth() ) {
+            return $posts;
+        }
+
+        if ( current_user_can( 'edit_posts' ) ) {
+            return $posts;
+        }
+
+        if ( ! $this->supports_visibility_filter( $query ) ) {
+            return $posts;
+        }
+
+        // Single post views are handled by 'on_template_redirect()', which
+        // sends the visitor to login rather than silently emptying the query.
+        if ( $query->is_singular && $query->is_main_query() ) {
+            return $posts;
+        }
+
+        $level           = $this->get_request_user_level();
+        $user_groups     = $this->get_request_user_groups();
+        $has_full_access = ! empty( $user_groups )
+            && count( array_intersect( $this->_settings->full_content_access_groups, $user_groups ) ) > 0;
+
+        $filtered = array();
+
+        foreach ( $posts as $post ) {
+            if ( ! $post instanceof WP_Post ) {
+                $filtered[] = $post;
+                continue;
+            }
+
+            if ( $this->is_post_visible( $post, $level, $user_groups, $has_full_access ) ) {
+                $filtered[] = $post;
+            }
+        }
+
+        $removed = count( $posts ) - count( $filtered );
+
+        if ( $removed > 0 ) {
+            // 'found_posts' was filtered before this runs, so the total can only
+            // be corrected by what was removed from the rows in hand. It stays
+            // approximate when a bypassed query spans several pages - an
+            // over-counted total is a lesser problem than a leaked article.
+            if ( isset( $query->found_posts ) ) {
+                $query->found_posts = max( 0, (int) $query->found_posts - $removed );
+
+                $per_page = (int) $query->get( 'posts_per_page' );
+                if ( $per_page > 0 ) {
+                    $query->max_num_pages = (int) ceil( $query->found_posts / $per_page );
+                }
+            }
+        }
+
+        return array_values( $filtered );
+    }
+
+    /**
+     * Whether a single post is visible at the given level and group membership.
+     *
+     * Mirrors the rules 'filter_pre_get_posts()' expresses as a meta query, so
+     * the two agree about who may see what.
+     *
+     * @param WP_Post $post
+     * @param int $level
+     * @param string[] $user_groups
+     * @param bool $has_full_access
+     * @return bool
+     */
+    private function is_post_visible( WP_Post $post, $level, array $user_groups, $has_full_access ) {
+        $raw = get_post_meta( $post->ID, 'bcc_login_visibility', true );
+
+        // 'on_meta_saved()' deletes the meta when it equals VISIBILITY_DEFAULT,
+        // so both "absent" and 0 mean "inherit the site default".
+        $visibility = ( '' === $raw || null === $raw || false === $raw ) ? 0 : (int) $raw;
+
+        if ( self::VISIBILITY_DEFAULT === $visibility ) {
+            $visibility = (int) $this->_settings->default_visibility;
+        }
+
+        if ( is_user_logged_in() ) {
+            // Logged-in visitors never see posts aimed only at logged-out ones.
+            if ( $visibility < self::VISIBILITY_DEFAULT || $visibility > $level ) {
+                return false;
+            }
+        } elseif ( $visibility > $level ) {
+            return false;
+        }
+
+        if ( $has_full_access || empty( $this->_settings->site_groups ) ) {
+            return true;
+        }
+
+        $post_groups = $this->_settings->array_union(
+            (array) get_post_meta( $post->ID, 'bcc_groups', false ),
+            (array) get_post_meta( $post->ID, 'bcc_visibility_groups', false )
+        );
+
+        if ( empty( $post_groups ) ) {
+            return true;
+        }
+
+        if ( empty( $user_groups ) ) {
+            return false;
+        }
+
+        return count( array_intersect( $post_groups, $user_groups ) ) > 0;
+    }
+
+    /**
+     * Current user level, resolved once per request.
+     *
+     * @return int
+     */
+    private function get_request_user_level() {
+        if ( ! isset( $this->_request_user_level ) ) {
+            $this->_request_user_level = (int) $this->_client->get_current_user_level();
+        }
+
+        return $this->_request_user_level;
+    }
+
+    /**
+     * Current user's groups, resolved once per request.
+     *
+     * 'get_current_user_groups()' is transient-backed, but 'the_posts' fires
+     * for every query on a page, so memoise it here as well.
+     *
+     * @return string[]
+     */
+    private function get_request_user_groups() {
+        if ( ! isset( $this->_request_user_groups ) ) {
+            $this->_request_user_groups = (array) $this->get_current_user_groups();
+        }
+
+        return $this->_request_user_groups;
     }
 
     /**
