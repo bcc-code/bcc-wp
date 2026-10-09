@@ -136,7 +136,8 @@ jobs:
           git push
 
           cd ..
-          zip -r bcc-attachments-rss-feed.zip bcc-attachments-rss-feed
+          # node_modules is only needed for the build, so keep it out of the released plugin
+          zip -r bcc-attachments-rss-feed.zip bcc-attachments-rss-feed -x '*/node_modules/*'
           cd ..
 
           echo "::set-output name=tag_name::bcc-attachments-rss-feed-v${build_version}"
