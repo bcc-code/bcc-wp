@@ -136,7 +136,8 @@ jobs:
           git push
 
           cd ..
-          zip -r bcc-post-update-translations-notifier.zip bcc-post-update-translations-notifier
+          # node_modules is only needed for the build, so keep it out of the released plugin
+          zip -r bcc-post-update-translations-notifier.zip bcc-post-update-translations-notifier -x '*/node_modules/*'
           cd ..
 
           echo "::set-output name=tag_name::bcc-post-update-translations-notifier-v${build_version}"
