@@ -28,6 +28,7 @@ require_once( 'includes/class-bcc-coreapi-client.php' );
 require_once( 'includes/class-bcc-storage.php' );
 require_once( 'includes/class-bcc-notifications.php' );
 require_once( 'includes/class-exclusive-lock.php' );
+require_once( 'includes/class-bcc-login-cleanup.php' );
 
 class BCC_Login {
     /**
@@ -51,7 +52,8 @@ class BCC_Login {
     private BCC_Coreapi_Client $_coreapi;
     private BCC_Notifications $_notifications;
     private BCC_Storage $_storage;
-    
+    private BCC_Login_Cleanup $_cleanup;
+
     /**
      * Initialize the plugin.
      */
@@ -73,6 +75,7 @@ class BCC_Login {
         $this->_feed = new BCC_Login_Feed( $this->_settings, $this->_client );
         $this->_updater = new BCC_Login_Updater( $this->plugin, $this->plugin_slug, $this->plugin_version, $this->plugin_name );
         $this->_notifications = new BCC_Notifications( $this->_settings, $this->_coreapi );
+        $this->_cleanup = new BCC_Login_Cleanup();
 
         if (!empty($this->_settings->site_groups) || !empty($this->_settings->full_content_access_groups)) {
             $this->_coreapi->ensure_subscription_to_person_updates();
@@ -265,6 +268,7 @@ class BCC_Login {
      * Called when plugin is deactivated
      */
     static function deactivate_plugin() {
+        BCC_Login_Cleanup::unschedule();
         flush_rewrite_rules();
     }
 
