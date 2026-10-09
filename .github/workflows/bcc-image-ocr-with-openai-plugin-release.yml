@@ -133,7 +133,8 @@ jobs:
           git push
 
           cd ..
-          zip -r bcc-image-ocr-with-openai.zip bcc-image-ocr-with-openai
+          # node_modules is only needed for the build, so keep it out of the released plugin
+          zip -r bcc-image-ocr-with-openai.zip bcc-image-ocr-with-openai -x '*/node_modules/*'
           cd ..
 
           echo "::set-output name=tag_name::bcc-image-ocr-with-openai-v${build_version}"
