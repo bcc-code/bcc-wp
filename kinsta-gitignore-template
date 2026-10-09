@@ -17,3 +17,8 @@ wp-content/plugins/*
 # specify (see the commented-out example.)
 wp-content/themes/*
 #!wp-content/themes/bcc-theme/
+
+# Never commit node_modules, not even inside the plugins and themes you whitelist above.
+# Keep this as the last rule: a whitelist rule added below it (e.g. one ending in /* or /**)
+# would include node_modules again.
+node_modules
