@@ -136,7 +136,8 @@ jobs:
           git push
 
           cd ..
-          zip -r bcc-keep-translated-posts-status-same-as-original.zip bcc-keep-translated-posts-status-same-as-original
+          # node_modules is only needed for the build, so keep it out of the released plugin
+          zip -r bcc-keep-translated-posts-status-same-as-original.zip bcc-keep-translated-posts-status-same-as-original -x '*/node_modules/*'
           cd ..
 
           echo "::set-output name=tag_name::bcc-keep-translated-posts-status-same-as-original-v${build_version}"
