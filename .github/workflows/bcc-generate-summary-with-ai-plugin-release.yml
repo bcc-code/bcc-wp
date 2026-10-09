@@ -130,7 +130,8 @@ jobs:
           git push
 
           cd ..
-          zip -r bcc-generate-summary-with-ai.zip bcc-generate-summary-with-ai
+          # node_modules is only needed for the build, so keep it out of the released plugin
+          zip -r bcc-generate-summary-with-ai.zip bcc-generate-summary-with-ai -x '*/node_modules/*'
           cd ..
 
           echo "::set-output name=tag_name::bcc-generate-summary-with-ai-v${build_version}"
