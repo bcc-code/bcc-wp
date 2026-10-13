@@ -71,7 +71,14 @@ class BCC_Login_Cleanup {
 
         if ( $only_missing_before ) {
             $before = get_option( self::MISSING_USERS_OPTION );
-            update_option( self::MISSING_USERS_OPTION, array( 'time' => time(), 'user_ids' => $user_ids ), false );
+            $now = array( 'time' => time(), 'user_ids' => $user_ids );
+            update_option( self::MISSING_USERS_OPTION, $now, false );
+
+            // Only continue once this list is saved, so the next run doesn't compare against an older one.
+            // update_option() also returns false when the value didn't change, so read it back instead.
+            if ( get_option( self::MISSING_USERS_OPTION ) !== $now ) {
+                return false;
+            }
 
             $missing_before = array();
             if ( isset( $before['time'], $before['user_ids'] ) && $before['time'] <= time() - 12 * HOUR_IN_SECONDS ) {
@@ -99,14 +106,24 @@ class BCC_Login_Cleanup {
 
             $deleted += $result;
 
-            // With a persistent object cache, a deleted user could otherwise still be loaded from the cache.
-            foreach ( $chunk as $user_id ) {
-                wp_cache_delete( $user_id, 'users' );
-                wp_cache_delete( $user_id, 'user_meta' );
-            }
+            self::clean_deleted_users_cache( $chunk );
         }
 
         return $deleted;
+    }
+
+    /**
+     * Removes deleted users from the object cache. With a persistent object cache, they could otherwise
+     * still be loaded from it. Clearing the 'users' group by id is enough for lookups by login, email or
+     * slug as well, as those only map to the id and then load the user by it.
+     *
+     * @param int[] $user_ids
+     */
+    static function clean_deleted_users_cache( $user_ids ) {
+        foreach ( $user_ids as $user_id ) {
+            wp_cache_delete( $user_id, 'users' );
+            wp_cache_delete( $user_id, 'user_meta' );
+        }
     }
 
     /**

@@ -677,6 +677,13 @@ class BCC_Login_Settings_Provider {
         ) {
             global $wpdb;
 
+            // Remember who gets deleted, to remove them from the object cache afterwards. The cleanup below only
+            // finds users that still have meta left, which isn't the case if the role was their only meta.
+            $subscriber_ids = array_map( 'intval', $wpdb->get_col(
+                "SELECT user_id FROM {$wpdb->prefix}usermeta
+                WHERE meta_key = '{$wpdb->prefix}capabilities' AND meta_value LIKE 'a:1:{s:10:\"subscriber\";b:1;}'"
+            ) );
+
             $sql = "DELETE {$wpdb->prefix}users, {$wpdb->prefix}usermeta
                     FROM {$wpdb->prefix}users
                     INNER JOIN {$wpdb->prefix}usermeta ON {$wpdb->prefix}users.ID = {$wpdb->prefix}usermeta.user_id
@@ -685,6 +692,8 @@ class BCC_Login_Settings_Provider {
                         meta_value LIKE 'a:1:{s:10:\"subscriber\";b:1;}'";
 
             $subscribers_deleted = $wpdb->query($sql);
+
+            BCC_Login_Cleanup::clean_deleted_users_cache( $subscriber_ids );
 
             if ( false === $subscribers_deleted ) {
                 add_settings_error(
