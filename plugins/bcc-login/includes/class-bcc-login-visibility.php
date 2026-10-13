@@ -730,7 +730,7 @@ class BCC_Login_Visibility {
         global $wp_embed;
 
         // Feeds read with the key list restricted posts in full, embeds included.
-        if ( is_feed() && $this->has_feed_key() ) {
+        if ( $this->has_feed_key() ) {
             return $html;
         }
 
@@ -799,12 +799,14 @@ class BCC_Login_Visibility {
     }
 
     /**
-     * Whether the request carries the key that unlocks the private feeds.
+     * Whether the request is for a feed and carries the key that unlocks the
+     * private feeds. Only feeds: added to any other URL, '?id=<key>' would
+     * open a restricted page.
      *
      * @return bool
      */
     private function has_feed_key() {
-        return ! empty($this->_settings->feed_key) && array_key_exists('id', $_GET) && $this->_settings->feed_key == $_GET['id'];
+        return is_feed() && ! empty($this->_settings->feed_key) && array_key_exists('id', $_GET) && $this->_settings->feed_key == $_GET['id'];
     }
 
     /**
@@ -1215,7 +1217,7 @@ class BCC_Login_Visibility {
     private function get_searchwp_visibility_sql( $alias ) {
         // The request-wide exemptions of 'filter_pre_get_posts()': editors, Phrase
         // with a valid token, and feeds read with the feed key.
-        if ( current_user_can( 'edit_posts' ) || $this->is_phrase_request() || ( is_feed() && $this->has_feed_key() ) ) {
+        if ( current_user_can( 'edit_posts' ) || $this->is_phrase_request() || $this->has_feed_key() ) {
             return null;
         }
 
