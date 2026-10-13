@@ -684,23 +684,26 @@ class BCC_Login_Settings_Provider {
                         meta_key = '{$wpdb->prefix}capabilities' AND
                         meta_value LIKE 'a:1:{s:10:\"subscriber\";b:1;}'";
 
-            $wpdb->query($sql);
+            $subscribers_deleted = $wpdb->query($sql);
+
+            if ( false === $subscribers_deleted ) {
+                add_settings_error(
+                    'subscribers_deleted',
+                    'subscribers_not_deleted',
+                    __( 'The subscribers could not be deleted.', 'bcc-login' ),
+                    'error'
+                );
+            }
 
             // The join above only removes the capabilities meta row of each subscriber,
             // so remove all remaining meta (e.g. openid-connect-generic-*) of users that no longer exist.
-            // The users tables are shared by all sites of a multisite network, so these aren't prefixed per site.
-            $sql = "DELETE {$wpdb->usermeta}
-                    FROM {$wpdb->usermeta}
-                    LEFT JOIN {$wpdb->users} ON {$wpdb->usermeta}.user_id = {$wpdb->users}.ID
-                    WHERE {$wpdb->users}.ID IS NULL";
-
-            $orphaned_meta_deleted = $wpdb->query($sql);
+            $orphaned_meta_deleted = BCC_Login_Cleanup::delete_orphaned_user_meta();
 
             if ( false === $orphaned_meta_deleted ) {
                 add_settings_error(
                     'subscribers_deleted',
                     'orphaned_user_meta_not_deleted',
-                    __( 'The user meta of deleted users could not be deleted.', 'bcc-login' ),
+                    __( 'Not all user meta of deleted users could be deleted.', 'bcc-login' ),
                     'error'
                 );
             }
@@ -731,8 +734,12 @@ class BCC_Login_Settings_Provider {
             // but skips the database when an object cache is in use, so force it here.
             delete_expired_transients( true );
 
-            // Only report the counts of the steps that succeeded, the others have an error notice.
-            $messages = array( __( 'All subscribers were successfully deleted.' ) );
+            // Only report the steps that succeeded, the others have an error notice.
+            $messages = array();
+
+            if ( false !== $subscribers_deleted ) {
+                $messages[] = __( 'All subscribers were successfully deleted.' );
+            }
 
             if ( false !== $orphaned_meta_deleted ) {
                 $messages[] = sprintf( __( 'Removed %d user meta rows of deleted users.', 'bcc-login' ), $orphaned_meta_deleted );
