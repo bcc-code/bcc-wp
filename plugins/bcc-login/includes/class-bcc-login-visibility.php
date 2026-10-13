@@ -14,6 +14,14 @@ class BCC_Login_Visibility {
 
     private const POST_VISIBILITY_GROUPS_IMPLEMENTATION_DATE = '2025-12-15 20:00:00';
 
+    // The query vars the query filters set to pass state between their hooks.
+    private const INTERNAL_QUERY_VARS = array(
+        'bcc_login_visibility_filter_added',
+        'bcc_login_visibility_rules',
+        'bcc_login_unsupported_post_types',
+        'bcc_login_skipped_unsupported',
+    );
+
     // A mapping of role -> level.
     private $levels = array(
         'bcc-login-member' => self::VISIBILITY_MEMBER,
@@ -33,6 +41,9 @@ class BCC_Login_Visibility {
     private $visibility_post_types = array( 'post', 'page', 'attachment', 'nav_menu_item' );
     private $post_types_allowing_filtering = array( 'post', 'page' );
 
+    /** @var bool Whether the query filters stand aside, while 'get_post_by_url()' looks a post up. */
+    private $_finding_post_by_url = false;
+
     /** @var int|null Per-request cache for the visitor's level. */
     private $_request_user_level = null;
 
@@ -47,7 +58,14 @@ class BCC_Login_Visibility {
         add_action( 'init', array( $this, 'on_init' ) );
         add_action( 'wp_loaded', array( $this, 'register_block_attributes' ) );
         add_action( 'template_redirect', array( $this, 'on_template_redirect' ), 0 );
-        add_filter( 'rest_pre_echo_response', array( $this, 'on_rest_pre_echo_response' ), 10, 3 );
+        // Both while WPML has the REST request's language set (from priority 10
+        // before the route's callback until priority 10 after it), so the posts
+        // checked are the ones the route serves.
+        add_filter( 'rest_request_before_callbacks', array( $this, 'filter_rest_single_post' ), 20, 3 );
+        add_filter( 'rest_request_after_callbacks', array( $this, 'filter_rest_yoast_head' ), 5, 3 );
+        add_action( 'rest_api_init', array( $this, 'on_rest_api_init' ) );
+        add_filter( 'rest_post_search_query', array( $this, 'filter_rest_post_search' ), PHP_INT_MAX );
+        add_filter( 'embed_oembed_html', array( $this, 'filter_embed_html' ), 10, 2 );
 
         add_action( 'added_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
         add_action( 'updated_post_meta', array( $this, 'on_meta_saved' ), 10, 4 );
@@ -55,6 +73,9 @@ class BCC_Login_Visibility {
         add_action( 'pre_get_posts', array( $this, 'filter_pre_get_posts' ) );
         add_filter( 'posts_where', array( $this, 'filter_posts_where' ), 10, 2 );
         add_filter( 'the_posts', array( $this, 'filter_the_posts' ), 20, 2 );
+        add_action( 'pre_get_posts', array( $this, 'recheck_unsupported_query' ), PHP_INT_MAX );
+        add_filter( 'searchwp\query\mods', array( $this, 'filter_searchwp_mods' ), 10, 2 );
+        add_filter( 'searchwp\query', array( $this, 'filter_searchwp_query' ), 10, 2 );
         add_filter( 'wp_get_nav_menu_items', array( $this, 'filter_menu_items' ), 20 );
         add_filter( 'render_block', array( $this, 'on_render_block' ), 10, 2 );
 
@@ -188,7 +209,7 @@ class BCC_Login_Visibility {
      * @return void
      */
     function on_template_redirect() {
-        global $wp;
+        global $wp, $wp_query;
 
         if ($this->should_skip_auth()) {
             return;
@@ -227,6 +248,18 @@ class BCC_Login_Visibility {
             return;
         }
 
+        // Not content: bcc-login's own endpoints - only the names it serves, which
+        // 'BCC_Login_Endpoints::serve_endpoint()' answers right after this, before
+        // anything else the URL asks for is rendered - and the site's robots.txt
+        // and favicon.ico. Not '?robots=1' on another URL: what that renders is up
+        // to other handlers, core's sitemaps for one.
+        $is_endpoint = in_array( get_query_var( 'bcc-login' ), BCC_Login_Endpoints::ENDPOINTS, true );
+        $is_robots   = ( is_robots() || is_favicon() ) && in_array( $wp->request, array( 'robots.txt', 'favicon.ico' ), true );
+
+        if ( $is_endpoint || $is_robots ) {
+            return;
+        }
+
         $post_id = 0;
         if ( is_home () ) {
             $post_id =  get_option('page_for_posts');
@@ -238,7 +271,7 @@ class BCC_Login_Visibility {
         // page 'get_post()' returns the first row of the result set, which the
         // visitor never asked for - gating on it sent anonymous searchers
         // straight to the login screen whenever a restricted article happened
-        // to rank first. Archives fall back to the site's default visibility.
+        // to rank first.
         if ( $post_id ) {
             $post = get_post( $post_id );
         } elseif ( is_singular() ) {
@@ -246,6 +279,25 @@ class BCC_Login_Visibility {
         } else {
             $post = null;
         }
+
+        // A listing - archive, search, the posts page, a feed in a core format - is
+        // served if it was filtered for the visitor and holds posts they may see.
+        // Anything else falls back to the site's default visibility: an empty or
+        // unfiltered listing (e.g. of a post type without visibility support), a
+        // comment feed, whose comments aren't filtered, and views another handler
+        // renders from a query of its own - feeds of other formats, trackbacks and
+        // core's sitemaps.
+        $is_core_feed = is_feed() && ! is_comment_feed()
+            && in_array( get_query_var( 'feed' ), array( 'feed', 'rss', 'rss2', 'atom', 'rdf' ), true );
+        $is_listing   = ( is_archive() || is_search() || is_home() || $is_core_feed )
+            && ( ! is_feed() || $is_core_feed )
+            && ! is_trackback()
+            && ! get_query_var( 'sitemap' ) && ! get_query_var( 'sitemap-stylesheet' );
+
+        if ( ! $post && $is_listing && $this->listing_has_visible_posts( $wp_query ) ) {
+            return;
+        }
+
         $level      = $this->_client->get_current_user_level();
         $visibility = (int)$this->_settings->default_visibility;        
 
@@ -355,111 +407,340 @@ class BCC_Login_Visibility {
     }
 
     /**
-     * Fail json request if the post requires a higher level.
+     * Whether a listing was filtered for the visitor and holds only posts they
+     * may see. Posts of a type without visibility support pass the filter
+     * unchecked, and their own pages fall back to the site's default visibility,
+     * so a listing that holds any doesn't count.
      *
+     * @param WP_Query $query
+     * @return bool
+     */
+    private function listing_has_visible_posts( $query ) {
+        if ( ! $query->get( 'bcc_login_visibility_filter_added' ) ) {
+            return false;
+        }
+
+        $unsupported_post_types = (array) $query->get( 'bcc_login_unsupported_post_types' );
+        $has_posts              = false;
+
+        foreach ( (array) $query->posts as $post ) {
+            if ( ! $post instanceof WP_Post ) {
+                continue;
+            }
+
+            if ( in_array( $post->post_type, $unsupported_post_types, true ) ) {
+                return false;
+            }
+
+            $has_posts = true;
+        }
+
+        return $has_posts;
+    }
+
+    /**
+     * Refuses a single post over the REST API to a visitor who may not view the
+     * post's own page.
+     *
+     * The routes in 'get_rest_requested_post()' load the post without a query,
+     * so the query filters never see it, and they let anyone read a published
+     * post: restricted posts were served to anonymous visitors. Runs before the
+     * route's callback, so a refused post isn't rendered at all.
+     *
+     * @param WP_REST_Response|WP_HTTP_Response|WP_Error|mixed $response
+     * @param array           $handler
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_HTTP_Response|WP_Error|mixed
+     */
+    function filter_rest_single_post( $response, $handler, $request ) {
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        $post = $this->get_rest_requested_post( $handler, $request );
+
+        if ( ! $post || $this->can_view_post( $post ) ) {
+            return $response;
+        }
+
+        return $this->rest_forbidden();
+    }
+
+    /**
+     * The post a REST API route serves on its own, if it's one of these: a
+     * single post from the posts controllers (core's and their subclasses), or
+     * the oEmbed data of a post ('/oembed/1.0/embed'), which holds its title,
+     * author and featured image.
+     *
+     * @param array           $handler
+     * @param WP_REST_Request $request
+     * @return WP_Post|null
+     */
+    private function get_rest_requested_post( $handler, $request ) {
+        $callback = $handler['callback'] ?? null;
+
+        if ( ! is_array( $callback ) || 'get_item' !== ( $callback[1] ?? null ) ) {
+            return null;
+        }
+
+        if ( ( $callback[0] ?? null ) instanceof WP_REST_Posts_Controller ) {
+            // The post the controller serves: an 'id' in the query string
+            // overrides the one in the route.
+            return get_post( (int) $request['id'] );
+        }
+
+        if ( ( $callback[0] ?? null ) instanceof WP_oEmbed_Controller ) {
+            return $this->get_post_by_url( $request['url'] );
+        }
+
+        return null;
+    }
+
+    /**
+     * The post one of the site's URLs points to, found as WordPress finds the
+     * post of an oEmbed ('WP_oEmbed_Controller::get_item()',
+     * 'get_oembed_response_data_for_url()'), but whoever the visitor is.
+     *
+     * Unless a plugin such as WPML turns the URL into a post ID first,
+     * 'url_to_postid()' finds the post with a query, which the query filters
+     * would empty for a visitor who may not view the post - so nothing would be
+     * left to refuse.
+     *
+     * @param string $url
+     * @return WP_Post|null
+     */
+    private function get_post_by_url( $url ) {
+        $this->_finding_post_by_url = true;
+
+        try {
+            $post_id = apply_filters( 'oembed_request_post_id', url_to_postid( $url ), $url );
+        } finally {
+            $this->_finding_post_by_url = false;
+        }
+
+        return $post_id ? get_post( $post_id ) : null;
+    }
+
+    /**
+     * Refuses the head Yoast SEO's 'get_head' route ('/yoast/v1/get_head?url=')
+     * returns for a post the visitor may not view: its title and description,
+     * which Yoast takes from the content when there's no excerpt.
+     *
+     * Checked once Yoast has answered, on the post Yoast's own lookup finds for
+     * the URL. A head that lookup can't place is refused rather than served, in
+     * case a Yoast update reads the URL differently.
+     *
+     * @param WP_REST_Response|WP_HTTP_Response|WP_Error|mixed $response
+     * @param array           $handler
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_HTTP_Response|WP_Error|mixed
+     */
+    function filter_rest_yoast_head( $response, $handler, $request ) {
+        $callback = $handler['callback'] ?? null;
+
+        if (
+            ! $response instanceof WP_REST_Response
+            || 200 !== $response->get_status() // Yoast's 404 head says nothing about a post.
+            || ! is_array( $callback )
+            || ! is_a( $callback[0] ?? null, 'Yoast\WP\SEO\Routes\Indexables_Head_Route' )
+            || 'get_head' !== ( $callback[1] ?? null )
+            || current_user_can( 'edit_posts' )
+        ) {
+            return $response;
+        }
+
+        // As Indexables_Head_Route::get_head() and Indexable_Head_Action::for_url() do.
+        $url  = esc_url_raw( utf8_uri_encode( (string) $request['url'] ) );
+        $meta = false;
+
+        if ( function_exists( 'YoastSEO' ) ) {
+            $meta = trailingslashit( get_home_url() ) === $url
+                ? YoastSEO()->meta->for_home_page()
+                : YoastSEO()->meta->for_url( $url );
+        }
+
+        $indexable   = $meta ? $meta->indexable : null;
+        $object_type = is_object( $indexable ) ? ( $indexable->object_type ?? null ) : null;
+
+        // Not a post: an archive, a term, the home page listing the latest posts.
+        if ( is_string( $object_type ) && 'post' !== $object_type ) {
+            return $response;
+        }
+
+        $post = 'post' === $object_type ? get_post( (int) $indexable->object_id ) : null;
+
+        if ( $post && is_post_publicly_viewable( $post ) && $this->can_view_post( $post ) ) {
+            return $response;
+        }
+
+        return $this->rest_forbidden();
+    }
+
+    /**
+     * The REST API's answer to a visitor who may not view a post: core's own
+     * 401 when logged out, 403 when logged in.
+     *
+     * @return WP_Error
+     */
+    private function rest_forbidden() {
+        return new WP_Error(
+            'rest_forbidden',
+            __( 'Sorry, you are not allowed to do that.' ),
+            array( 'status' => rest_authorization_required_code() )
+        );
+    }
+
+    /**
+     * Whether the visitor may view a single post: the rules 'on_template_redirect()'
+     * applies to the post's page, less the magic links, which only open the page.
+     *
+     * The visitor is the user WordPress authenticated. Over the REST API that
+     * takes the REST nonce the site's own scripts send - without it, a member
+     * counts as logged out, as in the API's post lists.
+     *
+     * @param WP_Post $post
+     * @return bool
+     */
+    private function can_view_post( WP_Post $post ) {
+        if ( current_user_can( 'edit_posts' ) ) {
+            return true;
+        }
+
+        $visibility = (int) get_post_meta( $post->ID, 'bcc_login_visibility', true );
+        if ( ! $visibility ) {
+            $visibility = (int) $this->_settings->default_visibility;
+        }
+
+        if ( $visibility > $this->_client->get_current_user_level() ) {
+            return false;
+        }
+
+        if ( empty( $this->_settings->site_groups ) ) {
+            return true;
+        }
+
+        $post_groups = $this->_settings->array_union(
+            get_post_meta( $post->ID, 'bcc_groups', false ),
+            get_post_meta( $post->ID, 'bcc_visibility_groups', false )
+        );
+
+        if ( empty( $post_groups ) ) {
+            return true;
+        }
+
+        $user_groups = is_user_logged_in() ? (array) $this->get_current_user_groups() : array();
+
+        return ! empty( $user_groups ) && count( array_intersect(
+            $this->_settings->array_union( $post_groups, $this->_settings->full_content_access_groups ),
+            $user_groups
+        ) ) > 0;
+    }
+
+    /**
+     * Adds 'filter_rest_post_list()' to the REST API's post lists.
+     *
+     * @return void
+     */
+    function on_rest_api_init() {
+        foreach ( get_post_types( array( 'show_in_rest' => true ) ) as $post_type ) {
+            add_filter( "rest_{$post_type}_query", array( $this, 'filter_rest_post_list' ), PHP_INT_MAX );
+        }
+    }
+
+    /**
+     * Applies the site's default visibility to a REST API post list of a post type
+     * without visibility support: empties it for visitors below that visibility.
+     *
+     * The query filters let those post types through unchecked - their posts have
+     * no visibility of their own - so the lists showed every post to anyone, while
+     * their pages, archives and single posts over the API fall back to the site's
+     * default visibility. Runs last, so no other filter widens the list again.
+     *
+     * @param array $args
      * @return array
      */
-    function on_rest_pre_echo_response( $response, $object, $request ) {
-        $route = $request->get_route();
-        $session_is_valid = $this->_client->is_session_valid();
-        $user_level = (int) $this->_client->get_user_level_based_on_claims();
-        $user_groups = $this->get_current_user_groups();
+    function filter_rest_post_list( $args ) {
+        $post_type = $args['post_type'] ?? '';
 
-        if ( is_array($response) && array_key_exists('code', $response) && $response['code'] == 'rest_cookie_invalid_nonce' )
-            return $response;
-
-        if ( $route == '/wp/v2/search' ) {
-            $response_arr = [];
-
-            foreach ( $response as $item ) {
-                $visibility = (int) $this->_settings->default_visibility;
-
-                $post_visibility = (int) get_post_meta( $item['id'], 'bcc_login_visibility', true );
-                if ( $post_visibility ) {
-                    $visibility = $post_visibility;
-                }
-
-                if ( $session_is_valid ) {
-                    // Simply add the post if the post visibility is default or public
-                    if ( $visibility == self::VISIBILITY_DEFAULT || $visibility == self::VISIBILITY_PUBLIC ) {
-                        $response_arr[] = $item;
-                        continue;
-                    }
-
-                    // Check login visibility
-                    if ( $visibility && $visibility > $user_level ) {
-                        continue;
-                    }
-
-                    // Check user groups
-                    if ( !empty($this->_settings->site_groups) && !current_user_can( 'edit_posts' ) ) {
-                        $post_target_groups = get_post_meta( $item['id'] , 'bcc_groups', false );
-                        $post_visibility_groups = get_post_meta( $item['id'] , 'bcc_visibility_groups', false );
-
-                        $visibility_groups = $this->_settings->array_union($post_target_groups, $post_visibility_groups);
-
-                        if ($visibility_groups && !$user_groups) {
-                            continue;
-                        }
-
-                        $visibility_groups = $this->_settings->array_union($visibility_groups, $this->_settings->full_content_access_groups);
-
-                        if ( count(array_intersect($visibility_groups, $user_groups)) == 0 ) {
-                            continue;
-                        }
-                    }
-
-                    $response_arr[] = $item;
-                }
-                else if ( $visibility <= self::VISIBILITY_PUBLIC ) {
-                    // If the post visibility is public-only, default or public
-                    $response_arr[] = $item;
-                }
-            }
-
-            return $response_arr;
+        // Post types with visibility support are filtered in 'filter_pre_get_posts()',
+        // menu items in 'filter_menu_items()'.
+        if ( 'nav_menu_item' !== $post_type && $this->is_unsupported_post_type( $post_type ) && $this->is_below_default_visibility() ) {
+            $args['post__in'] = array( 0 );
         }
 
-        else if ( preg_match('#^/wp/v2/(' . implode('|', $this->visibility_post_types) . ')/(\d+)$#', $route, $matches) ) {
-            $visibility = (int) $this->_settings->default_visibility;
+        return $args;
+    }
 
-            $post_visibility = (int) $response['meta']['bcc_login_visibility'];
-            if ( $post_visibility ) {
-                $visibility = $post_visibility;
-            }
-
-            if ( $session_is_valid ) {
-                // Check login visibility
-                if ( $visibility > $user_level ) {
-                    return $this->not_allowed_to_view_page();
-                }
-    
-                // Check user groups
-                if ( !empty($this->_settings->site_groups) && !current_user_can( 'edit_posts' ) ) {
-                    $post_target_groups = $response['meta']['bcc_groups'];
-                    $post_visibility_groups = $response['meta']['bcc_visibility_groups'];
-
-                    $visibility_groups = $this->_settings->array_union($post_target_groups, $post_visibility_groups);
-
-                    if ( $visibility_groups && !$user_groups ) {
-                        return $this->not_allowed_to_view_page();
-                    }
-
-                    $visibility_groups = $this->_settings->array_union($visibility_groups, $this->_settings->full_content_access_groups);
-
-                    if ( count(array_intersect($visibility_groups, $user_groups)) == 0 ) {
-                        return $this->not_allowed_to_view_page();
-                    }
-                }
-            }
-            else {
-                if ( $visibility > self::VISIBILITY_PUBLIC ) {
-                    return $this->not_allowed_to_view_page();
-                }
-            }
+    /**
+     * Leaves post types without visibility support out of the REST API's search
+     * ('/wp/v2/search') for visitors below the site's default visibility, as
+     * 'filter_rest_post_list()' does for their lists. Done in the query, so the
+     * totals and paging agree with the results.
+     *
+     * @param array $query_args
+     * @return array
+     */
+    function filter_rest_post_search( $query_args ) {
+        if ( ! $this->is_below_default_visibility() ) {
+            return $query_args;
         }
 
-        return $response;
+        $post_types = array_values( array_filter(
+            (array) ( $query_args['post_type'] ?? array() ),
+            function ( $post_type ) {
+                return ! $this->is_unsupported_post_type( $post_type );
+            }
+        ) );
+
+        if ( $post_types ) {
+            $query_args['post_type'] = $post_types;
+        } else {
+            // No post types left would mean any post type to WP_Query.
+            $query_args['post__in'] = array( 0 );
+        }
+
+        return $query_args;
+    }
+
+    /**
+     * Whether the visitor's level is below the site's default visibility, the
+     * visibility of posts of a type without visibility support.
+     *
+     * @return bool
+     */
+    private function is_below_default_visibility() {
+        return ! current_user_can( 'edit_posts' )
+            && (int) $this->_settings->default_visibility > $this->_client->get_current_user_level();
+    }
+
+    /**
+     * Shows a link instead of the embed of one of the site's own posts that the
+     * visitor may not view: the embed shows the post's title, author and
+     * featured image.
+     *
+     * Decided here, as the embed is output: WordPress caches it in the
+     * embedding post for every visitor, so whoever rendered it first would
+     * otherwise decide what everyone gets.
+     *
+     * @param string|false $html
+     * @param string       $url
+     * @return string|false
+     */
+    function filter_embed_html( $html, $url ) {
+        global $wp_embed;
+
+        // Feeds read with the key list restricted posts in full, embeds included.
+        if ( $this->has_feed_key() ) {
+            return $html;
+        }
+
+        $post = $this->get_post_by_url( $url );
+
+        if ( ! $post || $this->can_view_post( $post ) ) {
+            return $html;
+        }
+
+        return $wp_embed instanceof WP_Embed ? $wp_embed->maybe_make_link( $url ) : '';
     }
 
     private function not_allowed_to_view_page($visited_url = "") {
@@ -502,7 +783,7 @@ class BCC_Login_Visibility {
     function should_skip_auth() {
         global $pagenow;
 
-        if (! empty($this->_settings->feed_key) && array_key_exists('id',$_GET) && $this->_settings->feed_key == $_GET['id'] ) {
+        if ( $this->has_feed_key() ) {
             return true;
         }
 
@@ -515,6 +796,17 @@ class BCC_Login_Visibility {
         }
 
         return false;
+    }
+
+    /**
+     * Whether the request is for a feed and carries the key that unlocks the
+     * private feeds. Only feeds: added to any other URL, '?id=<key>' would
+     * open a restricted page.
+     *
+     * @return bool
+     */
+    private function has_feed_key() {
+        return is_feed() && ! empty($this->_settings->feed_key) && array_key_exists('id', $_GET) && $this->_settings->feed_key == $_GET['id'];
     }
 
     /**
@@ -620,16 +912,24 @@ class BCC_Login_Visibility {
      * @return void
      */
     function filter_pre_get_posts( $query ) {
-        // Don't filter posts for Phrase
-        // Check if Phrase (Memsource) is installed
-        if ( class_exists('\Memsource\Utils\AuthUtils') ) {
-            // Check if there's any token in the request
-            if ( \Memsource\Utils\AuthUtils::getTokenFromRequest() != false ) {
-                // Validate the token in the request
-                if ( \Memsource\Utils\AuthUtils::validateTokenInRequest() ) {
-                    return;
-                }
+        // Those query vars only count when set here. Some plugins pass request
+        // parameters straight into a query - Contextual Related Posts' REST API
+        // does - so a visitor could otherwise mark the query as filtered already,
+        // or its post types as unsupported, and get restricted posts unfiltered.
+        foreach ( self::INTERNAL_QUERY_VARS as $var ) {
+            if ( is_array( $query->query ) && array_key_exists( $var, $query->query ) ) {
+                unset( $query->query[ $var ], $query->query_vars[ $var ] );
             }
+        }
+
+        // A lookup of the post a URL points to, which is then checked on its own.
+        if ( $this->_finding_post_by_url ) {
+            return;
+        }
+
+        // Don't filter posts for Phrase
+        if ( $this->is_phrase_request() ) {
+            return;
         }
 
         // Single post views are handled in 'on_template_redirect()'. Secondary
@@ -638,19 +938,29 @@ class BCC_Login_Visibility {
             return;
         }
 
+        // A search that a search integration can take over is filtered whatever
+        // post types it asks for: SearchWP's native search drops the query's post
+        // type and searches every Source of its engine. Its SQL is filtered in
+        // 'filter_searchwp_mods()' and 'filter_searchwp_query()'; filtering the
+        // query here as well keeps 'filter_the_posts()' as the backstop for it and
+        // for other integrations. Not with 'suppress_filters' (as get_posts() does):
+        // that backstop doesn't run then, and the meta query fallback would hide
+        // every post type without visibility support.
+        $is_takeover_search = $query->is_search && ! $query->get('suppress_filters');
+
         // Don't filter posts for not supported post types
         // Menu items are e.g. handled in 'filter_menu_items()'
-        if ( !$this->supports_visibility_filter($query) ) {
+        if ( ! $is_takeover_search && ! $this->supports_visibility_filter( $query ) ) {
+            // Looked at again in 'recheck_unsupported_query()', once every
+            // 'pre_get_posts' callback has had its say about the post types.
+            $query->set( 'bcc_login_skipped_unsupported', 1 );
             return;
         }
 
         // Allow feeds to be accessed using key
-        if ( $query->is_feed && ! empty($this->_settings->feed_key) && array_key_exists('id', $_GET) && $this->_settings->feed_key == $_GET['id'] ) {
+        if ( $query->is_feed && $this->has_feed_key() ) {
             return;
         }
-
-        // Get original meta query
-        $meta_query = (array)$query->get('meta_query');
 
         // Check if visibility filters have already been added
         if ($query->get('bcc_login_visibility_filter_added')) {
@@ -658,7 +968,70 @@ class BCC_Login_Visibility {
             return;
         }
 
-        // Add visibility rules 
+        $rules = $this->get_visibility_rules();
+
+        // Indicate that this set of rules is for the visibility filter
+        $query->set('bcc_login_visibility_filter_added', 1);
+
+        $unsupported_post_types = $this->get_unsupported_post_types( $query );
+
+        // The rules are normally added as a subquery in 'filter_posts_where()'.
+        // That keeps them out of the caller's own meta query, lets post types
+        // without visibility support skip them - those never store
+        // 'bcc_login_visibility', so the rules would otherwise hide all of them -
+        // and avoids the joins and GROUP BY that a merged meta query adds, which
+        // measured about twice as fast on a post archive.
+        //
+        // A search that SearchWP takes over never runs this SQL; the same rules
+        // reach SearchWP's own query through 'filter_searchwp_mods()' and
+        // 'filter_searchwp_query()'.
+        //
+        // 'posts_where' is skipped for queries using 'suppress_filters' (as
+        // get_posts() does), so those fall back to the meta query rather than
+        // being left unfiltered. Unsupported post types are hidden in that case.
+        if ( ! $query->get('suppress_filters') ) {
+            $query->set('bcc_login_visibility_rules', $rules);
+            $query->set('bcc_login_unsupported_post_types', $unsupported_post_types);
+            return;
+        }
+
+        // Add all the rules to the original meta query
+        $meta_query = array(
+            'relation' => 'AND',
+            (array)$query->get('meta_query'),
+            $rules,
+        );
+
+        // Set the meta query to the complete, altered query
+        $query->set('meta_query', $meta_query);
+    }
+
+    /**
+     * Looks again at a query 'filter_pre_get_posts()' let through because none of
+     * its post types support visibility, once every other 'pre_get_posts' callback
+     * has run. A callback that switches the query to a supported post type later
+     * on would otherwise get those posts unfiltered - as the feed's '?post_types='
+     * did. It can only add the rules, never lift them.
+     *
+     * @param WP_Query $query
+     * @return void
+     */
+    function recheck_unsupported_query( $query ) {
+        if ( ! $query->get( 'bcc_login_skipped_unsupported' ) || $query->get( 'bcc_login_visibility_filter_added' ) ) {
+            return;
+        }
+
+        $query->set( 'bcc_login_skipped_unsupported', 0 );
+        $this->filter_pre_get_posts( $query );
+    }
+
+    /**
+     * Builds the visibility rules for the current visitor, as a meta query
+     * clause group.
+     *
+     * @return array
+     */
+    private function get_visibility_rules() {
         $user_level = $this->_client->get_current_user_level();
         $visibility_clause = array();
 
@@ -750,56 +1123,120 @@ class BCC_Login_Visibility {
             );
         }
 
-        // Indicate that this set of rules is for the visibility filter
-        $query->set('bcc_login_visibility_filter_added', 1);
+        return $rules;
+    }
 
-        $unsupported_post_types = $this->get_unsupported_post_types( $query );
-
-        // The rules are normally added as a subquery in 'filter_posts_where()'.
-        // That keeps them out of the caller's own meta query, lets post types
-        // without visibility support skip them - those never store
-        // 'bcc_login_visibility', so the rules would otherwise hide all of them -
-        // and avoids the joins and GROUP BY that a merged meta query adds, which
-        // measured about twice as fast on a post archive.
-        //
-        // 'posts_where' is skipped for queries using 'suppress_filters' (as
-        // get_posts() does), so those fall back to the meta query rather than
-        // being left unfiltered. Unsupported post types are hidden in that case.
-        if ( ! $query->get('suppress_filters') ) {
-            $query->set('bcc_login_visibility_rules', $rules);
-            $query->set('bcc_login_unsupported_post_types', $unsupported_post_types);
-
-            // Search is the one place where another plugin routinely takes the
-            // query over: a search integration (SearchWP, for one) answers
-            // 'posts_pre_query' with its own result set, so the SQL above -
-            // and the visibility subquery in it - never runs. Such
-            // integrations do read 'meta_query' off the query vars, so the
-            // rules are published there as well for searches. Whoever ends up
-            // executing the search then applies them, which keeps the result
-            // count and the paging honest; 'filter_the_posts()' remains the
-            // backstop for anything that honours neither.
-            if ( $query->is_search ) {
-                $meta_query = array_filter( array(
-                    'relation' => 'AND',
-                    ! empty( $meta_query ) ? $meta_query : null,
-                    $rules,
-                ) );
-
-                $query->set( 'meta_query', $meta_query );
-            }
-
-            return;
+    /**
+     * Whether the request comes from Phrase (Memsource) with a valid token.
+     * Phrase fetches content to translate, so it sees all posts.
+     *
+     * @return bool
+     */
+    private function is_phrase_request() {
+        // Check if Phrase (Memsource) is installed
+        if ( ! class_exists('\Memsource\Utils\AuthUtils') ) {
+            return false;
         }
 
-        // Add all the rules to the meta query
-        $meta_query = array(
-            'relation' => 'AND',
-            $meta_query,
-            $rules,
-        );
+        // Check if there's any token in the request, then validate it
+        return \Memsource\Utils\AuthUtils::getTokenFromRequest() != false
+            && \Memsource\Utils\AuthUtils::validateTokenInRequest();
+    }
 
-        // Set the meta query to the complete, altered query
-        $query->set('meta_query', $meta_query);
+    /**
+     * Applies the visibility rules to SearchWP's own queries.
+     *
+     * SearchWP answers the site search through 'posts_pre_query' with SQL of its
+     * own, so 'filter_posts_where()' never applies to it, and 'filter_the_posts()'
+     * can only trim the page afterwards, leaving totals and paging off. Its live
+     * search, REST API and shortcodes don't use WP_Query at all, so neither sees
+     * their rows. The rules are therefore added to SearchWP's own query, as a
+     * plain condition on the post IDs. They used to reach it as a meta query, but
+     * SearchWP joins that per postmeta row and repeats the joins in its relevance
+     * sums, so every result's score was multiplied by its number of meta rows -
+     * scrambling the ranking and making searches several times slower.
+     *
+     * A Mod with only a WHERE clause adds no JOIN: SearchWP puts the clause in
+     * the WHERE of its index query, so restricted posts add no weight to results.
+     *
+     * @param \SearchWP\Mod[] $mods
+     * @param \SearchWP\Query $query
+     * @return \SearchWP\Mod[]
+     */
+    function filter_searchwp_mods( $mods, $query ) {
+        if ( ! class_exists( '\SearchWP\Mod' ) || empty( \SearchWP::$index ) ) {
+            return $mods;
+        }
+
+        $condition = $this->get_searchwp_visibility_sql( \SearchWP::$index->get_alias() );
+
+        if ( null === $condition ) {
+            return $mods;
+        }
+
+        $mod = new \SearchWP\Mod();
+        $mod->raw_where_sql( $condition );
+
+        $mods   = (array) $mods;
+        $mods[] = $mod;
+
+        return $mods;
+    }
+
+    /**
+     * Applies the visibility rules to the results of SearchWP's queries as well.
+     *
+     * SearchWP can transfer a match's weight to another post - an attachment's
+     * or a comment's to its parent, for one - after the index query has been
+     * filtered by 'filter_searchwp_mods()'. A post the visitor may see could then
+     * surface a parent they may not, so the transferred results are checked too,
+     * in the outer WHERE, where SearchWP checks transferred IDs itself
+     * ('Post::prevent_invalid_post_ids()').
+     *
+     * @param array $sql    The query, as SearchWP builds it.
+     * @param array $params
+     * @return array
+     */
+    function filter_searchwp_query( $sql, $params ) {
+        $condition = $this->get_searchwp_visibility_sql( $params['index_alias'] );
+
+        if ( null !== $condition ) {
+            $sql['where']['bcc_login_visibility'] = "( {$condition} )";
+        }
+
+        return $sql;
+    }
+
+    /**
+     * Returns the SQL condition that limits SearchWP's rows to posts the visitor
+     * may see, or null if the visitor may see everything.
+     *
+     * @param string $alias SearchWP's alias for its index rows.
+     * @return string|null
+     */
+    private function get_searchwp_visibility_sql( $alias ) {
+        // The request-wide exemptions of 'filter_pre_get_posts()': editors, Phrase
+        // with a valid token, and feeds read with the feed key.
+        if ( current_user_can( 'edit_posts' ) || $this->is_phrase_request() || $this->has_feed_key() ) {
+            return null;
+        }
+
+        // Rows of any post type get the rules, as in a WordPress search that names
+        // no post type. Other Sources - terms, users, comments ('post.comment',
+        // holding comment IDs) - are left alone.
+        $post_sources = array();
+        foreach ( array_diff( get_post_types(), array( 'nav_menu_item' ) ) as $post_type ) {
+            $post_sources[] = "'" . esc_sql( 'post' . SEARCHWP_SEPARATOR . $post_type ) . "'";
+        }
+
+        $visible_posts = $this->get_visible_posts_sql( $this->get_visibility_rules() );
+
+        // The visible posts are this site's. SearchWP runs the whole query through
+        // $wpdb->prepare(), so any literal '%' must be escaped.
+        return str_replace( '%', '%%',
+            "{$alias}.source NOT IN ( " . implode( ', ', $post_sources ) . ' )'
+            . " OR ( {$alias}.site = " . (int) get_current_blog_id() . " AND {$alias}.id IN ( {$visible_posts} ) )"
+        );
     }
 
     /**
@@ -812,7 +1249,9 @@ class BCC_Login_Visibility {
      * articles ended up in search results for logged-out visitors.
      *
      * This is the backstop for that whole class of bypass, not for SearchWP
-     * specifically: whatever produced the rows, they are checked here.
+     * specifically: whatever produced the rows of a query 'filter_pre_get_posts()'
+     * set up for filtering, they are checked here. SearchWP's own SQL is filtered
+     * in 'filter_searchwp_mods()' and 'filter_searchwp_query()'.
      *
      * @param WP_Post[] $posts
      * @param WP_Query $query
@@ -823,23 +1262,19 @@ class BCC_Login_Visibility {
             return $posts;
         }
 
-        if ( $this->should_skip_auth() ) {
+        // Only check the queries 'filter_pre_get_posts()' set up for filtering, so
+        // the two agree on which queries are filtered: whatever it exempts (e.g.
+        // editors, requests carrying a valid Phrase token, feeds read with the key,
+        // single post views) stays exempt here as well. Re-checking an exempted
+        // query undoes the exemption - Phrase lost every restricted post from its
+        // list that way.
+        if ( ! $query->get( 'bcc_login_visibility_filter_added' ) ) {
             return $posts;
         }
 
-        if ( current_user_can( 'edit_posts' ) ) {
-            return $posts;
-        }
-
-        if ( ! $this->supports_visibility_filter( $query ) ) {
-            return $posts;
-        }
-
-        // Single post views are handled by 'on_template_redirect()', which
-        // sends the visitor to login rather than silently emptying the query.
-        if ( $query->is_singular && $query->is_main_query() ) {
-            return $posts;
-        }
+        // 'filter_posts_where()' lets post types without visibility support
+        // through, so they are let through here as well.
+        $unsupported_post_types = (array) $query->get( 'bcc_login_unsupported_post_types' );
 
         $level           = $this->get_request_user_level();
         $user_groups     = $this->get_request_user_groups();
@@ -849,7 +1284,7 @@ class BCC_Login_Visibility {
         $filtered = array();
 
         foreach ( $posts as $post ) {
-            if ( ! $post instanceof WP_Post ) {
+            if ( ! $post instanceof WP_Post || in_array( $post->post_type, $unsupported_post_types, true ) ) {
                 $filtered[] = $post;
                 continue;
             }
@@ -882,8 +1317,8 @@ class BCC_Login_Visibility {
     /**
      * Whether a single post is visible at the given level and group membership.
      *
-     * Mirrors the rules 'filter_pre_get_posts()' expresses as a meta query, so
-     * the two agree about who may see what.
+     * Mirrors the rules 'get_visibility_rules()' builds as a meta query, so the
+     * two agree about who may see what.
      *
      * @param WP_Post $post
      * @param int $level
@@ -982,24 +1417,7 @@ class BCC_Login_Visibility {
 
         global $wpdb;
 
-        // 'filter_pre_get_posts()' always builds a clause group, but guard anyway:
-        // WP_Meta_Query expects a group and silently drops a bare clause, which
-        // would leave the query unfiltered. Same test as its own
-        // WP_Meta_Query::is_first_order_clause().
-        if ( isset( $rules['key'] ) || isset( $rules['value'] ) ) {
-            $rules = array( $rules );
-        }
-
-        // Build the rules against an aliased copy of the posts table, so the
-        // generated postmeta joins stay scoped to the subquery and can't collide
-        // with the joins of the query we're filtering.
-        $meta_query = new WP_Meta_Query( $rules );
-        $clauses    = $meta_query->get_sql( 'post', 'bcc_visibility_posts', 'ID', $query );
-
-        $subquery = "{$wpdb->posts}.ID IN ("
-            . " SELECT bcc_visibility_posts.ID FROM {$wpdb->posts} AS bcc_visibility_posts"
-            . " {$clauses['join']} WHERE 1=1 {$clauses['where']}"
-        . ' )';
+        $subquery = "{$wpdb->posts}.ID IN ( " . $this->get_visible_posts_sql( $rules, $query ) . ' )';
 
         // Post types without visibility support skip the rules entirely.
         if ( ! empty( $unsupported_post_types ) ) {
@@ -1013,6 +1431,35 @@ class BCC_Login_Visibility {
         }
 
         return $where . " AND ( {$subquery} )";
+    }
+
+    /**
+     * Returns SQL selecting the IDs of the posts the rules let through, for use
+     * in "ID IN ( ... )".
+     *
+     * @param array         $rules
+     * @param WP_Query|null $query The query being filtered, if any.
+     * @return string
+     */
+    private function get_visible_posts_sql( $rules, $query = null ) {
+        global $wpdb;
+
+        // 'get_visibility_rules()' always builds a clause group, but guard anyway:
+        // WP_Meta_Query expects a group and silently drops a bare clause, which
+        // would leave the query unfiltered. Same test as its own
+        // WP_Meta_Query::is_first_order_clause().
+        if ( isset( $rules['key'] ) || isset( $rules['value'] ) ) {
+            $rules = array( $rules );
+        }
+
+        // Build the rules against an aliased copy of the posts table, so the
+        // generated postmeta joins stay scoped to the subquery and can't collide
+        // with the joins of the query we're filtering.
+        $meta_query = new WP_Meta_Query( $rules );
+        $clauses    = $meta_query->get_sql( 'post', 'bcc_visibility_posts', 'ID', $query );
+
+        return "SELECT bcc_visibility_posts.ID FROM {$wpdb->posts} AS bcc_visibility_posts"
+            . " {$clauses['join']} WHERE 1=1 {$clauses['where']}";
     }
 
     /**
@@ -1594,8 +2041,21 @@ class BCC_Login_Visibility {
         return $this->get_group_name($uid);
     }
 
+    /**
+     * Whether the query lists any post type with visibility support.
+     *
+     * Decided on the query vars as they stand when 'filter_pre_get_posts()' runs,
+     * not on the ones the query was created with, so earlier 'pre_get_posts'
+     * callbacks count: the feed lists the post types in '?post_types=' - or
+     * 'post' - whatever post type its URL names, so a feed URL of an unsupported
+     * post type served restricted posts. A later callback that switches the query
+     * to a supported post type is caught by 'recheck_unsupported_query()'.
+     *
+     * @param WP_Query $query
+     * @return bool
+     */
     function supports_visibility_filter($query) {
-        $post_types = array_key_exists('post_type', $query->query) ? $query->query['post_type'] : null;
+        $post_types = $query->get( 'post_type' );
 
         // No post type given: WP_Query defaults to 'post', which we do filter.
         // 'any' spans the public post types, so it needs filtering as well.
@@ -1603,10 +2063,14 @@ class BCC_Login_Visibility {
             return true;
         }
 
-        // Menu items are handled in 'filter_menu_items()'.
-        $post_types = array_diff( (array) $post_types, array( 'nav_menu_item' ) );
+        foreach ( (array) $post_types as $post_type ) {
+            // Menu items are handled in 'filter_menu_items()'.
+            if ( 'nav_menu_item' !== $post_type && ! $this->is_unsupported_post_type( $post_type ) ) {
+                return true;
+            }
+        }
 
-        return (bool) array_intersect( $post_types, $this->visibility_post_types );
+        return false;
     }
 
     /**
@@ -1616,9 +2080,11 @@ class BCC_Login_Visibility {
      * @return string[]
      */
     private function get_unsupported_post_types($query) {
-        $post_types = array_key_exists('post_type', $query->query) ? $query->query['post_type'] : null;
+        $post_types = $query->get( 'post_type' );
 
-        // No post type given: WP_Query defaults to 'post', which is supported.
+        // No post type given: WP_Query picks them later - 'post', 'any' for a
+        // search, the queried taxonomies' post types on a taxonomy archive - and
+        // every row gets the rules then.
         if ( empty( $post_types ) ) {
             return array();
         }
@@ -1628,10 +2094,33 @@ class BCC_Login_Visibility {
             $post_types = array_keys( get_post_types( array( 'exclude_from_search' => false ) ) );
         }
 
-        // Menu items are handled separately in 'filter_menu_items()'.
-        $post_types = array_diff( (array) $post_types, array( 'nav_menu_item' ) );
+        $unsupported_post_types = array();
 
-        return array_values( array_diff( (array) $post_types, $this->visibility_post_types ) );
+        foreach ( (array) $post_types as $post_type ) {
+            // Menu items are handled separately in 'filter_menu_items()'.
+            if ( 'nav_menu_item' !== $post_type && $this->is_unsupported_post_type( $post_type ) ) {
+                $unsupported_post_types[] = $post_type;
+            }
+        }
+
+        return array_values( array_unique( $unsupported_post_types ) );
+    }
+
+    /**
+     * Whether posts of a queried post type may skip the visibility rules.
+     *
+     * Fails closed on a name that isn't in WordPress's sanitized form: post types
+     * set by a 'pre_get_posts' callback aren't sanitized again, and MySQL
+     * compares them case-insensitively - 'POST' still returns posts.
+     *
+     * @param mixed $post_type
+     * @return bool
+     */
+    private function is_unsupported_post_type( $post_type ) {
+        return is_string( $post_type )
+            && '' !== $post_type
+            && sanitize_key( $post_type ) === $post_type
+            && ! in_array( $post_type, $this->visibility_post_types, true );
     }
 
     function supports_target_groups_filtering($query) {

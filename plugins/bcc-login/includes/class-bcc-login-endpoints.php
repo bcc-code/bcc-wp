@@ -2,6 +2,21 @@
 
 class BCC_Login_Endpoints {
 
+    /**
+     * The endpoints served under the `bcc-login` query var, each from endpoints/<name>.php.
+     * 'BCC_Login_Visibility::on_template_redirect()' lets these through without login,
+     * so add only endpoints that are safe for anyone to call.
+     */
+    public const ENDPOINTS = array(
+        'access-token',
+        'clear-cookies',
+        'id-token',
+        'refresh-login',
+        'logout',
+        'user-profile',
+        'invalidate-person-cache',
+    );
+
     private BCC_Login_Settings $settings;
 
     function __construct( BCC_Login_Settings $settings ) {
@@ -9,7 +24,7 @@ class BCC_Login_Endpoints {
 
         add_action( 'init', array( $this, 'add_rewrite_rules' ) );
         add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
-        add_filter( 'template_include', array( $this, 'include_endpoint' ), 99 );
+        add_action( 'template_redirect', array( $this, 'serve_endpoint' ), 1 );
     }
 
     /**
@@ -24,7 +39,7 @@ class BCC_Login_Endpoints {
     }
 
     /**
-     * Adds the `bcc-login` query var to use it in the `include_endpoint` method below.
+     * Adds the `bcc-login` query var to use it in the `serve_endpoint` method below.
      *
      * @param array $query_vars
      * @return array
@@ -35,21 +50,30 @@ class BCC_Login_Endpoints {
     }
 
     /**
-     * Load the requested endpoint.
+     * Serves the requested endpoint as the whole response.
      *
-     * @param string $template
-     * @return string
+     * Runs right after 'BCC_Login_Visibility::on_template_redirect()' (priority 0),
+     * which lets the endpoints through, and before WordPress renders anything else
+     * the URL asks for. Swapping the template in was not enough: WordPress renders a
+     * feed before it picks a template, so '/<restricted post>/feed/?bcc-login=logout'
+     * served the post's content.
+     *
+     * @return void
      */
-    function include_endpoint( $template ) {
-        switch ( get_query_var( 'bcc-login' ) ) {
-            case 'access-token': return BCC_LOGIN_PATH . 'endpoints/access-token.php';
-            case 'clear-cookies': return BCC_LOGIN_PATH . 'endpoints/clear-cookies.php';
-            case 'id-token': return BCC_LOGIN_PATH . 'endpoints/id-token.php';
-            case 'refresh-login': return BCC_LOGIN_PATH . 'endpoints/refresh-login.php';
-            case 'logout': return BCC_LOGIN_PATH . 'endpoints/logout.php';
-            case 'user-profile': return BCC_LOGIN_PATH . 'endpoints/user-profile.php';
-            case 'invalidate-person-cache': return BCC_LOGIN_PATH . 'endpoints/invalidate-person-cache.php';
+    function serve_endpoint() {
+        $endpoint = get_query_var( 'bcc-login' );
+
+        if ( ! in_array( $endpoint, self::ENDPOINTS, true ) ) {
+            return;
         }
-        return $template;
+
+        // Answer HEAD requests the way WordPress does, without running the endpoint:
+        // some of them log out or clear cookies.
+        if ( 'HEAD' === ( $_SERVER['REQUEST_METHOD'] ?? '' ) && apply_filters( 'exit_on_http_head', true ) ) {
+            exit;
+        }
+
+        include BCC_LOGIN_PATH . "endpoints/{$endpoint}.php";
+        exit;
     }
 }
