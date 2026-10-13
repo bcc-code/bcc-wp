@@ -20,7 +20,8 @@
 	},
 	"scripts": {
 		"start": "rimraf build && wp-scripts start",
-		"build": "rimraf build && wp-scripts build"
+		"build": "rimraf build && wp-scripts build",
+		"update-strings": "wp i18n make-pot . languages/bcc-login.pot --domain=bcc-login --exclude=node_modules,build"
 	},
 	"dependencies": {
 		"primeicons": "^7.0.0",

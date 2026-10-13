@@ -4,6 +4,8 @@
  * Plugin Name: BCC Login
  * Description: Integration to BCC's Login System.
  * Version: 1.2.12
+ * Text Domain: bcc-login
+ * Domain Path: /languages
  * Author: BCC IT
  * License: GPL2
  */
@@ -83,6 +85,9 @@ class BCC_Login {
 
         add_action( 'init', array( $this, 'redirect_login' ) );
         add_action( 'wp_authenticate', array( $this, 'end_session' ) );
+        add_action( 'plugins_loaded', function () {
+            load_plugin_textdomain( 'bcc-login', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+        } );
         add_action( 'wp_logout', array( $this, 'end_session' ) );
         add_action( 'wp_head', array( $this, 'add_auto_login_script' ) );
         add_action( 'wp_head', array( $this, 'hide_admin_bar' ) );

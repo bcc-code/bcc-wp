@@ -838,12 +838,20 @@ class BCC_Login_Visibility {
 
         $script_asset = require $script_path;
 
+        $extra_deps = [ 'wp-i18n', 'wp-element', 'wp-components' ];
+
         wp_enqueue_script(
             $script_handle,
             $script_url,
-            $script_asset['dependencies'],
+            array_merge($script_asset['dependencies'], $extra_deps),
             $script_asset['version'],
             true
+        );
+
+        wp_set_script_translations(
+            $script_handle,
+            'bcc-login',
+            BCC_LOGIN_PATH . 'languages'
         );
 
         wp_add_inline_script(

@@ -1,0 +1,14 @@
+msgid ""
+msgstr ""
+"Language: nb-NO\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n==1) ? 0 : 1;\n"
+"X-Generator: Phrase (phrase.com)\n"
+
+#: build/visibility.js:15830
+#: src/visibility.js:175
+#: build/visibility.js:14665
+msgid "Send notifications"
+msgstr "Send ut varsler"
