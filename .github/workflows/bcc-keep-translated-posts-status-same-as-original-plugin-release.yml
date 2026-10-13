@@ -102,6 +102,12 @@ jobs:
           cd plugins/bcc-keep-translated-posts-status-same-as-original
           yarn build
 
+          # Pull requests only check that the plugin builds. Releases are made from master
+          # (committing one from a pull request fails anyway).
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            exit 0
+          fi
+
           # Get package version
           package_version=${{steps.version.outputs.prop}}
           previous_date="${{steps.lastupdated.outputs.prop}}"
@@ -146,6 +152,7 @@ jobs:
 
       - uses: ncipollo/release-action@v1
         name: Create Release
+        if: github.event_name != 'pull_request'
         with:
           artifacts: "plugins/bcc-keep-translated-posts-status-same-as-original.zip"
           tag: ${{steps.build-and-zip.outputs.tag_name}}
