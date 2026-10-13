@@ -6,10 +6,12 @@ on:
     branches: [ "master" ]
     paths:
       - "plugins/**"
+      - ".github/workflows/php-sast.yml"
   pull_request:
     branches: [ "master" ]
     paths:
       - "plugins/**"
+      - ".github/workflows/php-sast.yml"
 
 permissions:
   contents: read
@@ -73,19 +75,28 @@ jobs:
         function get_culture() {};
         EOF
 
+    # Psalm is installed with Composer and pinned to a major version, because the psalm-github-actions image
+    # always runs the latest Psalm, and 7.0.0-rc1 crashes with humanmade/psalm-plugin-wordpress.
+    # PHP is pinned as well: it decides which Psalm 6.x Composer picks, and on the runner's PHP 8.3.6
+    # that is 6.5.0, which refuses to run below PHP 8.3.16.
+    - name: Set up PHP
+      uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+      with:
+        php-version: '8.4'
+        coverage: none
+        tools: composer
+
     - name: Install Psalm and Wordpress stubs
       run: |
-        composer require --dev php-stubs/wordpress-stubs ~6.8.0
-        composer require --dev humanmade/psalm-plugin-wordpress
+        composer require --dev "vimeo/psalm:^6.0" "php-stubs/wordpress-stubs:~6.8.0" humanmade/psalm-plugin-wordpress
 
     - name: Run Psalm
-      uses: psalm/psalm-github-actions@26f175f4d1d9006ea675bb78831ae94126017b07
-      with:
-        security_analysis: true
-        composer_require_dev: true
-        report_file: results.sarif
+      run: vendor/bin/psalm --output-format=github --taint-analysis --report=results.sarif
 
+    # Also upload when Psalm found issues (the step above then fails), so they show up in code scanning.
+    # The check on the report skips the upload when Psalm couldn't run at all.
     - name: Upload Security Analysis results to GitHub
+      if: ${{ !cancelled() && hashFiles('results.sarif') != '' }}
       uses: github/codeql-action/upload-sarif@v4
       with:
         sarif_file: results.sarif
