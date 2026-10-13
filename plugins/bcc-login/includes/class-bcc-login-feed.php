@@ -10,7 +10,9 @@ class BCC_Login_Feed {
         add_action( 'pre_get_posts', array( $this, 'add_paging_support') );
         add_filter('the_excerpt_rss', array( $this, 'add_image_to_rss' ));
         add_filter( 'the_category_rss', array( $this, 'add_internal_category_to_member_items'), 10, 2 ); 
-        add_action('pre_get_posts', array( $this,'include_custom_post_types_in_feed'));
+        // Runs before the visibility filter (priority 10), so that filter decides on
+        // the post types this feed lists rather than the post type named in its URL.
+        add_action('pre_get_posts', array( $this,'include_custom_post_types_in_feed'), 9);
         add_filter( 'rss2_ns', array( $this, 'add_custom_bcc_namespace'));
         add_filter( 'rss2_item', array( $this, 'add_custom_elements_to_items')); 
     }
@@ -72,13 +74,29 @@ class BCC_Login_Feed {
         // Check if it's the main query and a feed
         if ($query->is_main_query() && $query->is_feed()) {
 
+            // Default post types if no query string is provided
+            $post_types = array('post');
+
             // Check if the 'post_types' query parameter exists in the URL
             if (isset($_GET['post_types'])) {
-                // Get the post types from the query string and split them by comma
-                $post_types = explode(',', sanitize_text_field($_GET['post_types']));
-            } else {
-                // Default post types if no query string is provided
-                $post_types = array('post');
+                // Get the post types from the query string and split them by comma.
+                // WP_Query sanitizes post types in parse_query(), before
+                // 'pre_get_posts', so not the ones set here: sanitize them the same
+                // way and - as WordPress does for a post type in the URL - accept
+                // only publicly viewable ones. Reusable blocks (core's and Flatsome's
+                // UX Blocks) and contact forms are left out even where a theme makes
+                // them public (as bcc-forbund does): they aren't content, and a form
+                // holds its mail settings, addresses included.
+                $requested  = is_string($_GET['post_types']) ? explode(',', wp_unslash($_GET['post_types'])) : array();
+                $post_types = array_diff(array_map('sanitize_key', $requested), array('wp_block', 'blocks', 'wpcf7_contact_form'));
+                $post_types = array_values(array_unique(array_filter($post_types, 'is_post_type_viewable')));
+
+                // None of them can be listed: an empty feed, as an unknown post type
+                // gave before, rather than the posts.
+                if (empty($post_types)) {
+                    $post_types = array('post');
+                    $query->set('post__in', array(0));
+                }
             }
 
             // Modify the query to include the specified post types
@@ -234,6 +252,14 @@ class BCC_Login_Feed {
                     if ($details->original == "1") {
                         // Another language is original
                         $original_post = get_post($details->element_id); // Get post object by ID
+
+                        // Only point to the original when it's published with the same audience
+                        // as this item. WPML copies those settings to translations, but where they
+                        // differ, the reader may not be allowed to see the original's title or link.
+                        if ( ! $original_post || 'publish' !== $original_post->post_status || ! $this->has_same_audience( $post_id, $original_post->ID ) ) {
+                            break;
+                        }
+
                         $original_post_guid = $original_post->guid; // Extract the GUID
                         do_action('wpml_switch_language', $lang_code);
                         $original_post_permalink = get_permalink($details->element_id);
@@ -247,5 +273,28 @@ class BCC_Login_Feed {
             }
         }
 
+    }
+
+    /**
+     * Whether two posts have the same audience: visibility and groups.
+     *
+     * @param int $post_id
+     * @param int $other_post_id
+     * @return bool
+     */
+    private function has_same_audience( $post_id, $other_post_id ) {
+        foreach ( array( 'bcc_login_visibility', 'bcc_groups', 'bcc_visibility_groups' ) as $meta_key ) {
+            $values       = (array) get_post_meta( $post_id, $meta_key, false );
+            $other_values = (array) get_post_meta( $other_post_id, $meta_key, false );
+
+            sort( $values );
+            sort( $other_values );
+
+            if ( $values != $other_values ) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
