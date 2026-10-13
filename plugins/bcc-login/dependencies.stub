@@ -4,3 +4,15 @@
 * @return string
 */
 function get_culture() {};
+
+/**
+* SearchWP, which the visibility filters hook into when it's active.
+*/
+const SEARCHWP_SEPARATOR = '.';
+
+class SearchWP {
+    /**
+    * The index controller (\SearchWP\Index\Controller).
+    */
+    public static $index;
+}
