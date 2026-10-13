@@ -90,7 +90,8 @@ class BCC_Login_Visibility {
         add_shortcode( 'filtering_groups', array( $this, 'get_filtering_groups_list' ) );
         add_shortcode( 'post_group_tags_widget', array( $this, 'post_group_tags_widget' ) );
         add_shortcode( 'get_bcc_group_name', array( $this, 'get_bcc_group_name_by_id' ) );
-        add_shortcode( 'bcc_my_roles', array( $this, 'bcc_my_roles' ) );
+        add_shortcode( 'bcc_my_roles', array( $this, 'bcc_my_roles_for_widget' ) );
+        add_shortcode( 'bcc_get_all_my_roles', array( $this, 'bcc_get_all_my_roles' ) );
         add_shortcode( 'has_bcc_role_with_full_content_access', array( $this, 'has_bcc_role_with_full_content_access' ) );
         add_shortcode( 'bcc_magic_link', array( $this, 'bcc_magic_link' ) );
 
@@ -1608,8 +1609,38 @@ class BCC_Login_Visibility {
         return $user_site_groups;
     }
 
-    public function bcc_my_roles() {
+    public function bcc_my_roles_for_widget() {
         return json_encode($this->get_user_groups_list());
+    }
+
+    private function get_complete_user_groups_list() {
+        $roles_tag_groups = $this->get_groups_of_the_roles_tag();
+        $norway_key_roles = $this->get_groups_of_the_norway_tag();
+        $user_groups = $this->get_current_user_groups();
+
+        if (!$user_groups) {
+            return array();
+        }
+
+        $user_site_groups = array();
+
+        foreach ($roles_tag_groups as $group) {
+            if (in_array($group->uid, $user_groups)) {
+                $user_site_groups[] = $group;
+            }
+        }
+
+        foreach ($norway_key_roles as $group) {
+            if (in_array($group->uid, $user_groups)) {
+                $user_site_groups[] = $group;
+            }
+        }
+
+        return $user_site_groups;
+    }
+
+    public function bcc_get_all_my_roles() {
+        return json_encode($this->get_complete_user_groups_list());
     }
 
     public function has_bcc_role_with_full_content_access() {
