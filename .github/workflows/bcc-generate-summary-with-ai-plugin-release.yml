@@ -133,14 +133,28 @@ jobs:
           git config user.email "<>"
           git tag "version-bump-v${build_version}"
           git commit -am "Released bcc-generate-summary-with-ai plugin v${build_version}"
-          git push
+          # Several plugins can be released from the same push to master, and each run pushes its own
+          # version bump. If another run pushed first, rebase onto its commit and try again.
+          pushed=false
+          for attempt in 1 2 3 4 5; do
+            if git pull --rebase && git push; then
+              pushed=true
+              break
+            fi
+            git rebase --abort 2>/dev/null || true
+            sleep $((attempt * 5 + RANDOM % 5))
+          done
+          if [ "$pushed" != true ]; then
+            echo "::error::Could not push the version bump"
+            exit 1
+          fi
 
           cd ..
           # node_modules is only needed for the build, so keep it out of the released plugin
           zip -r bcc-generate-summary-with-ai.zip bcc-generate-summary-with-ai -x '*/node_modules/*'
           cd ..
 
-          echo "::set-output name=tag_name::bcc-generate-summary-with-ai-v${build_version}"
+          echo "tag_name=bcc-generate-summary-with-ai-v${build_version}" >> "$GITHUB_OUTPUT"
 
 
 

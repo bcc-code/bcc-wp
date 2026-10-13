@@ -93,7 +93,10 @@ jobs:
     - name: Run Psalm
       run: vendor/bin/psalm --output-format=github --taint-analysis --report=results.sarif
 
+    # Also upload when Psalm found issues (the step above then fails), so they show up in code scanning.
+    # The check on the report skips the upload when Psalm couldn't run at all.
     - name: Upload Security Analysis results to GitHub
+      if: ${{ !cancelled() && hashFiles('results.sarif') != '' }}
       uses: github/codeql-action/upload-sarif@v4
       with:
         sarif_file: results.sarif
