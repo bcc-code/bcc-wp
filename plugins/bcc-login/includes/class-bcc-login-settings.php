@@ -27,6 +27,7 @@ class BCC_Login_Settings {
     public $coreapi_base_url;
     public $disable_pubsub;
     public $widgets_base_url;
+    public $widgets_audience;
     public $track_clicks;
     public $track_page_load;
     public $track_page_interaction;
@@ -91,6 +92,7 @@ class BCC_Login_Settings_Provider {
         'coreapi_audience'          => 'BCC_COREAPI_AUDIENCE',
         'coreapi_base_url'          => 'BCC_COREAPI_BASE_URL',
         'widgets_base_url'          => 'BCC_WIDGETS_BASE_URL',
+        'widgets_audience'          => 'BCC_WIDGETS_AUDIENCE',
     );
 
     function __construct () {
@@ -110,6 +112,7 @@ class BCC_Login_Settings_Provider {
         $settings->coreapi_base_url = 'https://api.bcc.no';
         $settings->disable_pubsub = false;
         $settings->widgets_base_url = 'https://widgets.bcc.no';
+        $settings->widgets_audience = 'https://widgets.brunstad.org';
         $settings->track_clicks = false;
         $settings->track_page_load = true;
         $settings->track_page_interaction = true;
