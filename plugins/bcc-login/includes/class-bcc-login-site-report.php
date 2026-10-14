@@ -9,7 +9,7 @@
  * how the widgets API knows which site sent it.
  */
 class BCC_Login_Site_Report {
-    const SENT_TRANSIENT = 'bcc_login_site_report_sent';
+    const LOCK = 'bcc_login_site_report';
 
     private BCC_Login_Settings $_settings;
     private $plugin;
@@ -28,17 +28,19 @@ class BCC_Login_Site_Report {
      * Failures are logged and never stop the daily task.
      */
     function send() {
-        if ( empty( $this->_settings->client_id ) || empty( $this->_settings->client_secret ) ) {
+        // WP-Cron can run the daily task more often, even twice at once, e.g. when it can't save the next run
+        // time. So the report is sent at most once in 12 hours, claimed with WordPress's upgrader lock: an
+        // option added atomically, which expires. It's claimed before asking for a token, so a site that can't
+        // get one doesn't keep asking either.
+        self::load_upgrader();
+        if ( ! WP_Upgrader::create_lock( self::LOCK, 12 * HOUR_IN_SECONDS ) ) {
             return;
         }
 
-        // WP-Cron can run the daily task more often, e.g. when it can't save the next run time, so the report
-        // is sent at most once in 12 hours. That's noted before asking for a token, so a site that can't get
-        // one doesn't keep asking either.
-        if ( get_transient( self::SENT_TRANSIENT ) ) {
+        if ( empty( $this->_settings->client_id ) || empty( $this->_settings->client_secret ) ) {
+            error_log( 'BCC Login: The site report needs the client id and secret of the login client.' );
             return;
         }
-        set_transient( self::SENT_TRANSIENT, time(), 12 * HOUR_IN_SECONDS );
 
         $token = $this->get_token();
         if ( ! $token ) {
@@ -104,30 +106,30 @@ class BCC_Login_Site_Report {
     }
 
     /**
-     * Whether WordPress updates this plugin by itself, checked as WordPress does before an automatic update:
-     * automatic updates aren't turned off (e.g. by DISALLOW_FILE_MODS), the site isn't a git or other version
-     * control checkout, and auto-updates are on for the plugin or forced by a filter.
+     * Whether WordPress updates this plugin by itself, as its background updater decides: automatic updates
+     * aren't turned off (e.g. by DISALLOW_FILE_MODS), it can write the files without asking for credentials,
+     * the site isn't a git or other version control checkout, and auto-updates are on for the plugin or
+     * forced by a filter.
      */
     private function get_plugin_auto_updates() {
-        if ( ! class_exists( 'WP_Automatic_Updater' ) ) {
-            require_once ABSPATH . 'wp-admin/includes/class-wp-automatic-updater.php';
-        }
+        self::load_upgrader();
         $updater = new WP_Automatic_Updater();
 
-        if ( $updater->is_disabled() || $updater->is_vcs_checkout( WP_PLUGIN_DIR ) ) {
-            return false;
-        }
-
-        $enabled = apply_filters( 'plugins_auto_update_enabled', true )
-            && in_array( $this->plugin, (array) get_site_option( 'auto_update_plugins', array() ), true );
-
         // The same kind of item the plugins screen passes when it asks whether a filter forces auto-updates.
-        return (bool) apply_filters( 'auto_update_plugin', $enabled, (object) array(
+        return (bool) $updater->should_update( 'plugin', (object) array(
             'id'          => $this->plugin,
             'slug'        => dirname( $this->plugin ),
             'plugin'      => $this->plugin,
             'new_version' => '',
-        ) );
+        ), WP_PLUGIN_DIR );
+    }
+
+    /**
+     * WordPress's updater classes, loaded as WordPress loads them for its own automatic updates.
+     */
+    private static function load_upgrader() {
+        require_once ABSPATH . 'wp-admin/includes/admin.php';
+        require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
     }
 
     /**
