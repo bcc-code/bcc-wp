@@ -3,7 +3,7 @@
 /**
  * Plugin Name: BCC Login
  * Description: Integration to BCC's Login System.
- * Version: 1.2.13
+ * Version: 1.2.14
  * Author: BCC IT
  * License: GPL2
  */
@@ -29,13 +29,14 @@ require_once( 'includes/class-bcc-storage.php' );
 require_once( 'includes/class-bcc-notifications.php' );
 require_once( 'includes/class-exclusive-lock.php' );
 require_once( 'includes/class-bcc-login-cleanup.php' );
+require_once( 'includes/class-bcc-login-site-report.php' );
 
 class BCC_Login {
     /**
      * The plugin instance.
      */
     private static $instance = null;
-    private $plugin_version = "1.2.13";
+    private $plugin_version = "1.2.14";
     private $plugin;
     private $plugin_slug;
     private $plugin_name = "BCC Login";
@@ -53,6 +54,7 @@ class BCC_Login {
     private BCC_Notifications $_notifications;
     private BCC_Storage $_storage;
     private BCC_Login_Cleanup $_cleanup;
+    private BCC_Login_Site_Report $_site_report;
 
     /**
      * Initialize the plugin.
@@ -76,6 +78,7 @@ class BCC_Login {
         $this->_updater = new BCC_Login_Updater( $this->plugin, $this->plugin_slug, $this->plugin_version, $this->plugin_name );
         $this->_notifications = new BCC_Notifications( $this->_settings, $this->_coreapi );
         $this->_cleanup = new BCC_Login_Cleanup();
+        $this->_site_report = new BCC_Login_Site_Report( $this->_settings, $this->plugin, $this->plugin_version );
 
         if (!empty($this->_settings->site_groups) || !empty($this->_settings->full_content_access_groups)) {
             $this->_coreapi->ensure_subscription_to_person_updates();
