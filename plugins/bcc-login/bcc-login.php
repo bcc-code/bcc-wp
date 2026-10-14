@@ -6,6 +6,8 @@
  * Version: 1.2.13
  * Author: BCC IT
  * License: GPL2
+ * Requires at least: 6.6
+ * Requires PHP: 7.4
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

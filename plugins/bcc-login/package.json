@@ -5,9 +5,9 @@
 	"slug": "bcc-login",
 	"author": "<a href='https://github.com/bcc-code'>BCC Code</a>",
 	"author_profile": "https://github.com/bcc-code",
-	"requires": "3.0",
+	"requires": "6.6",
 	"tested": "5.8",
-	"requires_php": "5.3",
+	"requires_php": "7.4",
 	"last_updated": "2026-10-13 12:39:21",
 	"sections": {
 		"description": "BCC Login",
