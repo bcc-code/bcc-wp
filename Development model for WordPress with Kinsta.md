@@ -47,13 +47,11 @@ _Note: server details can be found in MyKinsta_
 
 3. Run `cd private`, `git init --bare {sitename}.git`
 
-4. Run `cd ../public`, `git init`
-
-5. Access the private repo hooks folder and create a post-receive hook.<br>
+4. Access the private repo hooks folder and create a post-receive hook.<br>
 `cd ../private/{sitename}.git/hooks`<br>
 `nano post-receive`
 
-6. Add the following code inside the post-receive file, make the necessary changes, save and quit nano (CTRL+X -> Y -> Enter).
+5. Add the following code inside the post-receive file, make the necessary changes, save and quit nano (CTRL+X -> Y -> Enter).
 <pre>#!/bin/bash
 TARGET="/www/{sitefolder_xxxxxxx}/public"
 GIT_DIR="/www/{sitefolder_xxxxxxx}/private/{sitename}.git"
@@ -75,10 +73,12 @@ done</pre>
 - **{sitename}** is the project name in Kinsta (**Username** value in **MyKinsta**)
 - **{sitefolder_xxxxxxx}** is the project name concatenated with the project id in Kinsta (found under the **Path** field in **MyKinsta**)
 
-7. Assign execute permissions to post-receive file.<br>
+6. Assign execute permissions to post-receive file.<br>
 `chmod +x post-receive`
 
-8. Do the same thing for the staging environment, or push Live into Staging in Kinsta.
+7. Do the same thing for the staging environment, or push Live into Staging in Kinsta.
+
+_Note: earlier versions of this guide also ran `git init` in **public**. Deploying doesn't use that empty repository, but WordPress sees it and stops updating core, plugins and themes by itself. On a site set up that way, check that the repository is empty (`git -C ~/public remote -v` prints nothing and `git -C ~/public log -1` says there are no commits yet), then move it out of **public**: `mv ~/public/.git ~/private/public-git-unused`_
 
 
 ## Push to GitHub (will deploy to Kinsta)
