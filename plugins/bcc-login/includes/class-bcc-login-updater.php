@@ -154,8 +154,9 @@ class BCC_Login_Updater {
 		if(
 			$remote
 			&& version_compare( $this->version, $remote->version, '<' )
-			&& version_compare( $remote->requires, get_bloginfo( 'version' ), '<' )
-			&& version_compare( $remote->requires_php, PHP_VERSION, '<' )
+			// At least the required versions: WordPress reports x.y.0 releases as just x.y.
+			&& version_compare( $remote->requires, get_bloginfo( 'version' ), '<=' )
+			&& version_compare( $remote->requires_php, PHP_VERSION, '<=' )
 		) {
 			$res->new_version = $remote->version;
 			$res->tested = $remote->tested;
