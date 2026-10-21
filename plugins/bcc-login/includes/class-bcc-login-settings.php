@@ -596,6 +596,7 @@ class BCC_Login_Settings_Provider {
             <?php settings_errors('groups_cache_flushed'); ?>
             <?php $this->render_delete_subscribers_button( ); ?>
             <?php settings_errors('subscribers_deleted'); ?>
+            <?php do_action( 'bcc_login_settings_maintenance' ); ?>
         </div>
         <?php
     }
