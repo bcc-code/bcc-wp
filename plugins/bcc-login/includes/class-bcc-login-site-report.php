@@ -15,6 +15,12 @@ class BCC_Login_Site_Report {
     private $plugin;
     private $plugin_version;
 
+    /**
+     * @var array|WP_Error|null What pressing "Send site report now" gave: the report that was sent, or why it
+     *                          couldn't be sent.
+     */
+    private $sent_now;
+
     function __construct( BCC_Login_Settings $settings, $plugin, $plugin_version ) {
         $this->_settings = $settings;
         $this->plugin = $plugin;
@@ -22,6 +28,9 @@ class BCC_Login_Site_Report {
 
         // After the daily cleanup, so the leftover count shows what it couldn't remove yet.
         add_action( BCC_Login_Cleanup::CRON_HOOK, array( $this, 'send' ), 20 );
+        // Before the settings page (Settings > BCC Login) is printed, so the browser keeps showing "Sending…"
+        // until the result is ready, instead of the top of the page.
+        add_action( 'load-settings_page_bcc_login', array( $this, 'send_now_handler' ) );
         add_action( 'bcc_login_settings_maintenance', array( $this, 'render_send_now_button' ) );
     }
 
@@ -102,52 +111,81 @@ class BCC_Login_Site_Report {
         if ( ! current_user_can( 'administrator' ) ) {
             return;
         }
+        // After sending, the page comes back to this section and shows the result under the button. WordPress
+        // moves other notices to the top of the page, out of sight from down here.
         ?>
-            <h3><?php _e( 'Site report', 'bcc-login' ); ?></h3>
+            <h3 id="bcc-login-site-report"><?php _e( 'Site report', 'bcc-login' ); ?></h3>
             <p><?php _e( 'Once a day, this site sends BCC its bcc-login, WordPress and PHP versions and its number of users and subscribers. Send it now to check that this works, for example after allowing the site\'s login client to get a token for the widgets API.', 'bcc-login' ); ?></p>
-            <form method="post">
+            <form method="post" action="#bcc-login-site-report" id="bcc-login-send-site-report">
                 <?php wp_nonce_field( 'send_site_report', 'send_site_report_nonce' ); ?>
-                <?php submit_button( __( 'Send site report now', 'bcc-login' ), 'secondary', 'send_site_report', false ); ?>
+                <input type="hidden" name="send_site_report" value="1">
+                <?php submit_button( __( 'Send site report now', 'bcc-login' ), 'secondary', '', false ); ?>
+                <span class="spinner" style="float: none;"></span>
             </form>
+            <script type="text/javascript">
+                // Sending takes a few seconds, so the button says so meanwhile. A disabled button isn't sent with
+                // the form, which is why the hidden field above tells that this form was sent.
+                document.getElementById( 'bcc-login-send-site-report' ).addEventListener( 'submit', function () {
+                    var button = this.querySelector( '[type=submit]' );
+                    button.disabled = true;
+                    button.value = <?php echo wp_json_encode( __( 'Sending…', 'bcc-login' ) ); ?>;
+                    this.querySelector( '.spinner' ).classList.add( 'is-active' );
+                } );
+                // Once the page has come back to this section, the result gets the focus, so that screen readers
+                // read it and the keyboard goes on from there. And the address loses its #…, or the page's other
+                // forms, which post to the same address, would come back here too.
+                if ( window.location.hash === '#bcc-login-site-report' ) {
+                    window.addEventListener( 'load', function () {
+                        setTimeout( function () {
+                            var result = document.getElementById( 'bcc-login-site-report-result' );
+                            if ( result ) {
+                                result.focus();
+                            }
+                            window.history.replaceState( null, '', window.location.pathname + window.location.search );
+                        } );
+                    } );
+                }
+            </script>
+            <?php // Inline notices stay here, under the button. Auth0's error description comes from outside. ?>
+            <?php if ( is_wp_error( $this->sent_now ) ) : ?>
+                <div id="bcc-login-site-report-result" class="notice notice-error inline" tabindex="-1">
+                    <p><strong><?php _e( 'The site report could not be sent.', 'bcc-login' ); ?></strong></p>
+                    <p><?php echo esc_html( $this->sent_now->get_error_message() ); ?></p>
+                </div>
+            <?php elseif ( $this->sent_now ) : ?>
+                <div id="bcc-login-site-report-result" class="notice notice-success inline" tabindex="-1">
+                    <p><strong><?php _e( 'The site report was sent.', 'bcc-login' ); ?></strong></p>
+                    <p><?php echo esc_html( sprintf(
+                        __( '%1$s: bcc-login %2$s, WordPress %3$s, PHP %4$s, users: %5$s, subscribers: %6$s.', 'bcc-login' ),
+                        $this->sent_now['siteUrl'],
+                        $this->sent_now['pluginVersion'],
+                        $this->sent_now['wordpressVersion'],
+                        $this->sent_now['phpVersion'],
+                        null === $this->sent_now['users'] ? '?' : number_format_i18n( $this->sent_now['users'] ),
+                        null === $this->sent_now['subscribers'] ? '?' : number_format_i18n( $this->sent_now['subscribers'] )
+                    ) ); ?></p>
+                </div>
+            <?php endif; ?>
         <?php
-        $this->send_now_handler();
-        settings_errors( 'site_report_sent' );
     }
 
     /**
-     * Sends the report when the button was pressed, and shows what was sent or why it couldn't be sent.
+     * Sends the report when the button was pressed, for render_send_now_button() to show what was sent or why
+     * it couldn't be sent.
      */
     function send_now_handler() {
-        if (
-            ! isset( $_POST['send_site_report'], $_POST['send_site_report_nonce'] ) ||
-            ! wp_verify_nonce( $_POST['send_site_report_nonce'], 'send_site_report' ) ||
-            ! current_user_can( 'administrator' )
-        ) {
+        if ( ! isset( $_POST['send_site_report'] ) || ! current_user_can( 'administrator' ) ) {
             return;
         }
 
-        $report = $this->send_now();
-
-        // settings_errors() prints messages as HTML, and Auth0's error description comes from outside.
-        if ( is_wp_error( $report ) ) {
-            add_settings_error( 'site_report_sent', 'site_report_not_sent', esc_html( $report->get_error_message() ), 'error' );
+        // The nonce stops other sites from sending the form on an administrator's behalf. It also runs out,
+        // e.g. when the page was left open for a day or loaded before logging in again.
+        if ( ! isset( $_POST['send_site_report_nonce'] ) || ! wp_verify_nonce( $_POST['send_site_report_nonce'], 'send_site_report' ) ) {
+            $this->sent_now = new WP_Error( 'bcc_login_site_report', __( 'The page had expired, so nothing was sent. Press the button again to send the site report.', 'bcc-login' ) );
             return;
         }
 
-        add_settings_error(
-            'site_report_sent',
-            'site_report_sent',
-            esc_html( sprintf(
-                __( 'The site report was sent: %1$s, bcc-login %2$s, WordPress %3$s, PHP %4$s, users: %5$s, subscribers: %6$s.', 'bcc-login' ),
-                $report['siteUrl'],
-                $report['pluginVersion'],
-                $report['wordpressVersion'],
-                $report['phpVersion'],
-                null === $report['users'] ? '?' : $report['users'],
-                null === $report['subscribers'] ? '?' : $report['subscribers']
-            ) ),
-            'success'
-        );
+        $this->sent_now = $this->send_now();
     }
 
     function get_report() {
