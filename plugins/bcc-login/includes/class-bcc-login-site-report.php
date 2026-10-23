@@ -114,6 +114,7 @@ class BCC_Login_Site_Report {
         // After sending, the page comes back to this section and shows the result under the button. WordPress
         // moves other notices to the top of the page, out of sight from down here.
         ?>
+            <hr>
             <h3 id="bcc-login-site-report"><?php _e( 'Site report', 'bcc-login' ); ?></h3>
             <p><?php _e( 'Once a day, this site sends BCC its bcc-login, WordPress and PHP versions and its number of users and subscribers. Send it now to check that this works, for example after allowing the site\'s login client to get a token for the widgets API.', 'bcc-login' ); ?></p>
             <form method="post" action="#bcc-login-site-report" id="bcc-login-send-site-report">
