@@ -10,6 +10,7 @@
  */
 class BCC_Login_Site_Report {
     const LOCK_OPTION = 'bcc_login_site_report.lock';
+    const LAST_SENT_OPTION = 'bcc_login_site_report.last_sent';
 
     private BCC_Login_Settings $_settings;
     private $plugin;
@@ -46,6 +47,7 @@ class BCC_Login_Site_Report {
         }
 
         $sent = $this->deliver();
+        $this->remember( $sent );
         if ( is_wp_error( $sent ) ) {
             error_log( 'BCC Login: ' . $sent->get_error_message() );
         }
@@ -63,7 +65,28 @@ class BCC_Login_Site_Report {
 
         $wpdb->delete( $wpdb->options, array( 'option_name' => self::LOCK_OPTION ) );
 
-        return $this->deliver();
+        $sent = $this->deliver();
+        $this->remember( $sent );
+
+        return $sent;
+    }
+
+    /**
+     * Keeps when the report was last sent and, if a later try failed, when and why, for the settings page.
+     *
+     * @param array|WP_Error $sent What deliver() gave.
+     */
+    private function remember( $sent ) {
+        if ( is_wp_error( $sent ) ) {
+            $last = get_option( self::LAST_SENT_OPTION );
+            $last = is_array( $last ) ? $last : array();
+            $last['failed'] = time();
+            $last['error'] = $sent->get_error_message();
+        } else {
+            $last = array( 'sent' => time() );
+        }
+
+        update_option( self::LAST_SENT_OPTION, $last, false );
     }
 
     /**
@@ -114,8 +137,18 @@ class BCC_Login_Site_Report {
         // After sending, the page comes back to this section and shows the result under the button. WordPress
         // moves other notices to the top of the page, out of sight from down here.
         ?>
+            <hr>
             <h3 id="bcc-login-site-report"><?php _e( 'Site report', 'bcc-login' ); ?></h3>
             <p><?php _e( 'Once a day, this site sends BCC its bcc-login, WordPress and PHP versions and its number of users and subscribers. Send it now to check that this works, for example after allowing the site\'s login client to get a token for the widgets API.', 'bcc-login' ); ?></p>
+            <?php $last = get_option( self::LAST_SENT_OPTION ); ?>
+            <p id="bcc-login-site-report-last-sent">
+                <strong><?php _e( 'Last sent:', 'bcc-login' ); ?></strong>
+                <?php echo esc_html( ! empty( $last['sent'] ) ? self::format_time( $last['sent'] ) : __( 'not yet', 'bcc-login' ) ); ?>
+                <?php if ( ! empty( $last['failed'] ) ) : ?>
+                    <br><strong><?php _e( 'Last try failed:', 'bcc-login' ); ?></strong>
+                    <?php echo esc_html( self::format_time( $last['failed'] ) . ' – ' . $last['error'] ); ?>
+                <?php endif; ?>
+            </p>
             <form method="post" action="#bcc-login-site-report" id="bcc-login-send-site-report">
                 <?php wp_nonce_field( 'send_site_report', 'send_site_report_nonce' ); ?>
                 <input type="hidden" name="send_site_report" value="1">
@@ -132,8 +165,8 @@ class BCC_Login_Site_Report {
                     this.querySelector( '.spinner' ).classList.add( 'is-active' );
                 } );
                 // Once the page has come back to this section, the result gets the focus, so that screen readers
-                // read it and the keyboard goes on from there. And the address loses its #…, or the page's other
-                // forms, which post to the same address, would come back here too.
+                // read it and the keyboard goes on from there. The #… stays in the address, so that the page
+                // comes back here also when something reloads it.
                 if ( window.location.hash === '#bcc-login-site-report' ) {
                     window.addEventListener( 'load', function () {
                         setTimeout( function () {
@@ -141,7 +174,6 @@ class BCC_Login_Site_Report {
                             if ( result ) {
                                 result.focus();
                             }
-                            window.history.replaceState( null, '', window.location.pathname + window.location.search );
                         } );
                     } );
                 }
@@ -167,6 +199,17 @@ class BCC_Login_Site_Report {
                 </div>
             <?php endif; ?>
         <?php
+    }
+
+    /**
+     * A time in the site's date and time format, and how long ago it was, e.g. "23 October 2026 09:41 (5 mins ago)".
+     */
+    private static function format_time( $time ) {
+        return sprintf(
+            __( '%1$s (%2$s ago)', 'bcc-login' ),
+            wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $time ),
+            human_time_diff( $time )
+        );
     }
 
     /**
