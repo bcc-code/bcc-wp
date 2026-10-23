@@ -611,7 +611,8 @@ class BCC_Login_Settings_Provider {
             <hr>
             <h2><?php _e( 'Groups Cache', 'bcc-login' ); ?></h2>
             <p><?php _e( 'Flush the cached groups data. This will force groups to be re-fetched from the API on the next page load.', 'bcc-login') ?></p>
-            <form method="post">
+            <?php // Posts to the page without the #… "Send site report now" leaves in the address, so it comes back at the top, where its notice is. ?>
+            <form method="post" action="<?php echo esc_url( admin_url( 'options-general.php?page=' . $this->options_page ) ); ?>">
                 <?php wp_nonce_field( 'flush_groups_cache', 'flush_groups_cache_nonce' ); ?>
                 <input type="hidden" name="flush_groups_cache" value="true">
                 <?php submit_button( __( 'Flush Groups Cache', 'bcc-login' ), 'secondary', 'flush_groups_cache_btn', false ); ?>
@@ -663,7 +664,8 @@ class BCC_Login_Settings_Provider {
             <?php elseif ( is_multisite() ) : ?>
                 <p><?php _e( 'On a network, subscribers who also belong to another site only leave this site, and network administrators are left alone. Only a network administrator can delete user accounts.', 'bcc-login' ) ?></p>
             <?php endif; ?>
-            <form method="post">
+            <?php // Posts to the page without the #… "Send site report now" leaves in the address, so it comes back at the top, where its notice is. ?>
+            <form method="post" action="<?php echo esc_url( admin_url( 'options-general.php?page=' . $this->options_page ) ); ?>">
 				<?php wp_nonce_field( 'delete_subscribers', 'delete_subscribers_nonce' ); ?>
 				<?php submit_button('Delete subscribers', 'delete', 'delete_subscribers', false, array(
 					'onclick' => 'return confirm("Are you sure you want to delete all the subscribers?");'
