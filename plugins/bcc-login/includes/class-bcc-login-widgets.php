@@ -143,6 +143,31 @@ class BCC_Login_Widgets {
 
             return $html . PHP_EOL;
         } );
+
+        // "Fra Skjulte Skatter", optionally with language="en" and hide-header="true". The same embed serves every
+        // visitor: the token endpoint gives a visitor who isn't signed in an empty token, and the widget then shows
+        // its public layout.
+        add_shortcode( 'bcc-hidden-treasures-highlights', function ($attributes) {
+            $attributes = array_change_key_case((array)$attributes, CASE_LOWER);
+
+            // The site provides get_culture(). Without it or a language here, the widget shows Norwegian.
+            $language = $attributes['language'] ?? '';
+            if ( $language === '' && function_exists('get_culture') ) {
+                $language = get_culture();
+            }
+            $hide_header = filter_var($attributes['hide-header'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+            $html =  '<div id="bcc-hidden-treasures-highlights"></div>';
+            $html .= '<script id="script-bcc-hidden-treasures-highlights" data-authentication-type="WebApp" data-authentication-location="' . esc_url(site_url( '?bcc-login=access-token' )) . '" ';
+            $html .= 'data-language="' . esc_attr($language) . '" ';
+            if ( $hide_header ) {
+                $html .= 'data-hide-header="true" ';
+            }
+            // This widget has no /widgets/...Js URL.
+            $html .= 'src="' . esc_url($this->settings->widgets_base_url . '/scripts/hidden-treasures-highlights.js') . '" defer></script>';
+
+            return $html . PHP_EOL;
+        } );
     }
 
     function add_fields_for_topbar_search() {
