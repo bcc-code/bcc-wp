@@ -807,7 +807,24 @@ class BCC_Login_Visibility {
      * @return bool
      */
     private function has_feed_key() {
-        return is_feed() && ! empty($this->_settings->feed_key) && array_key_exists('id', $_GET) && $this->_settings->feed_key == $_GET['id'];
+        if ( ! is_feed() || ! isset( $_GET['id'] ) ) {
+            return false;
+        }
+
+        $feed_key = $this->_settings->feed_key;
+        $given_key = $_GET['id'];
+
+        // hash_equals() only takes strings, and '?id[]=…' makes 'id' an array.
+        if ( empty( $feed_key ) || ! is_string( $feed_key ) || ! is_string( $given_key ) ) {
+            return false;
+        }
+
+        // hash_equals() takes the same time wherever a guess differs from the
+        // key, so response times can't reveal how much of a guess was right.
+        // It also compares the strings as they are, whereas '==' compares
+        // numeric strings as numbers: it let '?id=0' through for a key such as
+        // '0e' followed by only digits.
+        return hash_equals( $feed_key, $given_key );
     }
 
     /**
