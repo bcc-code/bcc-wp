@@ -673,6 +673,7 @@ class BCC_Login_Settings_Provider {
 					'onclick' => 'return confirm("Are you sure you want to delete all the subscribers?");'
 				)); ?>
 			</form> 
+            <br />
         <?php
         $this->delete_subscribers_handler();
     }
