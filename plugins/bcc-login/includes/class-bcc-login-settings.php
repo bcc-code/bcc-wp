@@ -215,9 +215,11 @@ class BCC_Login_Settings_Provider {
         // Set defaults
         $settings->member_organization_name = $settings->member_organization_name ? $settings->member_organization_name :  get_bloginfo( 'blog_name' );
 
-        // Generate feed key if not assigned
+        // Generate feed key if not assigned. random_bytes() reads the operating
+        // system's cryptographically secure source; 16 bytes give 32 lowercase
+        // hex characters, the format feed keys have always had.
         if ( empty($settings->feed_key) ) {
-            $settings->feed_key = strtolower(str_replace("-","",trim($this->createGUID(), '{}')));
+            $settings->feed_key = bin2hex(random_bytes(16));
             update_option('bcc_feed_key', $settings->feed_key);   
         }
 
@@ -1100,28 +1102,4 @@ class BCC_Login_Settings_Provider {
     public function get_settings() : BCC_Login_Settings {
         return $this->_settings;
     }
-
-    /**
-	 * Helper to create the GUID
-	 */
-	private function createGUID() {
-		if (function_exists('com_create_guid')) {
-			return com_create_guid();
-		} else {
-			mt_srand((float)microtime()*10000);
-			//optional for php 4.2.0 and up.
-			$set_charid = strtoupper(md5(uniqid(rand(), true)));
-			$set_hyphen = chr(45);
-			// "-"
-			$set_uuid = chr(123)
-				.substr($set_charid, 0, 8).$set_hyphen
-				.substr($set_charid, 8, 4).$set_hyphen
-				.substr($set_charid, 12, 4).$set_hyphen
-				.substr($set_charid, 16, 4).$set_hyphen
-				.substr($set_charid, 20, 12)
-				.chr(125);
-				// "}"
-			return $set_uuid;
-		}
-	}
 }
