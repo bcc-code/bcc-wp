@@ -1108,7 +1108,7 @@ class BCC_Login_Settings_Provider {
 		if (function_exists('com_create_guid')) {
 			return com_create_guid();
 		} else {
-			mt_srand((double)microtime()*10000);
+			mt_srand((float)microtime()*10000);
 			//optional for php 4.2.0 and up.
 			$set_charid = strtoupper(md5(uniqid(rand(), true)));
 			$set_hyphen = chr(45);
