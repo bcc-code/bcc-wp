@@ -9,11 +9,18 @@
  * how the widgets API knows which site sent it.
  */
 class BCC_Login_Site_Report {
-    const LOCK = 'bcc_login_site_report';
+    const LOCK_OPTION = 'bcc_login_site_report.lock';
+    const LAST_SENT_OPTION = 'bcc_login_site_report.last_sent';
 
     private BCC_Login_Settings $_settings;
     private $plugin;
     private $plugin_version;
+
+    /**
+     * @var array|WP_Error|null What pressing "Send site report now" gave: the report that was sent, or why it
+     *                          couldn't be sent.
+     */
+    private $sent_now;
 
     function __construct( BCC_Login_Settings $settings, $plugin, $plugin_version ) {
         $this->_settings = $settings;
@@ -22,49 +29,206 @@ class BCC_Login_Site_Report {
 
         // After the daily cleanup, so the leftover count shows what it couldn't remove yet.
         add_action( BCC_Login_Cleanup::CRON_HOOK, array( $this, 'send' ), 20 );
+        // Before the settings page (Settings > BCC Login) is printed, so the browser keeps showing "Sending…"
+        // until the result is ready, instead of the top of the page.
+        add_action( 'load-settings_page_bcc_login', array( $this, 'send_now_handler' ) );
+        add_action( 'bcc_login_settings_maintenance', array( $this, 'render_send_now_button' ) );
     }
 
     /**
-     * Failures are logged and never stop the daily task.
+     * The daily report. Failures are logged and never stop the daily task.
      */
     function send() {
         // WP-Cron can run the daily task more often, even twice at once, e.g. when it can't save the next run
-        // time. So the report is sent at most once in 12 hours, claimed with WordPress's upgrader lock: an
-        // option added atomically, which expires. It's claimed before asking for a token, so a site that can't
-        // get one doesn't keep asking either.
-        self::load_upgrader();
-        if ( ! WP_Upgrader::create_lock( self::LOCK, 12 * HOUR_IN_SECONDS ) ) {
+        // time. So the report is sent at most once in 12 hours. The time is claimed before asking for a token,
+        // so a site that can't get one doesn't keep asking either.
+        if ( ! self::claim() ) {
             return;
         }
 
-        if ( empty( $this->_settings->client_id ) || empty( $this->_settings->client_secret ) ) {
-            error_log( 'BCC Login: The site report needs the client id and secret of the login client.' );
-            return;
+        $sent = $this->deliver();
+        $this->remember( $sent );
+        if ( is_wp_error( $sent ) ) {
+            error_log( 'BCC Login: ' . $sent->get_error_message() );
+        }
+    }
+
+    /**
+     * Sends the report right away, however recently it was sent, e.g. to check the site's setup in Auth0.
+     * It clears the last claim rather than claiming the next 12 hours, so the next daily report is still sent
+     * at its usual time.
+     *
+     * @return array|WP_Error The report that was sent, or why it couldn't be sent.
+     */
+    function send_now() {
+        global $wpdb;
+
+        $wpdb->delete( $wpdb->options, array( 'option_name' => self::LOCK_OPTION ) );
+
+        $sent = $this->deliver();
+        $this->remember( $sent );
+
+        return $sent;
+    }
+
+    /**
+     * Keeps when the report was last sent and, if a later try failed, when and why, for the settings page.
+     *
+     * @param array|WP_Error $sent What deliver() gave.
+     */
+    private function remember( $sent ) {
+        if ( is_wp_error( $sent ) ) {
+            $last = get_option( self::LAST_SENT_OPTION );
+            $last = is_array( $last ) ? $last : array();
+            $last['failed'] = time();
+            $last['error'] = $sent->get_error_message();
+        } else {
+            $last = array( 'sent' => time() );
         }
 
-        $token = $this->get_token();
-        if ( ! $token ) {
-            return;
+        update_option( self::LAST_SENT_OPTION, $last, false );
+    }
+
+    /**
+     * Claims the next 12 hours for sending the daily report: true when the last claim is older than that. Of
+     * two runs at once, only one can claim them.
+     *
+     * The time is kept in an option, but read and written only with SQL. WordPress's own lock
+     * (WP_Upgrader::create_lock) goes through the option cache, and re-creating an expired lock leaves the
+     * option cached as missing. With a persistent object cache that stopped the daily report after two days.
+     */
+    private static function claim() {
+        global $wpdb;
+
+        $now = time();
+
+        // The first claim adds the option. Of two runs at once, only one can add it.
+        $added = $wpdb->query( $wpdb->prepare(
+            "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %d, 'off')",
+            self::LOCK_OPTION,
+            $now
+        ) );
+        if ( $added > 0 ) {
+            return true;
         }
 
-        $response = wp_remote_post( rtrim( $this->_settings->widgets_base_url, '/' ) . '/api/wordpress-sites/report', array(
-            'timeout' => 15,
-            'headers' => array(
-                'Authorization' => 'Bearer ' . $token,
-                'Content-Type'  => 'application/json',
-            ),
-            'body'    => wp_json_encode( $this->get_report() ),
+        // Later claims move the time forward once it's 12 hours old. Of two runs at once, the second waits for
+        // the first and then finds the new time.
+        $moved = $wpdb->query( $wpdb->prepare(
+            "UPDATE {$wpdb->options} SET option_value = %d WHERE option_name = %s AND CAST(option_value AS UNSIGNED) <= %d",
+            $now,
+            self::LOCK_OPTION,
+            $now - 12 * HOUR_IN_SECONDS
         ) );
 
-        if ( is_wp_error( $response ) ) {
-            error_log( 'BCC Login: Could not send the site report: ' . $response->get_error_message() );
+        // Both statements count a row only when they claim it, also on connections that count matched rows
+        // instead of changed ones (MYSQLI_CLIENT_FOUND_ROWS).
+        return $moved > 0;
+    }
+
+    /**
+     * The "Send site report now" button under Maintenance on the settings page, and what happened when it was
+     * pressed. Like the rest of Maintenance, only administrators see it.
+     */
+    function render_send_now_button() {
+        if ( ! current_user_can( 'administrator' ) ) {
+            return;
+        }
+        // After sending, the page comes back to this section and shows the result under the button. WordPress
+        // moves other notices to the top of the page, out of sight from down here.
+        ?>
+            <hr>
+            <h3 id="bcc-login-site-report"><?php _e( 'Site report', 'bcc-login' ); ?></h3>
+            <p><?php _e( 'Once a day, this site sends BCC its bcc-login, WordPress and PHP versions and its number of users and subscribers. Send it now to check that this works, for example after allowing the site\'s login client to get a token for the widgets API.', 'bcc-login' ); ?></p>
+            <?php $last = get_option( self::LAST_SENT_OPTION ); ?>
+            <p id="bcc-login-site-report-last-sent">
+                <strong><?php _e( 'Last sent:', 'bcc-login' ); ?></strong>
+                <?php echo esc_html( ! empty( $last['sent'] ) ? self::format_time( $last['sent'] ) : __( 'not yet', 'bcc-login' ) ); ?>
+                <?php if ( ! empty( $last['failed'] ) ) : ?>
+                    <br><strong><?php _e( 'Last try failed:', 'bcc-login' ); ?></strong>
+                    <?php echo esc_html( self::format_time( $last['failed'] ) . ' – ' . $last['error'] ); ?>
+                <?php endif; ?>
+            </p>
+            <form method="post" action="#bcc-login-site-report" id="bcc-login-send-site-report">
+                <?php wp_nonce_field( 'send_site_report', 'send_site_report_nonce' ); ?>
+                <input type="hidden" name="send_site_report" value="1">
+                <?php submit_button( __( 'Send site report now', 'bcc-login' ), 'secondary', '', false ); ?>
+                <span class="spinner" style="float: none;"></span>
+            </form>
+            <script type="text/javascript">
+                // Sending takes a few seconds, so the button says so meanwhile. A disabled button isn't sent with
+                // the form, which is why the hidden field above tells that this form was sent.
+                document.getElementById( 'bcc-login-send-site-report' ).addEventListener( 'submit', function () {
+                    var button = this.querySelector( '[type=submit]' );
+                    button.disabled = true;
+                    button.value = <?php echo wp_json_encode( __( 'Sending…', 'bcc-login' ) ); ?>;
+                    this.querySelector( '.spinner' ).classList.add( 'is-active' );
+                } );
+                // Once the page has come back to this section, the result gets the focus, so that screen readers
+                // read it and the keyboard goes on from there. The #… stays in the address, so that the page
+                // comes back here also when something reloads it.
+                if ( window.location.hash === '#bcc-login-site-report' ) {
+                    window.addEventListener( 'load', function () {
+                        setTimeout( function () {
+                            var result = document.getElementById( 'bcc-login-site-report-result' );
+                            if ( result ) {
+                                result.focus();
+                            }
+                        } );
+                    } );
+                }
+            </script>
+            <?php // Inline notices stay here, under the button. Auth0's error description comes from outside. ?>
+            <?php if ( is_wp_error( $this->sent_now ) ) : ?>
+                <div id="bcc-login-site-report-result" class="notice notice-error inline" tabindex="-1">
+                    <p><strong><?php _e( 'The site report could not be sent.', 'bcc-login' ); ?></strong></p>
+                    <p><?php echo esc_html( $this->sent_now->get_error_message() ); ?></p>
+                </div>
+            <?php elseif ( $this->sent_now ) : ?>
+                <div id="bcc-login-site-report-result" class="notice notice-success inline" tabindex="-1">
+                    <p><strong><?php _e( 'The site report was sent.', 'bcc-login' ); ?></strong></p>
+                    <p><?php echo esc_html( sprintf(
+                        __( '%1$s: bcc-login %2$s, WordPress %3$s, PHP %4$s, users: %5$s, subscribers: %6$s.', 'bcc-login' ),
+                        $this->sent_now['siteUrl'],
+                        $this->sent_now['pluginVersion'],
+                        $this->sent_now['wordpressVersion'],
+                        $this->sent_now['phpVersion'],
+                        null === $this->sent_now['users'] ? '?' : number_format_i18n( $this->sent_now['users'] ),
+                        null === $this->sent_now['subscribers'] ? '?' : number_format_i18n( $this->sent_now['subscribers'] )
+                    ) ); ?></p>
+                </div>
+            <?php endif; ?>
+        <?php
+    }
+
+    /**
+     * A time in the site's date and time format, and how long ago it was, e.g. "23 October 2026 09:41 (5 mins ago)".
+     */
+    private static function format_time( $time ) {
+        return sprintf(
+            __( '%1$s (%2$s ago)', 'bcc-login' ),
+            wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $time ),
+            human_time_diff( $time )
+        );
+    }
+
+    /**
+     * Sends the report when the button was pressed, for render_send_now_button() to show what was sent or why
+     * it couldn't be sent.
+     */
+    function send_now_handler() {
+        if ( ! isset( $_POST['send_site_report'] ) || ! current_user_can( 'administrator' ) ) {
             return;
         }
 
-        $status = wp_remote_retrieve_response_code( $response );
-        if ( $status < 200 || $status >= 300 ) {
-            error_log( 'BCC Login: The widgets API refused the site report with HTTP ' . $status . '.' );
+        // The nonce stops other sites from sending the form on an administrator's behalf. It also runs out,
+        // e.g. when the page was left open for a day or loaded before logging in again.
+        if ( ! isset( $_POST['send_site_report_nonce'] ) || ! wp_verify_nonce( $_POST['send_site_report_nonce'], 'send_site_report' ) ) {
+            $this->sent_now = new WP_Error( 'bcc_login_site_report', __( 'The page had expired, so nothing was sent. Press the button again to send the site report.', 'bcc-login' ) );
+            return;
         }
+
+        $this->sent_now = $this->send_now();
     }
 
     function get_report() {
@@ -106,6 +270,43 @@ class BCC_Login_Site_Report {
     }
 
     /**
+     * Gets a token for the site's login client and posts the report to the widgets API.
+     *
+     * @return array|WP_Error The report that was sent, or why it couldn't be sent.
+     */
+    private function deliver() {
+        if ( empty( $this->_settings->client_id ) || empty( $this->_settings->client_secret ) ) {
+            return new WP_Error( 'bcc_login_site_report', 'The site report needs the client id and secret of the login client.' );
+        }
+
+        $token = $this->get_token();
+        if ( is_wp_error( $token ) ) {
+            return $token;
+        }
+
+        $report = $this->get_report();
+        $response = wp_remote_post( rtrim( $this->_settings->widgets_base_url, '/' ) . '/api/wordpress-sites/report', array(
+            'timeout' => 15,
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $token,
+                'Content-Type'  => 'application/json',
+            ),
+            'body'    => wp_json_encode( $report ),
+        ) );
+
+        if ( is_wp_error( $response ) ) {
+            return new WP_Error( 'bcc_login_site_report', 'Could not send the site report: ' . $response->get_error_message() );
+        }
+
+        $status = wp_remote_retrieve_response_code( $response );
+        if ( $status < 200 || $status >= 300 ) {
+            return new WP_Error( 'bcc_login_site_report', 'The widgets API refused the site report with HTTP ' . $status . '.' );
+        }
+
+        return $report;
+    }
+
+    /**
      * Whether WordPress updates this plugin by itself, as its background updater decides: automatic updates
      * aren't turned off (e.g. by DISALLOW_FILE_MODS), it can write the files without asking for credentials,
      * the site isn't a git or other version control checkout, and auto-updates are on for the plugin or
@@ -134,6 +335,8 @@ class BCC_Login_Site_Report {
 
     /**
      * A token for the widgets API, for the site's own login client.
+     *
+     * @return string|WP_Error
      */
     private function get_token() {
         $response = wp_remote_post( $this->_settings->token_endpoint, array(
@@ -147,8 +350,7 @@ class BCC_Login_Site_Report {
         ) );
 
         if ( is_wp_error( $response ) ) {
-            error_log( 'BCC Login: Could not get a token for the site report: ' . $response->get_error_message() );
-            return null;
+            return new WP_Error( 'bcc_login_site_report', 'Could not get a token for the site report: ' . $response->get_error_message() );
         }
 
         $body = json_decode( wp_remote_retrieve_body( $response ) );
@@ -156,8 +358,7 @@ class BCC_Login_Site_Report {
         if ( 200 !== wp_remote_retrieve_response_code( $response ) || empty( $body->access_token ) ) {
             // Auth0's error code and description only, e.g. when the login client may not get a token for the widgets API yet.
             $error = isset( $body->error ) ? $body->error . ( isset( $body->error_description ) ? ': ' . $body->error_description : '' ) : 'HTTP ' . wp_remote_retrieve_response_code( $response );
-            error_log( 'BCC Login: Could not get a token for the site report: ' . $error );
-            return null;
+            return new WP_Error( 'bcc_login_site_report', 'Could not get a token for the site report: ' . $error );
         }
 
         return $body->access_token;

@@ -3,7 +3,7 @@
 /**
  * Plugin Name: BCC Login
  * Description: Integration to BCC's Login System.
- * Version: 1.2.15
+ * Version: 1.2.21
  * Author: BCC IT
  * License: GPL2
  * Requires at least: 6.6
@@ -38,7 +38,7 @@ class BCC_Login {
      * The plugin instance.
      */
     private static $instance = null;
-    private $plugin_version = "1.2.15";
+    private $plugin_version = "1.2.21";
     private $plugin;
     private $plugin_slug;
     private $plugin_name = "BCC Login";
@@ -117,7 +117,7 @@ class BCC_Login {
 
         if (
             (
-                ($pagenow == 'wp-login.php' || $this->should_auto_login()) &&
+                $pagenow == 'wp-login.php' &&
                 !isset( $_GET['loggedout'] ) &&
                 !isset( $_GET['code'] ) &&
                 !isset( $_POST['wp-submit'] ) &&
@@ -149,12 +149,13 @@ class BCC_Login {
 
                     if (document.cookie.indexOf("wp_has_logged_in") >= 0) {
                         should_login = true;
-                    } else {
-                        for (let i=0; i<auto_login_referrers.length;i++) {
-                            let referrer = auto_login_referrers[i];
-                            if (document.referrer && document.referer.indexOf("http") === 0) {
-                                let host = document.referrer.split("/")[2];
-                                if (host && (host.indexOf(referrer) == 0 || (referrer.indexOf(".") != -1 && host.indexOf(referrer) != -1))) {
+                    } else if (document.referrer.indexOf("http") === 0) {
+                        let host = document.referrer.split("/")[2];
+                        // Links within this site are not a reason to log in, even when its own domain matches.
+                        if (host && host !== location.host) {
+                            for (let i=0; i<auto_login_referrers.length;i++) {
+                                let referrer = auto_login_referrers[i];
+                                if (host.indexOf(referrer) == 0 || (referrer.indexOf(".") != -1 && host.indexOf(referrer) != -1)) {
                                     should_login = true;
                                 }
                             }
@@ -166,37 +167,6 @@ class BCC_Login {
                 }
             </script>' . PHP_EOL;
         }
-    }
-
-    function should_auto_login() {
-        // Don't log in user if they are already logged in
-        if (is_user_logged_in() && $this->_client->is_session_valid()) {
-            return false;
-        }
-
-        if (!is_front_page() || $this->_client->is_redirect_url()) {
-            return false;
-        }
-
-        // Auto-login user if they have logged in previously on this device
-        if ($this->_client->has_user_logged_in_previously()){
-            return true;
-        }
-
-        // Auto-login if user is coming from portal.bcc.no or *.brunstad.org
-        if (isset($_SERVER['HTTP_REFERER'])) {
-            $referrer = $_SERVER['HTTP_REFERER'];
-            $referrer_host = parse_url($referrer, PHP_URL_HOST);
-            $found = false;
-
-            // Check if the referrer URL contains any of the search strings
-            foreach ($this->auto_login_referrers as $search_string) {
-                if (strpos($referrer_host, $search_string) !== false) {
-                    return true;
-                }
-            }            
-        }
-        return false;
     }
 
     /**

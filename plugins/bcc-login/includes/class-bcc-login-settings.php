@@ -215,9 +215,11 @@ class BCC_Login_Settings_Provider {
         // Set defaults
         $settings->member_organization_name = $settings->member_organization_name ? $settings->member_organization_name :  get_bloginfo( 'blog_name' );
 
-        // Generate feed key if not assigned
+        // Generate feed key if not assigned. random_bytes() reads the operating
+        // system's cryptographically secure source; 16 bytes give 32 lowercase
+        // hex characters, the format feed keys have always had.
         if ( empty($settings->feed_key) ) {
-            $settings->feed_key = strtolower(str_replace("-","",trim($this->createGUID(), '{}')));
+            $settings->feed_key = bin2hex(random_bytes(16));
             update_option('bcc_feed_key', $settings->feed_key);   
         }
 
@@ -596,6 +598,7 @@ class BCC_Login_Settings_Provider {
             <?php settings_errors('groups_cache_flushed'); ?>
             <?php $this->render_delete_subscribers_button( ); ?>
             <?php settings_errors('subscribers_deleted'); ?>
+            <?php do_action( 'bcc_login_settings_maintenance' ); ?>
         </div>
         <?php
     }
@@ -610,7 +613,8 @@ class BCC_Login_Settings_Provider {
             <hr>
             <h2><?php _e( 'Groups Cache', 'bcc-login' ); ?></h2>
             <p><?php _e( 'Flush the cached groups data. This will force groups to be re-fetched from the API on the next page load.', 'bcc-login') ?></p>
-            <form method="post">
+            <?php // Posts to the page without the #… "Send site report now" leaves in the address, so it comes back at the top, where its notice is. ?>
+            <form method="post" action="<?php echo esc_url( admin_url( 'options-general.php?page=' . $this->options_page ) ); ?>">
                 <?php wp_nonce_field( 'flush_groups_cache', 'flush_groups_cache_nonce' ); ?>
                 <input type="hidden" name="flush_groups_cache" value="true">
                 <?php submit_button( __( 'Flush Groups Cache', 'bcc-login' ), 'secondary', 'flush_groups_cache_btn', false ); ?>
@@ -662,12 +666,14 @@ class BCC_Login_Settings_Provider {
             <?php elseif ( is_multisite() ) : ?>
                 <p><?php _e( 'On a network, subscribers who also belong to another site only leave this site, and network administrators are left alone. Only a network administrator can delete user accounts.', 'bcc-login' ) ?></p>
             <?php endif; ?>
-            <form method="post">
+            <?php // Posts to the page without the #… "Send site report now" leaves in the address, so it comes back at the top, where its notice is. ?>
+            <form method="post" action="<?php echo esc_url( admin_url( 'options-general.php?page=' . $this->options_page ) ); ?>">
 				<?php wp_nonce_field( 'delete_subscribers', 'delete_subscribers_nonce' ); ?>
 				<?php submit_button('Delete subscribers', 'delete', 'delete_subscribers', false, array(
 					'onclick' => 'return confirm("Are you sure you want to delete all the subscribers?");'
 				)); ?>
 			</form> 
+            <br />
         <?php
         $this->delete_subscribers_handler();
     }
@@ -1096,28 +1102,4 @@ class BCC_Login_Settings_Provider {
     public function get_settings() : BCC_Login_Settings {
         return $this->_settings;
     }
-
-    /**
-	 * Helper to create the GUID
-	 */
-	private function createGUID() {
-		if (function_exists('com_create_guid')) {
-			return com_create_guid();
-		} else {
-			mt_srand((double)microtime()*10000);
-			//optional for php 4.2.0 and up.
-			$set_charid = strtoupper(md5(uniqid(rand(), true)));
-			$set_hyphen = chr(45);
-			// "-"
-			$set_uuid = chr(123)
-				.substr($set_charid, 0, 8).$set_hyphen
-				.substr($set_charid, 8, 4).$set_hyphen
-				.substr($set_charid, 12, 4).$set_hyphen
-				.substr($set_charid, 16, 4).$set_hyphen
-				.substr($set_charid, 20, 12)
-				.chr(125);
-				// "}"
-			return $set_uuid;
-		}
-	}
 }
