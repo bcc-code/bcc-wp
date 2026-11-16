@@ -144,7 +144,7 @@ class BCC_Login_Widgets {
             return $html . PHP_EOL;
         } );
 
-        // "Fra Skjulte Skatter", optionally with language="en", hide-header="true" and muted-videos="true". The same
+        // "Fra Skjulte Skatter", optionally with language="en", hide-header="true" and still-pictures="true". The same
         // embed serves every visitor: the token endpoint gives a visitor who isn't signed in an empty token, and the
         // widget then shows its public layout.
         add_shortcode( 'bcc-hidden-treasures-highlights', function ($attributes) {
@@ -160,7 +160,7 @@ class BCC_Login_Widgets {
             $html .= '<script id="script-bcc-hidden-treasures-highlights" data-authentication-type="WebApp" data-authentication-location="' . esc_url(site_url( '?bcc-login=access-token' )) . '" ';
             $html .= 'data-language="' . esc_attr($language) . '" ';
             // The widget turns its flags on for any value, even "false", so only those that are on here are passed on.
-            foreach ( array( 'hide-header', 'muted-videos' ) as $flag ) {
+            foreach ( array( 'hide-header', 'still-pictures' ) as $flag ) {
                 if ( filter_var($attributes[$flag] ?? false, FILTER_VALIDATE_BOOLEAN) ) {
                     $html .= 'data-' . $flag . '="true" ';
                 }
