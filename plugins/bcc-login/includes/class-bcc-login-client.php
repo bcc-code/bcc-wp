@@ -53,7 +53,20 @@ class BCC_Login_Client {
         $obj_state->return_url = $this->get_current_url();
         set_transient( 'oidc_auth_state_' . $obj_state->state, $obj_state, $this->STATE_TIME_LIMIT );
 
+        // Bind the state to the browser that started the login.
+        setcookie( $this->state_cookie_name( $obj_state->state ), '1', array(
+            'expires'  => time() + $this->STATE_TIME_LIMIT,
+            'path'     => '/',
+            'secure'   => is_ssl(),
+            'httponly' => true,
+            'samesite' => 'Lax', // Sent on the identity provider's redirect back (a top-level GET).
+        ) );
+
         return $obj_state;
+    }
+
+    private function state_cookie_name( $state ) {
+        return 'bcc_login_state_' . $state;
     }
 
     function on_parse_request( $query ){
@@ -81,7 +94,22 @@ class BCC_Login_Client {
 
         $obj_state = get_transient( 'oidc_auth_state_' . $state );
 
+        // Only complete a login started in this browser, and only once. The cookie name comes from
+        // the stored state, which this site generated, not from the query string.
+        if ( is_object( $obj_state ) && empty( $_COOKIE[ $this->state_cookie_name( $obj_state->state ) ] ) ) {
+            $obj_state = false;
+        }
+
         if ( is_object( $obj_state ) ) {
+            delete_transient( 'oidc_auth_state_' . $obj_state->state );
+            setcookie( $this->state_cookie_name( $obj_state->state ), '', array(
+                'expires'  => time() - HOUR_IN_SECONDS,
+                'path'     => '/',
+                'secure'   => is_ssl(),
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ) );
+
             $tokens = $this->request_tokens( $code );
             $id_token = $tokens['id_token'];
             $access_token = $tokens['access_token'];
