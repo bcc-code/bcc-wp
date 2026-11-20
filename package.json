@@ -19,12 +19,12 @@
     "@types/wordpress__hooks": "^2.4.1",
     "@types/wordpress__i18n": "^3.11.0",
     "@types/wordpress__plugins": "^2.3.7",
-    "@wordpress/scripts": "^30.24.0",
+    "@wordpress/scripts": "^37.0.0",
     "rimraf": "^3.0.2",
     "yarn": "^1.22.19"
   },
   "engines": {
-    "node": ">=12"
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
   },
   "dependencies": {
     "primereact": "^10.8.5"
