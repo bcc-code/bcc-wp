@@ -141,7 +141,8 @@ class BCC_Login_Client {
             $strong_result = false;
             $token_id = '';
             if ( ! empty ($sid) ) {
-                $token_id = md5( $sid );
+                // Keyed with this site's salt, so the handle is different on every site.
+                $token_id = hash_hmac( 'sha256', $sid, wp_salt( 'auth' ) );
             } else {
                 $token_id = base64_encode( openssl_random_pseudo_bytes($length, $strong_result) );
                 if(!$strong_result) error_log('Token_id not random enough! openssl_random_pseudo_bytes($length, $strong_result) was used to generate a cryptographically secure token_id, but the function concluded that it\'s not secure enough. Please read https://www.php.net/manual/en/function.openssl-random-pseudo-bytes.php');
