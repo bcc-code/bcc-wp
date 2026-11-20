@@ -2026,7 +2026,7 @@ class BCC_Login_Visibility {
 
                 foreach ($post_target_groups as $role) {
                     $link = $attributes['link'] . '?target-groups[]=' . $role->uid;
-                    $html .= '<a href="'. $link . '"><span class="member-overview__role-badge">' . $role->name . '</span></a>';
+                    $html .= '<a href="'. esc_attr( wp_kses_bad_protocol( $link, wp_allowed_protocols() ) ) . '"><span class="member-overview__role-badge">' . esc_html( $role->name ) . '</span></a>';
                 }
             $html .= '</div>';
         }
@@ -2040,7 +2040,7 @@ class BCC_Login_Visibility {
 
                 foreach ($post_visibility_groups as $role) {
                     $link = $attributes['link'] . '?target-groups[]=' . $role->uid;
-                    $html .= '<a href="'. $link . '"><span class="member-overview__role-badge">' . $role->name . '</span></a>';
+                    $html .= '<a href="'. esc_attr( wp_kses_bad_protocol( $link, wp_allowed_protocols() ) ) . '"><span class="member-overview__role-badge">' . esc_html( $role->name ) . '</span></a>';
                 }
             $html .= '</div>';
         }
