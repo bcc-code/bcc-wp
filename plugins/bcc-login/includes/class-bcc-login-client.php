@@ -101,7 +101,7 @@ class BCC_Login_Client {
         $email = $id_token_claims['email'];
         $sid = $id_token_claims['sid'];
 
-        $user = $this->get_user_by_identity( $person_id, $email );
+        $user = $this->get_user_by_identity( $person_id, $email, $id_token_claims['email_verified'] ?? null );
 
         if ( ! $user ) {
             if ( $id_token_claims['https://login.bcc.no/claims/hasMembership'] == false ) {
@@ -229,36 +229,29 @@ class BCC_Login_Client {
         return BCC_Login_Users::get_subscriber();
     }
 
-    function get_user_by_identity( $person_id, $email ){
+    /**
+     * Finds the WordPress user for a login: by person ID in the login field, then by email.
+     *
+     * Both lookups are exact. An email the identity provider marks as unverified is never
+     * used to link an account.
+     */
+    function get_user_by_identity( $person_id, $email, $email_verified = null ){
         // 1. Lookup by person_id in user login field
         if ( ! empty( $person_id ) ) {
-            $user_query = new WP_User_Query(
-                array(
-                    'search' => $person_id,
-                    'search_columns' => array( 'user_login' )
-                )
-            );
-
-            // If we found an existing users, grab the first one returned.
-            if ( $user_query->get_total() > 0 ) {
-                $users = $user_query->get_results();
-                return $users[0];
+            $user = get_user_by( 'login', $person_id );
+            if ( $user ) {
+                return $user;
             }
         }
 
-        // 2. Lookup by email
-        if ( ! empty( $email ) ) {
-            $user_query = new WP_User_Query(
-                array(
-                    'search' => $email,
-                    'search_columns' => array( 'user_email', 'user_login' )
-                )
-            );
-
-            // If we found an existing users, grab the first one returned.
-            if ( $user_query->get_total() > 0 ) {
-                $users = $user_query->get_results();
-                return $users[0];
+        // 2. Lookup by email (in the email or login field), unless the provider says it's unverified
+        if ( ! empty( $email ) && false !== $email_verified ) {
+            $user = get_user_by( 'email', $email );
+            if ( ! $user ) {
+                $user = get_user_by( 'login', $email );
+            }
+            if ( $user ) {
+                return $user;
             }
         }
 
