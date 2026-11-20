@@ -11,6 +11,29 @@ class BCC_Login_Users {
         add_action( 'admin_init', array( $this, 'on_admin_init' ) );
         add_action( 'pre_user_query', array( $this, 'modify_user_query' ) );
         add_action( 'profile_update', array( $this, 'on_profile_update' ), 10, 2 );
+        add_filter( 'map_meta_cap', array( $this, 'deny_editing_common_users' ), 10, 4 );
+    }
+
+    /**
+     * Denies editing the shared accounts that members and subscribers are signed in as.
+     *
+     * on_profile_update() runs after a change is saved, so it can't prevent one. Mapping these
+     * capabilities to do_not_allow covers the profile screen, the REST API and session management.
+     *
+     * @param string[] $caps
+     * @param string   $cap
+     * @param int      $user_id
+     * @param array    $args
+     * @return string[]
+     */
+    function deny_editing_common_users( $caps, $cap, $user_id, $args ) {
+        if ( in_array( $cap, array( 'edit_user', 'delete_user', 'promote_user', 'remove_user' ), true ) && ! empty( $args[0] ) ) {
+            $target = get_userdata( (int) $args[0] );
+            if ( $target && $this->is_common_user( $target ) ) {
+                $caps[] = 'do_not_allow';
+            }
+        }
+        return $caps;
     }
 
     /**
