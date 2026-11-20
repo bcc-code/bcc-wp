@@ -94,15 +94,15 @@ class BCC_Login_Client {
 
         $obj_state = get_transient( 'oidc_auth_state_' . $state );
 
-        // Only complete a login started in this browser, and only once.
-        $state_cookie = $this->state_cookie_name( $state );
-        if ( is_object( $obj_state ) && empty( $_COOKIE[ $state_cookie ] ) ) {
+        // Only complete a login started in this browser, and only once. The cookie name comes from
+        // the stored state, which this site generated, not from the query string.
+        if ( is_object( $obj_state ) && empty( $_COOKIE[ $this->state_cookie_name( $obj_state->state ) ] ) ) {
             $obj_state = false;
         }
 
         if ( is_object( $obj_state ) ) {
-            delete_transient( 'oidc_auth_state_' . $state );
-            setcookie( $state_cookie, '', array(
+            delete_transient( 'oidc_auth_state_' . $obj_state->state );
+            setcookie( $this->state_cookie_name( $obj_state->state ), '', array(
                 'expires'  => time() - HOUR_IN_SECONDS,
                 'path'     => '/',
                 'secure'   => is_ssl(),
