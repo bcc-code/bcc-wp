@@ -99,6 +99,18 @@ class BCC_Attachments_RSS_Feed {
 			)
 		)";
 
+		// Only attachments that aren't attached to anything, or whose post is published and not
+		// password protected, like core's attachment pages and /wp/v2/media.
+		$where .= " AND (
+			{$wpdb->posts}.post_parent = 0
+			OR EXISTS (
+				SELECT 1 FROM {$wpdb->posts} p_parent
+				WHERE p_parent.ID = {$wpdb->posts}.post_parent
+				  AND p_parent.post_status = 'publish'
+				  AND p_parent.post_password = ''
+			)
+		)";
+
 		return $where;
 	}
 
