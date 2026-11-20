@@ -367,7 +367,7 @@ class BCC_Login_Settings_Provider {
                 'value' => $this->_settings->feed_key,
                 'label' => __( 'Feed', 'bcc-login' ),
                 'readonly' => 0,
-                'description' => 'The following link can be used to retrieve protected content: <a target="_blank" href="' . get_site_url(null,'/feed') . '?id=' . $this->_settings->feed_key . '">' . get_site_url(null,'/feed') . '?id=' . $this->_settings->feed_key . '</a>'
+                'description' => 'The following link can be used to retrieve protected content: <a target="_blank" href="' . esc_url( get_site_url(null,'/feed') . '?id=' . $this->_settings->feed_key ) . '">' . esc_html( get_site_url(null,'/feed') . '?id=' . $this->_settings->feed_key ) . '</a>'
             )
         );
 

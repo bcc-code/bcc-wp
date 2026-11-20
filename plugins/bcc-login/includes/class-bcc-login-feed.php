@@ -191,7 +191,7 @@ class BCC_Login_Feed {
             // Target Groups: the primary groups that the KPIs are measured for
             if (is_array($post_target_groups)) {
                 foreach ($post_target_groups as $group) {
-                    $result .= "\t\t<bcc:targetGroup>" . $group . "</bcc:targetGroup>\n";
+                    $result .= "\t\t<bcc:targetGroup>" . $this->escape_xml($group) . "</bcc:targetGroup>\n";
                 }
             }
 
@@ -200,7 +200,7 @@ class BCC_Login_Feed {
                 $visibility_groups = $this->_settings->array_union($post_visibility_groups, $this->_settings->full_content_access_groups);
 
                 foreach ($visibility_groups as $group) {
-                    $result .= "\t\t<bcc:visibilityGroup>" . $group . "</bcc:visibilityGroup>\n";
+                    $result .= "\t\t<bcc:visibilityGroup>" . $this->escape_xml($group) . "</bcc:visibilityGroup>\n";
                 }
             }
         }
