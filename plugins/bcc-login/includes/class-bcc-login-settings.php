@@ -289,12 +289,13 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_track_page_load' );
         register_setting( $this->option_name, 'bcc_track_page_interaction' );
 
-        $use_groups_settings = !empty($this->_settings->site_groups) || BCC_Coreapi_Client::check_groups_access(
+        // Only needed for the settings page; admin_init also runs for admin-ajax.php and admin-post.php.
+        $use_groups_settings = !empty($this->_settings->site_groups) || ( current_user_can( 'manage_options' ) && BCC_Coreapi_Client::check_groups_access(
             $this->_settings->token_endpoint,
             $this->_settings->client_id,
             $this->_settings->client_secret,
             $this->_settings->coreapi_audience
-        );
+        ) );
         $this->_use_groups_settings = $use_groups_settings;
         $use_notification_settings = $use_groups_settings; // Tie notification settings to groupsettings for now
 
