@@ -505,7 +505,7 @@ class OpenID_Connect_Generic_Client_Wrapper {
 		if ( $this->settings->redirect_user_back && ! empty( $redirect_url ) ) {
 			do_action( 'openid-connect-generic-redirect-user-back', $redirect_url, $user );
 			setcookie( $this->cookie_redirect_key, $redirect_url, 1, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
-			wp_redirect( $redirect_url );
+			wp_safe_redirect( $redirect_url ); // The URL comes from redirect_to: stay on this site.
 		} else { // Otherwise, go home!
 			wp_redirect( home_url() );
 		}
@@ -674,31 +674,14 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			}
 		}
 
-		// 2. Lookup by email
+		// 2. Lookup by email (exact match on email, then login)
 		if (!empty($email)) {
-			$user_query = new WP_User_Query( array(
-				'search' => $email,
-				'search_columns' => array( 'user_email', 'user_login' )
-			) );
-
-			// If we found an existing users, grab the first one returned.
-			if ( $user_query->get_total() > 0 ) {
-				$users = $user_query->get_results();
-				return $users[0];
+			$user = get_user_by( 'email', $email );
+			if ( ! $user ) {
+				$user = get_user_by( 'login', $email );
 			}
-		}
-
-		// 3. Lookup by email
-		if (!empty($email)) {
-			$user_query = new WP_User_Query( array(
-				'search' => $email,
-				'search_columns' => array( 'user_email', 'user_login' )
-			) );
-
-			// If we found an existing users, grab the first one returned.
-			if ( $user_query->get_total() > 0 ) {
-				$users = $user_query->get_results();
-				return $users[0];
+			if ( $user ) {
+				return $user;
 			}
 		}
 

@@ -107,7 +107,8 @@ class BCC_Signon {
 	 */
 	public function bcc_signon_plugin_create_menu() {
 		add_action ( 'admin_init', function() {
-			if ( strpos(wp_get_referer(), 'options-general.php?page=bcc_signon_settings_page&delete_subscribers=true') !== false) {
+			// Only a POST from the form below, with its nonce.
+			if ( isset( $_POST['delete_subscribers'] ) && current_user_can( 'manage_options' ) && check_admin_referer( 'bcc_signon_delete_subscribers' ) ) {
 				$this->delete_subscribers();
 
 				add_settings_error(
@@ -163,6 +164,7 @@ class BCC_Signon {
 			</form>
 
 			<form method="post">
+				<?php wp_nonce_field( 'bcc_signon_delete_subscribers', '_wpnonce', false ); ?>
 				<input type="hidden" name="_wp_http_referer" value="<?php echo add_query_arg( 'delete_subscribers', 'true', wp_get_referer() ) ?>">
 				<?php submit_button('Delete all subscribers', 'delete', 'delete_subscribers', false, array(
 					'onclick' => 'return confirm("Are you sure you want to delete all the subscribers?");'

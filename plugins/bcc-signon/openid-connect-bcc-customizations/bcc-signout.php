@@ -30,7 +30,12 @@
                 };
                 
                 var qs = getQueryString(window.location.search.substr(1).split('&'))
-                window.location = qs["redirectpath"];   
+                // Same-origin redirects only.
+                var target = new URL(qs["redirectpath"] || "/", window.location.origin);
+                if (target.origin !== window.location.origin) {
+                    target = new URL("/", window.location.origin);
+                }
+                window.location.replace(target.href);
             </script>
         </div>
     </body>
