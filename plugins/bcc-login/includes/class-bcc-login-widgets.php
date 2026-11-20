@@ -174,25 +174,41 @@ class BCC_Login_Widgets {
 
     function add_fields_for_topbar_search() {
         register_rest_field( 'search-result', 'link', array (
-            'get_callback' => function ($post_arr) {
+            'get_callback' => function ($post_arr, $field_name, $request) {
+                // Only post results carry a post ID: for term and post-format results the ID is a term ID.
+                if ( 'post' !== $request['type'] ) {
+                    return null;
+                }
                 return get_permalink( $post_arr['id']) ;
             }
         ));
     
         register_rest_field( 'search-result', 'excerpt', array (
-            'get_callback' => function ($post_arr) {
+            'get_callback' => function ($post_arr, $field_name, $request) {
+                // Only post results carry a post ID: for term and post-format results the ID is a term ID.
+                if ( 'post' !== $request['type'] ) {
+                    return null;
+                }
                 return get_the_excerpt( $post_arr['id'] );
             }
         ));
     
         register_rest_field( 'search-result', 'image', array (
-            'get_callback' => function ($post_arr) {
+            'get_callback' => function ($post_arr, $field_name, $request) {
+                // Only post results carry a post ID: for term and post-format results the ID is a term ID.
+                if ( 'post' !== $request['type'] ) {
+                    return null;
+                }
                 return get_the_post_thumbnail_url( $post_arr['id'], 'full' );
             }
         ));
     
         register_rest_field( 'search-result', 'post_date', array (
-            'get_callback' => function ($post_arr) {
+            'get_callback' => function ($post_arr, $field_name, $request) {
+                // Only post results carry a post ID: for term and post-format results the ID is a term ID.
+                if ( 'post' !== $request['type'] ) {
+                    return null;
+                }
                 return get_the_date( 'j. F Y', $post_arr['id'] );
             }
         ));
