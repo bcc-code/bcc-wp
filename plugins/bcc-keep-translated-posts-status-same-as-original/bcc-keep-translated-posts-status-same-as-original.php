@@ -42,10 +42,12 @@ class BCC_Keep_Translated_Posts_Status_Same_As_Original {
      * 1) Guardrail at save-time: before WordPress writes to DB, make translation status match its source.
      */
     function bcc_filter_on_wp_insert_post_data ( $data, $postarr ) {
-        if ( strpos( $_SERVER['REQUEST_URI'], '/wp-json/memsource/v1/connector/translate/' ) !== false ) {
+        // Decide on the REST route WordPress is serving, not on text in the request URL.
+        $rest_route = ( defined( 'REST_REQUEST' ) && REST_REQUEST && isset( $GLOBALS['wp']->query_vars['rest_route'] ) )
+            ? (string) $GLOBALS['wp']->query_vars['rest_route']
+            : '';
+        if ( preg_match( '#^/memsource/v1/connector/translate/(\d+)/?$#', $rest_route, $matches ) ) {
             // This is a Memsource translation request
-            preg_match( '/\/wp-json\/memsource\/v1\/connector\/translate\/(\d+)\?token=/', $_SERVER['REQUEST_URI'], $matches );
-            
             if ( ! isset($matches[1]) )
                 return $data;
 
