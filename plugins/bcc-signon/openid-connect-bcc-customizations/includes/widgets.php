@@ -96,8 +96,8 @@ add_shortcode( 'bcc-widgets-week-calendar', function ($attributes) {
 
     $html =  '<div id="bcc-calendar-week"></div>';
     $html .= '<script async="true" id="script-bcc-calendar-week" data-authentication-type="WebApp" data-authentication-location="'. get_access_token_url() . '" ';
-    $html .= 'data-language="' . $attributes['language'] . '" data-maxdays="' .  $attributes['maxdays'] . '" data-maxappointments="' . $attributes['maxappointments'] . '" ';
-    $html .= 'data-calendars="' . $attributes['calendars'] .'" data-fullcalendarurl="' .  $attributes['fullcalendarurl'] .'" ';
+    $html .= 'data-language="' . esc_attr( $attributes['language'] ) . '" data-maxdays="' .  esc_attr( $attributes['maxdays'] ) . '" data-maxappointments="' . esc_attr( $attributes['maxappointments'] ) . '" ';
+    $html .= 'data-calendars="' . esc_attr( $attributes['calendars'] ) .'" data-fullcalendarurl="' .  esc_attr( wp_kses_bad_protocol( $attributes['fullcalendarurl'] ?? '', wp_allowed_protocols() ) ) .'" ';
     $html .= 'src="https://widgets.bcc.no/widgets/CalendarWeekJs"></script>';
 
     return $html;
@@ -112,8 +112,8 @@ add_shortcode( 'bcc-widgets-month-calendar', function ($attributes) {
 
     $html =  '<div id="bcc-calendar-month"></div>';
     $html .= '<script async="true" id="script-bcc-calendar-month" data-authentication-type="WebApp" data-authentication-location="'. get_access_token_url() . '" ';
-    $html .= 'data-language="' . $attributes['language'] . '"';
-    $html .= 'data-calendars="' . $attributes['calendars'] .'" ';
+    $html .= 'data-language="' . esc_attr( $attributes['language'] ) . '"';
+    $html .= 'data-calendars="' . esc_attr( $attributes['calendars'] ) .'" ';
     $html .= 'src="https://widgets.bcc.no/widgets/CalendarMonthJs"></script>';
     
     return $html;
@@ -127,9 +127,9 @@ add_shortcode( 'bcc-widgets-search', function ($attributes) {
 
     $html =  '<div id="bcc-search"></div>';
     $html .= '<script async="true" id="script-bcc-search" data-authentication-type="WebApp" data-authentication-location="'. get_access_token_url() . '" ';
-    $html .= 'data-language="' . $attributes['language'] . '"';
-    $html .= 'data-hidesearchbox="' . $attributes['hidesearchbox'] .'" ';
-    $html .= 'data-searchquery="' . $attributes['searchquery'] .'" ';
+    $html .= 'data-language="' . esc_attr( $attributes['language'] ) . '"';
+    $html .= 'data-hidesearchbox="' . esc_attr( $attributes['hidesearchbox'] ) .'" ';
+    $html .= 'data-searchquery="' . esc_attr( $attributes['searchquery'] ) .'" ';
     $html .= 'src="https://widgets.bcc.no/widgets/SearchJs"></script>';
     
     return $html;
@@ -143,8 +143,8 @@ add_shortcode( 'bcc-widgets-tvguide', function ($attributes) {
 
     $html = '<div id="bcc-tvguide"></div>';
     $html .= '<script async="true" id="script-bcc-tvguide" data-authentication-type="WebApp" data-authentication-location="'. get_access_token_url() . '" ';
-    $html .= 'data-language="' . $attributes['language'] . '" ';
-    $html .= 'data-maxdays="' . $attributes['maxdays'] . '" src="https://widgets.bcc.no/widgets/TvGuideJs"></script>';
+    $html .= 'data-language="' . esc_attr( $attributes['language'] ) . '" ';
+    $html .= 'data-maxdays="' . esc_attr( $attributes['maxdays'] ) . '" src="https://widgets.bcc.no/widgets/TvGuideJs"></script>';
     
     return $html;
 } );
@@ -157,9 +157,9 @@ add_shortcode( 'bcc-widgets-birthday', function ($attributes) {
 
     $html = '<div id="bcc-birthday"></div>';
     $html .= '<script async="true" id="script-bcc-birthday" data-authentication-type="WebApp" data-authentication-location="'. get_access_token_url() . '" ';
-    $html .= 'data-language="' . $attributes['language'] . '" ';
-    $html .= 'data-churchname="' . $attributes['churchname'] . '" ';
-    $html .= 'data-maxdays="' . $attributes['maxdays'] . '" ';
+    $html .= 'data-language="' . esc_attr( $attributes['language'] ) . '" ';
+    $html .= 'data-churchname="' . esc_attr( $attributes['churchname'] ) . '" ';
+    $html .= 'data-maxdays="' . esc_attr( $attributes['maxdays'] ) . '" ';
     $html .= 'src="https://widgets.bcc.no/widgets/BirthdayJs"></script>';
 
     return $html;
