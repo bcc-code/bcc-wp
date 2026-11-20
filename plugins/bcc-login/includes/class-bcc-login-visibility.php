@@ -342,6 +342,10 @@ class BCC_Login_Visibility {
                     exit;
                 }
 
+                // The page is only visible because of this cookie, so it must not end up in a page cache.
+                if (!defined('DONOTCACHEPAGE')) define('DONOTCACHEPAGE', true);
+                nocache_headers();
+
                 return; // Allow access without needing the query arg
             }
         }
