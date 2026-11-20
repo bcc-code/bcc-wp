@@ -141,6 +141,14 @@ class BCC_WP_Proxy_Plugin {
         return $this->get_config_value('BCC_WP_PROXY_KEY');
     }
 
+    /**
+     * Checks the key sent by the proxy. Requests are rejected when BCC_WP_PROXY_KEY isn't set.
+     */
+    private function is_valid_proxy_key( $provided ) {
+        $key = (string) $this->get_auth_key();
+        return $key !== '' && is_string( $provided ) && hash_equals( $key, $provided );
+    }
+
 
     /**
      * Checks if auth key has been provided in authorization header and returns the userID set by the proxy (if specified)
@@ -148,7 +156,7 @@ class BCC_WP_Proxy_Plugin {
     function authorize_proxy_request() {
         $header = apache_request_headers();
         if ( isset( $header['X-Wp-Proxy-Key'] )) {
-            if ( $header['X-Wp-Proxy-Key'] == $this->get_auth_key() ) {
+            if ( $this->is_valid_proxy_key( $header['X-Wp-Proxy-Key'] ) ) {
 
                 /* Don't redirect to cannonical address if request is coming from proxy */
                 remove_filter('template_redirect','redirect_canonical');
@@ -175,7 +183,7 @@ class BCC_WP_Proxy_Plugin {
     function authorize_api_request() {
         $header = apache_request_headers();
          if ( isset( $header['X-Wp-Proxy-Key'] )) {
-            if ( $header['X-Wp-Proxy-Key'] == $this->get_auth_key() ) {
+            if ( $this->is_valid_proxy_key( $header['X-Wp-Proxy-Key'] ) ) {
                 return true;
             }
          }
