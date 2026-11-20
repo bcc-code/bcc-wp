@@ -78,6 +78,7 @@ class BCC_Login_Visibility {
         add_filter( 'searchwp\query', array( $this, 'filter_searchwp_query' ), 10, 2 );
         add_filter( 'wp_get_nav_menu_items', array( $this, 'filter_menu_items' ), 20 );
         add_filter( 'render_block', array( $this, 'on_render_block' ), 10, 2 );
+        add_filter( 'get_the_excerpt', array( $this, 'on_get_the_excerpt' ), 9, 2 );
 
         add_action( 'wp_nav_menu_item_custom_fields', array( $this, 'on_render_menu_item' ), 0, 5 );
         add_action( 'wp_update_nav_menu_item', array( $this, 'on_update_menu_item' ), 10, 3 );
@@ -1733,6 +1734,72 @@ class BCC_Login_Visibility {
         }
 
         return $block_content;
+    }
+
+    /**
+     * Builds the automatic excerpt without the blocks the visitor may not see.
+     *
+     * Block audience and groups are enforced in on_render_block(). Core's excerpt_remove_blocks()
+     * renders the inner blocks of Group, Columns and Column blocks directly, so the same checks are
+     * applied here before the excerpt is built. Runs before wp_trim_excerpt() (priority 10), and
+     * only when the post has no manual excerpt and hides something for this visitor.
+     *
+     * @param string       $excerpt
+     * @param WP_Post|null $post
+     * @return string
+     */
+    function on_get_the_excerpt( $excerpt, $post = null ) {
+        if ( '' !== $excerpt || ! $post instanceof WP_Post || ! has_blocks( $post->post_content ) ) {
+            return $excerpt;
+        }
+
+        $blocks  = parse_blocks( $post->post_content );
+        $visible = $this->remove_hidden_blocks( $blocks );
+        if ( $visible === $blocks ) {
+            return $excerpt;
+        }
+
+        $filtered_post = clone $post;
+        $filtered_post->post_content = serialize_blocks( $visible );
+        $filtered_post->filter = 'raw'; // So get_post() returns this copy instead of reloading the post.
+
+        return wp_trim_excerpt( '', $filtered_post );
+    }
+
+    /**
+     * Removes, at any depth, the blocks on_render_block() would hide for the current visitor.
+     *
+     * @param array[] $blocks Parsed blocks.
+     * @return array[]
+     */
+    private function remove_hidden_blocks( array $blocks ) : array {
+        $visible = array();
+        foreach ( $blocks as $block ) {
+            if ( '' === $this->on_render_block( '-', $block ) ) {
+                continue;
+            }
+            if ( ! empty( $block['innerBlocks'] ) ) {
+                // innerContent holds a null placeholder for each inner block, in order: keep them in step.
+                $inner_blocks  = array();
+                $inner_content = array();
+                $index         = 0;
+                foreach ( $block['innerContent'] as $chunk ) {
+                    if ( null !== $chunk ) {
+                        $inner_content[] = $chunk;
+                        continue;
+                    }
+                    $kept = $this->remove_hidden_blocks( array( $block['innerBlocks'][ $index++ ] ) );
+                    if ( $kept ) {
+                        $inner_blocks[]  = $kept[0];
+                        $inner_content[] = null;
+                    }
+                }
+                $block['innerBlocks']  = $inner_blocks;
+                $block['innerContent'] = $inner_content;
+            }
+            $visible[] = $block;
+        }
+        return $visible;
     }
 
     /**
