@@ -202,17 +202,18 @@ function handle_ajax(): void {
 		wp_send_json_error( [ 'message' => $result->get_error_message() ], 502 );
 	}
 
-	$description = (string) ( $result['description'] ?? '' );
-	$alt_text    = (string) ( $result['alt_text']    ?? '' );
-	$caption     = (string) ( $result['caption']     ?? '' );
+	// Sanitize once, and return exactly what is stored.
+	$description = wp_kses_post( (string) ( $result['description'] ?? '' ) );
+	$alt_text    = sanitize_text_field( (string) ( $result['alt_text']    ?? '' ) );
+	$caption     = sanitize_textarea_field( (string) ( $result['caption']     ?? '' ) );
 
 	// Persist server-side so a refresh keeps the values.
 	wp_update_post( [
 		'ID'           => $attachment_id,
-		'post_content' => wp_kses_post( $description ),
-		'post_excerpt' => sanitize_textarea_field( $caption ),
+		'post_content' => $description,
+		'post_excerpt' => $caption,
 	] );
-	update_post_meta( $attachment_id, '_wp_attachment_image_alt', sanitize_text_field( $alt_text ) );
+	update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
 
 	wp_send_json_success( [
 		'description' => $description,
@@ -457,15 +458,16 @@ add_filter( 'render_block_core/image', function ( $block_content, $block ) {
                 $tag = $m[0];
                 if ( preg_match( '/\salt\s*=\s*("|\')(.*?)\1/i', $tag, $am ) ) {
                     if ( trim( $am[2] ) === '' ) {
-                        $tag = preg_replace(
+                        // A callback, so the alt text is inserted literally.
+                        $tag = preg_replace_callback(
                             '/\salt\s*=\s*("|\').*?\1/i',
-                            ' alt="' . esc_attr( $alt ) . '"',
+                            fn() => ' alt="' . esc_attr( $alt ) . '"',
                             $tag,
                             1
                         );
                     }
                 } else {
-                    $tag = preg_replace( '/<img\b/i', '<img alt="' . esc_attr( $alt ) . '"', $tag, 1 );
+                    $tag = preg_replace_callback( '/<img\b/i', fn() => '<img alt="' . esc_attr( $alt ) . '"', $tag, 1 );
                 }
                 return $tag;
             },

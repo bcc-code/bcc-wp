@@ -1,5 +1,8 @@
 <?php
 
+// JSON built from the ID token's claims: keep browsers from rendering it as HTML.
+header( 'Content-Type: application/json; charset=utf-8' );
+header( 'X-Content-Type-Options: nosniff' );
 setcookie('wordpress_nocache', 'true');
 
 $token = '';
