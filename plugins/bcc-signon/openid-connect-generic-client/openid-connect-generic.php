@@ -182,17 +182,17 @@ class OpenID_Connect_Generic {
 	function enforce_privacy_redirect() {
 		global $wp;
 		$url = home_url(add_query_arg(array($_GET), $wp->request));
-		if (!strpos($url, 'wp-login')) {
-			if ( $this->settings->enforce_privacy 
-					&& ! OpenID_Connect_Generic::is_unprotected_url($url)
-					&& ! is_user_logged_in() ) {
-				OpenID_Connect_Generic::redirect_to_login_page();
-			}
-			else if ( ! $this->settings->enforce_privacy
-					&& OpenID_Connect_Generic::is_protected_url($url)
-					&& ! is_user_logged_in() ) {
-				OpenID_Connect_Generic::redirect_to_login_page();
-			}
+		// Unprotected URLs are matched on the path only. template_redirect doesn't run for wp-login.php.
+		$path_url = home_url($wp->request);
+		if ( $this->settings->enforce_privacy
+				&& ! OpenID_Connect_Generic::is_unprotected_url($path_url)
+				&& ! is_user_logged_in() ) {
+			OpenID_Connect_Generic::redirect_to_login_page();
+		}
+		else if ( ! $this->settings->enforce_privacy
+				&& OpenID_Connect_Generic::is_protected_url($url)
+				&& ! is_user_logged_in() ) {
+			OpenID_Connect_Generic::redirect_to_login_page();
 		}
 	}
 
