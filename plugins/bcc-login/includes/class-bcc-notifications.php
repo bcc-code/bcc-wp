@@ -93,14 +93,16 @@ class BCC_Notifications
     }
 
     /**
-     * Whether the current user may send notifications for a post: they must be able to edit
-     * that post and to publish posts of its type.
+     * Whether the current user may send notifications for a post. Only editors (and administrators)
+     * send notifications: they must be able to edit the post, and to edit others' posts and publish
+     * posts of its type. Authors can't, not even for their own posts.
      */
     private function can_send_notifications_for(int $post_id): bool {
         $post_type = get_post_type_object(get_post_type($post_id));
 
         return $post_type
             && current_user_can('edit_post', $post_id)
+            && current_user_can($post_type->cap->edit_others_posts)
             && current_user_can($post_type->cap->publish_posts);
     }
 
