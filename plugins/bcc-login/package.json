@@ -28,6 +28,6 @@
 		"rimraf": "^5.0.10"
 	},
 	"devDependencies": {
-		"@wordpress/scripts": "^31.0.0"
+		"@wordpress/scripts": "^37.0.0"
 	}
 }
