@@ -38,8 +38,10 @@ class BCC_Notifications
                         return new WP_REST_Response(array('error' => 'You are not allowed to send notifications for this post'), 403);
                     }
 
-                    $test_email_address = $request->get_param('testEmailAddress') ?: null;
-                    if ($test_email_address !== null && !is_email($test_email_address)) {
+                    // A test send must name a valid address. Any value given is checked, even "" or "0",
+                    // so a test request can't turn into a send to the post's groups.
+                    $test_email_address = $request->get_param('testEmailAddress');
+                    if ($test_email_address !== null && (!is_string($test_email_address) || !is_email($test_email_address))) {
                         return new WP_REST_Response(array('error' => 'testEmailAddress is not a valid email address'), 400);
                     }
                     $updated_notifications = $this->send_notification($post_id, $test_email_address);
