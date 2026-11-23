@@ -674,11 +674,19 @@ class OpenID_Connect_Generic_Client_Wrapper {
 			}
 		}
 
-		// 2. Lookup by email (exact match on email, then login)
+		// 2. Lookup by email (exact match on email, then login). get_user_by( 'login' ) passes the value
+		// through sanitize_user(), which drops characters, so only accept a user whose stored value is the claim.
 		if (!empty($email)) {
+			$email = (string) $email;
 			$user = get_user_by( 'email', $email );
+			if ( $user && strtolower( $user->user_email ) !== strtolower( $email ) ) {
+				$user = false;
+			}
 			if ( ! $user ) {
 				$user = get_user_by( 'login', $email );
+				if ( $user && strtolower( $user->user_login ) !== strtolower( $email ) ) {
+					$user = false;
+				}
 			}
 			if ( $user ) {
 				return $user;

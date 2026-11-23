@@ -107,8 +107,10 @@ class BCC_Signon {
 	 */
 	public function bcc_signon_plugin_create_menu() {
 		add_action ( 'admin_init', function() {
-			// Only a POST from the form below, with its nonce.
-			if ( isset( $_POST['delete_subscribers'] ) && current_user_can( 'manage_options' ) && check_admin_referer( 'bcc_signon_delete_subscribers' ) ) {
+			// Only a POST from the form below, on this plugin's settings page, with its nonce. BCC Login's
+			// settings page has a form with a field of the same name and its own nonce.
+			if ( isset( $_GET['page'], $_POST['delete_subscribers'] ) && 'bcc_signon_settings_page' === $_GET['page']
+					&& current_user_can( 'manage_options' ) && check_admin_referer( 'bcc_signon_delete_subscribers' ) ) {
 				$this->delete_subscribers();
 
 				add_settings_error(
