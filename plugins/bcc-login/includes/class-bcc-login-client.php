@@ -232,23 +232,37 @@ class BCC_Login_Client {
     /**
      * Finds the WordPress user for a login: by person ID in the login field, then by email.
      *
-     * Both lookups are exact. An email the identity provider marks as unverified is never
+     * Both lookups are exact (ignoring case). get_user_by( 'login' ) passes the value through
+     * sanitize_user(), which drops characters, so a user only counts if their stored login or
+     * email is the claimed value. An email the identity provider marks as unverified is never
      * used to link an account.
      */
     function get_user_by_identity( $person_id, $email, $email_verified = null ){
+        $is = function ( $stored, $claimed ) {
+            return strtolower( (string) $stored ) === strtolower( (string) $claimed );
+        };
+
         // 1. Lookup by person_id in user login field
         if ( ! empty( $person_id ) ) {
             $user = get_user_by( 'login', $person_id );
-            if ( $user ) {
+            if ( $user && $is( $user->user_login, $person_id ) ) {
                 return $user;
             }
         }
 
         // 2. Lookup by email (in the email or login field), unless the provider says it's unverified
-        if ( ! empty( $email ) && false !== $email_verified ) {
+        $unverified = null !== $email_verified
+            && false === filter_var( $email_verified, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE );
+        if ( ! empty( $email ) && ! $unverified ) {
             $user = get_user_by( 'email', $email );
+            if ( $user && ! $is( $user->user_email, $email ) ) {
+                $user = false;
+            }
             if ( ! $user ) {
                 $user = get_user_by( 'login', $email );
+                if ( $user && ! $is( $user->user_login, $email ) ) {
+                    $user = false;
+                }
             }
             if ( $user ) {
                 return $user;
