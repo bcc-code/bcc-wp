@@ -1763,7 +1763,34 @@ class BCC_Login_Visibility {
         $filtered_post->post_content = serialize_blocks( $visible );
         $filtered_post->filter = 'raw'; // So get_post() returns this copy instead of reloading the post.
 
-        return wp_trim_excerpt( '', $filtered_post );
+        $excerpt = wp_trim_excerpt( '', $filtered_post );
+
+        // Nothing this visitor may see is left. Given an empty excerpt, core's wp_trim_excerpt() would
+        // build one again from the whole post, so it is skipped for this call.
+        if ( '' === trim( $excerpt ) ) {
+            $this->skip_core_excerpt_once();
+        }
+
+        return $excerpt;
+    }
+
+    /**
+     * Takes core's wp_trim_excerpt() off get_the_excerpt for the call in progress, and puts it back
+     * at the next priority, after its turn has passed.
+     */
+    private function skip_core_excerpt_once() {
+        $priority = has_filter( 'get_the_excerpt', 'wp_trim_excerpt' );
+        if ( false === $priority ) {
+            return;
+        }
+
+        remove_filter( 'get_the_excerpt', 'wp_trim_excerpt', $priority );
+        $restore = function ( $excerpt ) use ( &$restore, $priority ) {
+            remove_filter( 'get_the_excerpt', $restore, $priority + 1 );
+            add_filter( 'get_the_excerpt', 'wp_trim_excerpt', $priority, 2 );
+            return $excerpt;
+        };
+        add_filter( 'get_the_excerpt', $restore, $priority + 1 );
     }
 
     /**
