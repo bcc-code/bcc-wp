@@ -207,13 +207,14 @@ function handle_ajax(): void {
 	$alt_text    = sanitize_text_field( (string) ( $result['alt_text']    ?? '' ) );
 	$caption     = sanitize_textarea_field( (string) ( $result['caption']     ?? '' ) );
 
-	// Persist server-side so a refresh keeps the values.
-	wp_update_post( [
+	// Persist server-side so a refresh keeps the values. Both functions unslash what they
+	// are given, so slash it first, or backslashes in the text would be lost.
+	wp_update_post( wp_slash( [
 		'ID'           => $attachment_id,
 		'post_content' => $description,
 		'post_excerpt' => $caption,
-	] );
-	update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
+	] ) );
+	update_post_meta( $attachment_id, '_wp_attachment_image_alt', wp_slash( $alt_text ) );
 
 	wp_send_json_success( [
 		'description' => $description,
