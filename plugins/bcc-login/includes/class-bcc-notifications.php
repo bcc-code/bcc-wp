@@ -28,11 +28,22 @@ class BCC_Notifications
                 $post_id = $request->get_param('postId');
 
                 if ($post_id) {
+                    $post_id = (int) $post_id;
+
                     if (!in_array(get_post_type($post_id), $this->settings->notification_post_types)) {
                         return new WP_REST_Response(array('error' => 'This post type is not allowed to sent notifications'), 400);
                     }
 
-                    $test_email_address = $request->get_param('testEmailAddress') ?: null;
+                    if (!$this->can_send_notifications_for($post_id)) {
+                        return new WP_REST_Response(array('error' => 'You are not allowed to send notifications for this post'), 403);
+                    }
+
+                    // A test send must name a valid address. Any value given is checked, even "" or "0",
+                    // so a test request can't turn into a send to the post's groups.
+                    $test_email_address = $request->get_param('testEmailAddress');
+                    if ($test_email_address !== null && (!is_string($test_email_address) || !is_email($test_email_address))) {
+                        return new WP_REST_Response(array('error' => 'testEmailAddress is not a valid email address'), 400);
+                    }
                     $updated_notifications = $this->send_notification($post_id, $test_email_address);
 
                     return new WP_REST_Response($updated_notifications, 200);
@@ -57,6 +68,15 @@ class BCC_Notifications
                     return new WP_REST_Response(array('error' => 'postId or notificationId parameter is required'), 400);
                 }
 
+                // The ID becomes part of a Core API path.
+                if (!is_scalar($notification_id) || !preg_match('/^[A-Za-z0-9_-]+$/', (string) $notification_id)) {
+                    return new WP_REST_Response(array('error' => 'notificationId is not valid'), 400);
+                }
+
+                if (!current_user_can('edit_post', (int) $post_id)) {
+                    return new WP_REST_Response(array('error' => 'You are not allowed to edit this post'), 403);
+                }
+
                 if (!in_array(get_post_type($post_id), $this->settings->notification_post_types)) {
                     return new WP_REST_Response(array('error' => 'This post type is not allowed to sent notifications'), 400);
                 }
@@ -70,6 +90,20 @@ class BCC_Notifications
                 return current_user_can('edit_posts');
             },
         ));
+    }
+
+    /**
+     * Whether the current user may send notifications for a post. Only editors (and administrators)
+     * send notifications: they must be able to edit the post, and to edit others' posts and publish
+     * posts of its type. Authors can't, not even for their own posts.
+     */
+    private function can_send_notifications_for(int $post_id): bool {
+        $post_type = get_post_type_object(get_post_type($post_id));
+
+        return $post_type
+            && current_user_can('edit_post', $post_id)
+            && current_user_can($post_type->cap->edit_others_posts)
+            && current_user_can($post_type->cap->publish_posts);
     }
 
     public function register_wpml_translations_endpoint() {
