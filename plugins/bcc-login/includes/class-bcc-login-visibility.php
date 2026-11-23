@@ -342,6 +342,10 @@ class BCC_Login_Visibility {
                     exit;
                 }
 
+                // The page is only visible because of this cookie, so it must not end up in a page cache.
+                if (!defined('DONOTCACHEPAGE')) define('DONOTCACHEPAGE', true);
+                nocache_headers();
+
                 return; // Allow access without needing the query arg
             }
         }
@@ -1805,7 +1809,7 @@ class BCC_Login_Visibility {
 
     function populate_post_audience_column( $column_name, $id ) {
         if ($column_name == 'post_audience') {
-            echo get_post_meta( $id, 'bcc_login_visibility', true );
+            echo esc_html( get_post_meta( $id, 'bcc_login_visibility', true ) );
             return;
         }
 
@@ -1830,7 +1834,7 @@ class BCC_Login_Visibility {
                 return;
             }
 
-            echo join(",", $active_target_groups);
+            echo esc_html( join(",", $active_target_groups) );
         }
 
         if ($column_name == 'post_visibility_groups') {
@@ -1838,7 +1842,7 @@ class BCC_Login_Visibility {
 
             if ($post_visibility_groups) {
                 $groups_string = join(",", $post_visibility_groups);
-                echo $groups_string;
+                echo esc_html( $groups_string );
             }
 
             return;
@@ -1855,7 +1859,7 @@ class BCC_Login_Visibility {
             $group_names = array();
 
             foreach ($active_target_groups as $post_group) {
-                array_push($group_names, '<span class="group-name">' . $this->get_group_name($post_group) . '</span>');
+                array_push($group_names, '<span class="group-name">' . esc_html( $this->get_group_name($post_group) ) . '</span>');
             }
 
             echo join(", ", $group_names);
@@ -1872,7 +1876,7 @@ class BCC_Login_Visibility {
             $group_names = array();
 
             foreach ($active_visibility_groups as $post_group) {
-                array_push($group_names, '<span class="group-name">' . $this->get_group_name($post_group) . '</span>');
+                array_push($group_names, '<span class="group-name">' . esc_html( $this->get_group_name($post_group) ) . '</span>');
             }
 
             echo join(", ", $group_names);
@@ -1911,7 +1915,7 @@ class BCC_Login_Visibility {
         }
 
         if ( isset( $_POST['bcc_login_visibility'] ) ) {
-            update_post_meta( $post_id, 'bcc_login_visibility', $_POST['bcc_login_visibility'] );
+            update_post_meta( $post_id, 'bcc_login_visibility', (int) $_POST['bcc_login_visibility'] );
         }
     }
 
@@ -2022,7 +2026,7 @@ class BCC_Login_Visibility {
 
                 foreach ($post_target_groups as $role) {
                     $link = $attributes['link'] . '?target-groups[]=' . $role->uid;
-                    $html .= '<a href="'. $link . '"><span class="member-overview__role-badge">' . $role->name . '</span></a>';
+                    $html .= '<a href="'. esc_attr( wp_kses_bad_protocol( $link, wp_allowed_protocols() ) ) . '"><span class="member-overview__role-badge">' . esc_html( $role->name ) . '</span></a>';
                 }
             $html .= '</div>';
         }
@@ -2036,7 +2040,7 @@ class BCC_Login_Visibility {
 
                 foreach ($post_visibility_groups as $role) {
                     $link = $attributes['link'] . '?target-groups[]=' . $role->uid;
-                    $html .= '<a href="'. $link . '"><span class="member-overview__role-badge">' . $role->name . '</span></a>';
+                    $html .= '<a href="'. esc_attr( wp_kses_bad_protocol( $link, wp_allowed_protocols() ) ) . '"><span class="member-overview__role-badge">' . esc_html( $role->name ) . '</span></a>';
                 }
             $html .= '</div>';
         }
@@ -2222,7 +2226,7 @@ class BCC_Login_Visibility {
         }
 
         if ( isset( $_POST['bcc_login_visibility'] ) ) {
-            update_post_meta( $attach_id, 'bcc_login_visibility', $_POST['bcc_login_visibility'] );
+            update_post_meta( $attach_id, 'bcc_login_visibility', (int) $_POST['bcc_login_visibility'] );
         }
     }
 

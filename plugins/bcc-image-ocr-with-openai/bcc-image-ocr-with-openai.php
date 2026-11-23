@@ -2,7 +2,7 @@
 /**
  * Plugin Name: BCC – Image OCR with OpenAI
  * Description: Adds a button to the attachment edit screen that uses OpenAI Vision to extract all visible text from an image and fill the Description, Alternative Text and Caption fields in a single request.
- * Version:     1.3.5
+ * Version:     1.3.6
  * Author:      BCC IT
  * License:     GPL-2.0-or-later
  * Requires at least: 6.0
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const VERSION      = '1.3.5';
+const VERSION      = '1.3.6';
 const OPTION_KEY   = 'bcc_image_ocr_with_openai_settings';
 const AJAX_ACTION  = 'bcc_image_ocr_with_openai_extract';
 const NONCE_ACTION = 'bcc_image_ocr_with_openai';
@@ -202,17 +202,19 @@ function handle_ajax(): void {
 		wp_send_json_error( [ 'message' => $result->get_error_message() ], 502 );
 	}
 
-	$description = (string) ( $result['description'] ?? '' );
-	$alt_text    = (string) ( $result['alt_text']    ?? '' );
-	$caption     = (string) ( $result['caption']     ?? '' );
+	// Sanitize once, and return exactly what is stored.
+	$description = wp_kses_post( (string) ( $result['description'] ?? '' ) );
+	$alt_text    = sanitize_text_field( (string) ( $result['alt_text']    ?? '' ) );
+	$caption     = sanitize_textarea_field( (string) ( $result['caption']     ?? '' ) );
 
-	// Persist server-side so a refresh keeps the values.
-	wp_update_post( [
+	// Persist server-side so a refresh keeps the values. Both functions unslash what they
+	// are given, so slash it first, or backslashes in the text would be lost.
+	wp_update_post( wp_slash( [
 		'ID'           => $attachment_id,
-		'post_content' => wp_kses_post( $description ),
-		'post_excerpt' => sanitize_textarea_field( $caption ),
-	] );
-	update_post_meta( $attachment_id, '_wp_attachment_image_alt', sanitize_text_field( $alt_text ) );
+		'post_content' => $description,
+		'post_excerpt' => $caption,
+	] ) );
+	update_post_meta( $attachment_id, '_wp_attachment_image_alt', wp_slash( $alt_text ) );
 
 	wp_send_json_success( [
 		'description' => $description,
@@ -457,15 +459,16 @@ add_filter( 'render_block_core/image', function ( $block_content, $block ) {
                 $tag = $m[0];
                 if ( preg_match( '/\salt\s*=\s*("|\')(.*?)\1/i', $tag, $am ) ) {
                     if ( trim( $am[2] ) === '' ) {
-                        $tag = preg_replace(
+                        // A callback, so the alt text is inserted literally.
+                        $tag = preg_replace_callback(
                             '/\salt\s*=\s*("|\').*?\1/i',
-                            ' alt="' . esc_attr( $alt ) . '"',
+                            fn() => ' alt="' . esc_attr( $alt ) . '"',
                             $tag,
                             1
                         );
                     }
                 } else {
-                    $tag = preg_replace( '/<img\b/i', '<img alt="' . esc_attr( $alt ) . '"', $tag, 1 );
+                    $tag = preg_replace_callback( '/<img\b/i', fn() => '<img alt="' . esc_attr( $alt ) . '"', $tag, 1 );
                 }
                 return $tag;
             },

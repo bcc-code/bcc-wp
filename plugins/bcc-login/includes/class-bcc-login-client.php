@@ -368,7 +368,7 @@ class BCC_Login_Client {
                 $error_description = $result['error_description'];
             }
 
-            echo $error . ': ' . $error_description;
+            echo esc_html( $error . ': ' . $error_description );
 
             exit;
         }
