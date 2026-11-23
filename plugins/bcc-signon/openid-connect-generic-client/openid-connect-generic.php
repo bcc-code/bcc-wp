@@ -182,18 +182,52 @@ class OpenID_Connect_Generic {
 	function enforce_privacy_redirect() {
 		global $wp;
 		$url = home_url(add_query_arg(array($_GET), $wp->request));
-		if (!strpos($url, 'wp-login')) {
-			if ( $this->settings->enforce_privacy 
-					&& ! OpenID_Connect_Generic::is_unprotected_url($url)
-					&& ! is_user_logged_in() ) {
-				OpenID_Connect_Generic::redirect_to_login_page();
+		// template_redirect doesn't run for wp-login.php.
+		if ( $this->settings->enforce_privacy
+				&& ! $this->is_unprotected_request($url, home_url($wp->request))
+				&& ! is_user_logged_in() ) {
+			OpenID_Connect_Generic::redirect_to_login_page();
+		}
+		else if ( ! $this->settings->enforce_privacy
+				&& OpenID_Connect_Generic::is_protected_url($url)
+				&& ! is_user_logged_in() ) {
+			OpenID_Connect_Generic::redirect_to_login_page();
+		}
+	}
+
+	/**
+	 * Check if the request is for an unprotected URL.
+	 *
+	 * An entry matches if it is exactly the requested URL, query string included (like the private
+	 * feed link), or if it matches both the whole URL and the URL without its query string. So text in
+	 * the query string can't make a protected page match, and an entry for a page doesn't cover other
+	 * content its URL's query string selects (like a search on the home page).
+	 *
+	 * @param string $url      The requested URL, with its query string.
+	 * @param string $path_url The requested URL without its query string.
+	 */
+	function is_unprotected_request($url, $path_url) {
+		$unprotected = array_map('trim',
+			apply_filters(
+				'oidc_unprotected_urls',
+				explode("\n", $this->settings->unprotected_urls)
+			)
+		);
+
+		foreach ($unprotected as $entry) {
+			if ($entry === '') {
+				continue;
 			}
-			else if ( ! $this->settings->enforce_privacy
-					&& OpenID_Connect_Generic::is_protected_url($url)
-					&& ! is_user_logged_in() ) {
-				OpenID_Connect_Generic::redirect_to_login_page();
+			if ($entry === $url) {
+				return true;
+			}
+			if (OpenID_Connect_Generic::match_regexes($url, array($entry))
+					&& OpenID_Connect_Generic::match_regexes($path_url, array($entry))) {
+				return true;
 			}
 		}
+
+		return false;
 	}
 
 	/**

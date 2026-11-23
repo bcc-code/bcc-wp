@@ -21,9 +21,10 @@ if ( version_compare(get_bloginfo('version'), '4.7', '>=') ) {
 }
 
 function disable_wp_rest_api($access) {
-  $url = strtok($_SERVER["REQUEST_URI"],'?');
-  
-  if ( !is_user_logged_in() && !strpos($url,'/bcc-wp-proxy/') /*&& !isUnprotectedRestUrl($url)*/ ) {
+  // Decide on the REST route WordPress is serving, not on the request path.
+  $route = isset( $GLOBALS['wp']->query_vars['rest_route'] ) ? (string) $GLOBALS['wp']->query_vars['rest_route'] : '';
+
+  if ( !is_user_logged_in() && 0 !== strpos($route, '/bcc-wp-proxy/') /*&& !isUnprotectedRestUrl($url)*/ ) {
     $message = apply_filters('disable_wp_rest_api_error', __('REST API restricted to authenticated users.', 'disable-wp-rest-api'));
     return new WP_Error('rest_login_required', $message, array('status' => rest_authorization_required_code()));
   }
