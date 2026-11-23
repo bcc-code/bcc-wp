@@ -69,8 +69,8 @@ class BCC_Login_Widgets {
 
             $html =  '<div id="bcc-calendar-week"></div>';
             $html .= '<script id="script-bcc-calendar-week" data-authentication-type="WebApp" data-authentication-location="' . site_url( '?bcc-login=access-token' ) . '" ';
-            $html .= 'data-language="' . $attributes['language'] . '" data-maxdays="' .  $attributes['maxdays'] . '" data-maxappointments="' . $attributes['maxappointments'] . '" ';
-            $html .= 'data-calendars="' . $attributes['calendars'] .'" data-fullcalendarurl="' .  $attributes['fullcalendarurl'] . '" ';
+            $html .= 'data-language="' . esc_attr( $attributes['language'] ) . '" data-maxdays="' .  esc_attr( $attributes['maxdays'] ) . '" data-maxappointments="' . esc_attr( $attributes['maxappointments'] ) . '" ';
+            $html .= 'data-calendars="' . esc_attr( $attributes['calendars'] ) .'" data-fullcalendarurl="' .  esc_attr( wp_kses_bad_protocol( $attributes['fullcalendarurl'] ?? '', wp_allowed_protocols() ) ) . '" ';
             $html .= 'src="'.$this->settings->widgets_base_url.'/widgets/CalendarWeekJs" defer></script>';
 
             return $html . PHP_EOL;
@@ -81,7 +81,7 @@ class BCC_Login_Widgets {
 
             $html =  '<div id="bcc-calendar-month"></div>';
             $html .= '<script id="script-bcc-calendar-month" data-authentication-type="WebApp" data-authentication-location="' . site_url( '?bcc-login=access-token' ) . '" ';
-            $html .= 'data-language="' . $attributes['language'] . '" data-calendars="' . $attributes['calendars'] . '" ';
+            $html .= 'data-language="' . esc_attr( $attributes['language'] ) . '" data-calendars="' . esc_attr( $attributes['calendars'] ) . '" ';
             $html .= 'src="'.$this->settings->widgets_base_url.'/widgets/CalendarMonthJs" defer></script>';
             
             return $html . PHP_EOL;
@@ -92,7 +92,7 @@ class BCC_Login_Widgets {
 
             $html = '<div id="bcc-birthday"></div>';
             $html .= '<script id="script-bcc-birthday" data-authentication-type="WebApp" data-authentication-location="' . site_url( '?bcc-login=access-token' ) . '" ';
-            $html .= 'data-language="' . $attributes['language'] . '" data-churchname="' . $attributes['churchname'] . '" data-maxdays="' . $attributes['maxdays'] . '" ';
+            $html .= 'data-language="' . esc_attr( $attributes['language'] ) . '" data-churchname="' . esc_attr( $attributes['churchname'] ) . '" data-maxdays="' . esc_attr( $attributes['maxdays'] ) . '" ';
             $html .= 'src="'.$this->settings->widgets_base_url.'/widgets/BirthdayJs" defer></script>';
 
             return $html . PHP_EOL;
@@ -114,7 +114,7 @@ class BCC_Login_Widgets {
                 $html .= '</svg>';
             $html .= '</div>';
             $html .= '<script id="script-bcc-map" data-authentication-type="WebApp" data-authentication-location="' . site_url( '?bcc-login=access-token' ) . '" ';
-            $html .= 'data-district="' . ($attributes['district'] ?? '') . '" data-zoom="' . ($attributes['zoom'] ?? '') . '" data-lat="' . ($attributes['lat'] ?? '') . '" data-lng="' . ($attributes['lng'] ?? '') . '" ';
+            $html .= 'data-district="' . esc_attr( $attributes['district'] ?? '' ) . '" data-zoom="' . esc_attr( $attributes['zoom'] ?? '' ) . '" data-lat="' . esc_attr( $attributes['lat'] ?? '' ) . '" data-lng="' . esc_attr( $attributes['lng'] ?? '' ) . '" ';
             $html .= 'src="'.$this->settings->widgets_base_url.'/widgets/MapJs" defer></script>';
 
             return $html . PHP_EOL;
@@ -174,25 +174,41 @@ class BCC_Login_Widgets {
 
     function add_fields_for_topbar_search() {
         register_rest_field( 'search-result', 'link', array (
-            'get_callback' => function ($post_arr) {
+            'get_callback' => function ($post_arr, $field_name, $request) {
+                // Only post results carry a post ID: for term and post-format results the ID is a term ID.
+                if ( 'post' !== $request['type'] ) {
+                    return null;
+                }
                 return get_permalink( $post_arr['id']) ;
             }
         ));
     
         register_rest_field( 'search-result', 'excerpt', array (
-            'get_callback' => function ($post_arr) {
+            'get_callback' => function ($post_arr, $field_name, $request) {
+                // Only post results carry a post ID: for term and post-format results the ID is a term ID.
+                if ( 'post' !== $request['type'] ) {
+                    return null;
+                }
                 return get_the_excerpt( $post_arr['id'] );
             }
         ));
     
         register_rest_field( 'search-result', 'image', array (
-            'get_callback' => function ($post_arr) {
+            'get_callback' => function ($post_arr, $field_name, $request) {
+                // Only post results carry a post ID: for term and post-format results the ID is a term ID.
+                if ( 'post' !== $request['type'] ) {
+                    return null;
+                }
                 return get_the_post_thumbnail_url( $post_arr['id'], 'full' );
             }
         ));
     
         register_rest_field( 'search-result', 'post_date', array (
-            'get_callback' => function ($post_arr) {
+            'get_callback' => function ($post_arr, $field_name, $request) {
+                // Only post results carry a post ID: for term and post-format results the ID is a term ID.
+                if ( 'post' !== $request['type'] ) {
+                    return null;
+                }
                 return get_the_date( 'j. F Y', $post_arr['id'] );
             }
         ));
