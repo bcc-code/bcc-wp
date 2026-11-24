@@ -78,14 +78,14 @@ jobs:
 
       - name: Get Package Version
         id: version
-        uses: notiz-dev/github-action-json-property@release
+        uses: notiz-dev/github-action-json-property@a5a9c668b16513c737c3e1f8956772c99c73f6e8 # v0.2.0
         with:
             path: 'plugins/bcc-image-ocr-with-openai/package.json'
             prop_path: 'version'
 
       - name: Get Previous Updated
         id: lastupdated
-        uses: notiz-dev/github-action-json-property@release
+        uses: notiz-dev/github-action-json-property@a5a9c668b16513c737c3e1f8956772c99c73f6e8 # v0.2.0
         with:
             path: 'plugins/bcc-image-ocr-with-openai/package.json'
             prop_path: 'last_updated'
@@ -161,7 +161,7 @@ jobs:
 
 
 
-      - uses: ncipollo/release-action@v1
+      - uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
         name: Create Release
         if: github.event_name != 'pull_request'
         with:
