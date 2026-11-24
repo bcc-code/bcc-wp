@@ -69,6 +69,48 @@ class BCC_Login_Client {
         return 'bcc_login_state_' . $state;
     }
 
+    /**
+     * A parameter of the request's query string, or '' if it's missing or not a string.
+     *
+     * Read from the query string itself: when a rewrite rule matches the request, as one does for
+     * the redirect URI with pretty permalinks, WordPress removes $_GET['error'] while parsing the
+     * request, before 'parse_request' runs.
+     */
+    private function get_query_param( $name ) {
+        $params = $_GET;
+        if ( isset( $_SERVER['QUERY_STRING'] ) && is_string( $_SERVER['QUERY_STRING'] ) ) {
+            parse_str( $_SERVER['QUERY_STRING'], $params );
+        }
+        return isset( $params[ $name ] ) && is_string( $params[ $name ] ) ? $params[ $name ] : '';
+    }
+
+    /**
+     * Shows that the identity provider ended the login with an error, e.g. 'access_denied' when the
+     * person cancelled or isn't allowed in. Only codes made of lowercase letters and underscores,
+     * as OAuth's are, are shown, so a crafted link can't put other text on the page.
+     */
+    private function show_login_error( $error ) {
+        if ( ! preg_match( '/^[a-z_]{1,64}$/', $error ) ) {
+            $error = 'unknown_error';
+        }
+
+        wp_die(
+            sprintf(
+                '%s<br><br><a href="%s">%s</a><br><br><a href="%s">%s</a>',
+                /* translators: %s: the error code from the identity provider, e.g. access_denied */
+                esc_html( sprintf( __( 'The login could not be completed (%s).', 'bcc-login' ), $error ) ),
+                esc_url( wp_login_url() ),
+                esc_html__( 'Try again', 'bcc-login' ),
+                esc_url( home_url() ),
+                esc_html__( 'Go to the front page', 'bcc-login' )
+            ),
+            esc_html__( 'Login failed', 'bcc-login' ),
+            array(
+                'response' => 401,
+            )
+        );
+    }
+
     function on_parse_request( $query ){
         if ( $this->is_redirect_url() ) {
            $this->complete_login();
@@ -84,15 +126,16 @@ class BCC_Login_Client {
     }
 
     private function complete_login() {
-        $code = $_GET['code'];
-        $state = $_GET['state'];
+        $code = $this->get_query_param( 'code' );
+        $state = $this->get_query_param( 'state' );
 
-        if ( ! empty( $_GET['error'] ) ) {
-            echo esc_html( $_GET['error'] );
-            exit;
+        // The identity provider sends 'error' instead of 'code' when the login failed or was cancelled.
+        $error = $this->get_query_param( 'error' );
+        if ( '' !== $error ) {
+            $this->show_login_error( $error );
         }
 
-        $obj_state = get_transient( 'oidc_auth_state_' . $state );
+        $obj_state = '' !== $state ? get_transient( 'oidc_auth_state_' . $state ) : false;
 
         // Only complete a login started in this browser, and only once. The cookie name comes from
         // the stored state, which this site generated, not from the query string.
@@ -100,7 +143,7 @@ class BCC_Login_Client {
             $obj_state = false;
         }
 
-        if ( is_object( $obj_state ) ) {
+        if ( is_object( $obj_state ) && '' !== $code ) {
             delete_transient( 'oidc_auth_state_' . $obj_state->state );
             setcookie( $this->state_cookie_name( $obj_state->state ), '', array(
                 'expires'  => time() - HOUR_IN_SECONDS,
