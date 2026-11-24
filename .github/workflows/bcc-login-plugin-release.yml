@@ -80,17 +80,15 @@ jobs:
 
       - name: Get Package Version
         id: version
-        uses: notiz-dev/github-action-json-property@a5a9c668b16513c737c3e1f8956772c99c73f6e8 # v0.2.0
-        with:
-          path: 'plugins/bcc-login/package.json'
-          prop_path: 'version'
+        run: |
+          prop=$(jq -er '.version | select(type == "string" and . != "" and (contains("\n") | not))' plugins/bcc-login/package.json)
+          echo "prop=$prop" >> "$GITHUB_OUTPUT"
 
       - name: Get Previous Updated
         id: lastupdated
-        uses: notiz-dev/github-action-json-property@a5a9c668b16513c737c3e1f8956772c99c73f6e8 # v0.2.0
-        with:
-          path: 'plugins/bcc-login/package.json'
-          prop_path: 'last_updated'
+        run: |
+          prop=$(jq -er '.last_updated | select(type == "string" and . != "" and (contains("\n") | not))' plugins/bcc-login/package.json)
+          echo "prop=$prop" >> "$GITHUB_OUTPUT"
 
       - id: build-and-zip
         name: Build and Zip Plugin
