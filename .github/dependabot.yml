@@ -1,0 +1,20 @@
+# Keeps the GitHub Actions in .github/workflows up to date, both those used by tag
+# (e.g. actions/checkout@v6) and those pinned to a commit with a version comment
+# (e.g. ncipollo/release-action@<sha> # v1.21.0).
+#
+# A change to a plugin's release workflow releases that plugin, so all updates come in one
+# pull request a month: one merge, one round of releases. New versions wait 7 days first.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "ci"
