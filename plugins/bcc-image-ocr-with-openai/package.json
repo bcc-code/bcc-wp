@@ -19,10 +19,7 @@
 		"high": ""
 	},
 	"scripts": {
-		"start": "rimraf build && wp-scripts start",
-		"build": "rimraf build && wp-scripts build"
-	},
-	"dependencies": {
-		"rimraf": "^5.0.5"
+		"start": "wp-scripts start",
+		"build": "wp-scripts build"
 	}
 }

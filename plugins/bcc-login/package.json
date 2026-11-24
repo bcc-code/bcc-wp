@@ -19,13 +19,12 @@
 		"high": ""
 	},
 	"scripts": {
-		"start": "rimraf build && wp-scripts start",
-		"build": "rimraf build && wp-scripts build"
+		"start": "wp-scripts start",
+		"build": "wp-scripts build"
 	},
 	"dependencies": {
 		"primeicons": "^7.0.0",
-		"primereact": "^10.9.7",
-		"rimraf": "^5.0.10"
+		"primereact": "^10.9.7"
 	},
 	"devDependencies": {
 		"@wordpress/scripts": "^37.0.0"
