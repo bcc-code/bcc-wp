@@ -37,7 +37,7 @@ jobs:
         working-directory: ./plugins/bcc-attachments-rss-feed
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     # This config file gets auto-loaded by PHPStan
     - name: Set PHPStan config
@@ -74,7 +74,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: true
           fetch-depth: 0
