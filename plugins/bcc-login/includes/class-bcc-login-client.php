@@ -101,7 +101,8 @@ class BCC_Login_Client {
         $email = $id_token_claims['email'];
         $sid = $id_token_claims['sid'];
 
-        $user = $this->get_user_by_identity( $person_id, $email );
+        $email_verified = $id_token_claims['email_verified'] ?? null;
+        $user = $this->get_user_by_identity( $person_id, $email, $email_verified );
 
         if ( ! $user ) {
             if ( $id_token_claims['https://login.bcc.no/claims/hasMembership'] == false ) {
@@ -109,7 +110,7 @@ class BCC_Login_Client {
                 exit;
             }
             if ( $this->_settings->create_missing_users ) {
-                $user = $this->create_new_user( $person_id, $email, $id_token_claims );
+                $user = $this->create_new_user( $person_id, $this->email_for_new_user( $email, $email_verified ), $id_token_claims );
             } else {
                 $user = $this->get_common_login( $id_token_claims );
             }
@@ -229,40 +230,63 @@ class BCC_Login_Client {
         return BCC_Login_Users::get_subscriber();
     }
 
-    function get_user_by_identity( $person_id, $email ){
+    /**
+     * Finds the WordPress user for a login: by person ID in the login field, then by email.
+     *
+     * Both lookups are exact (ignoring case). get_user_by( 'login' ) passes the value through
+     * sanitize_user(), which drops characters, so a user only counts if their stored login or
+     * email is the claimed value. On a network, only users of this site count, as with the
+     * WP_User_Query search used before. An email the identity provider marks as unverified is
+     * never used to link an account.
+     */
+    function get_user_by_identity( $person_id, $email, $email_verified = null ){
+        $find = function ( $field, $value ) {
+            $user = get_user_by( $field, $value );
+            $stored = $user ? ( 'email' === $field ? $user->user_email : $user->user_login ) : '';
+            if ( ! $user || strtolower( (string) $stored ) !== strtolower( (string) $value ) ) {
+                return false;
+            }
+            return ( ! is_multisite() || is_user_member_of_blog( $user->ID ) ) ? $user : false;
+        };
+
         // 1. Lookup by person_id in user login field
         if ( ! empty( $person_id ) ) {
-            $user_query = new WP_User_Query(
-                array(
-                    'search' => $person_id,
-                    'search_columns' => array( 'user_login' )
-                )
-            );
-
-            // If we found an existing users, grab the first one returned.
-            if ( $user_query->get_total() > 0 ) {
-                $users = $user_query->get_results();
-                return $users[0];
+            $user = $find( 'login', $person_id );
+            if ( $user ) {
+                return $user;
             }
         }
 
-        // 2. Lookup by email
-        if ( ! empty( $email ) ) {
-            $user_query = new WP_User_Query(
-                array(
-                    'search' => $email,
-                    'search_columns' => array( 'user_email', 'user_login' )
-                )
-            );
-
-            // If we found an existing users, grab the first one returned.
-            if ( $user_query->get_total() > 0 ) {
-                $users = $user_query->get_results();
-                return $users[0];
+        // 2. Lookup by email (in the email or login field), unless the provider says it's unverified
+        if ( ! empty( $email ) && ! $this->is_email_unverified( $email_verified ) ) {
+            $user = $find( 'email', $email ) ?: $find( 'login', $email );
+            if ( $user ) {
+                return $user;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Whether the identity provider marks the email as unverified (`email_verified` false or "false").
+     * A missing claim (null) doesn't count as unverified.
+     */
+    private function is_email_unverified( $email_verified ) {
+        return null !== $email_verified
+            && false === filter_var( $email_verified, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE );
+    }
+
+    /**
+     * The email to give a new user. An unverified email that already belongs to another account
+     * is left out, so the new account can still be created (WordPress requires unique emails);
+     * the person is found by their person ID next time.
+     */
+    private function email_for_new_user( $email, $email_verified ) {
+        if ( $this->is_email_unverified( $email_verified ) && ! empty( $email ) && email_exists( $email ) ) {
+            return '';
+        }
+        return $email;
     }
 
     private function get_full_redirect_url() {
