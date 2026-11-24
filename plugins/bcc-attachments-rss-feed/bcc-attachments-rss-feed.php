@@ -99,16 +99,15 @@ class BCC_Attachments_RSS_Feed {
 			)
 		)";
 
-		// Only attachments that aren't attached to anything, or whose post is published and not
-		// password protected, like core's attachment pages and /wp/v2/media.
-		$where .= " AND (
-			{$wpdb->posts}.post_parent = 0
-			OR EXISTS (
-				SELECT 1 FROM {$wpdb->posts} p_parent
-				WHERE p_parent.ID = {$wpdb->posts}.post_parent
-				  AND p_parent.post_status = 'publish'
-				  AND p_parent.post_password = ''
-			)
+		// Leave out attachments of posts that aren't published (drafts, scheduled, pending, private,
+		// trashed) or are password protected. Core's attachment pages and /wp/v2/media also hide
+		// attachments of unpublished posts, but show those of password-protected ones; this feed
+		// leaves those out too, as it carries the attachments' extracted text. Attachments that
+		// aren't attached to a post, or whose post no longer exists, are listed, as in core.
+		$where .= " AND NOT EXISTS (
+			SELECT 1 FROM {$wpdb->posts} p_parent
+			WHERE p_parent.ID = {$wpdb->posts}.post_parent
+			  AND ( p_parent.post_status <> 'publish' OR p_parent.post_password <> '' )
 		)";
 
 		return $where;
