@@ -14,9 +14,14 @@ on:
       - '**'
   pull_request:
     branches: [ master ]
+    # Pull requests that change only the root package.json or yarn.lock (e.g. from Dependabot)
+    # also build bcc-login, the plugin that bundles npm packages. Pushing those files to master
+    # doesn't release anything.
     paths:
       - plugins/bcc-login/**
       - .github/workflows/bcc-login-plugin-release.yml
+      - package.json
+      - yarn.lock
     tags-ignore:
       - '**'
 
