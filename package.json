@@ -9,7 +9,7 @@
     "build": "yarn workspace bcc-login build"
   },
   "devDependencies": {
-    "@types/react": "^16.8.24",
+    "@types/react": "^19.3.0",
     "@wordpress/scripts": "^37.0.0",
     "yarn": "^1.22.19"
   },
