@@ -17,7 +17,7 @@
     "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
   },
   "dependencies": {
-    "primereact": "^10.8.5"
+    "primereact": "^10.9.9"
   },
   "resolutions": {
     "serialize-javascript": "^7.1.3"

@@ -24,7 +24,7 @@
 	},
 	"dependencies": {
 		"primeicons": "^8.0.2",
-		"primereact": "^10.9.7"
+		"primereact": "^10.9.9"
 	},
 	"devDependencies": {
 		"@wordpress/scripts": "^37.0.0"
