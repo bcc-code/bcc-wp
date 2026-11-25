@@ -180,11 +180,10 @@ class OpenID_Connect_Generic {
 	 * @return void
 	 */
 	function enforce_privacy_redirect() {
-		global $wp;
-		$url = home_url(add_query_arg(array($_GET), $wp->request));
+		list($url, $path_url) = $this->get_request_urls();
 		// template_redirect doesn't run for wp-login.php.
 		if ( $this->settings->enforce_privacy
-				&& ! $this->is_unprotected_request($url, home_url($wp->request))
+				&& ! $this->is_unprotected_request($url, $path_url)
 				&& ! is_user_logged_in() ) {
 			OpenID_Connect_Generic::redirect_to_login_page();
 		}
@@ -193,6 +192,19 @@ class OpenID_Connect_Generic {
 				&& ! is_user_logged_in() ) {
 			OpenID_Connect_Generic::redirect_to_login_page();
 		}
+	}
+
+	/**
+	 * The requested URL, with and without its query string, as the privacy checks compare them.
+	 *
+	 * @return string[]
+	 */
+	function get_request_urls() {
+		global $wp;
+		return array(
+			home_url(add_query_arg(array($_GET), $wp->request)),
+			home_url($wp->request),
+		);
 	}
 
 	/**
@@ -261,16 +273,20 @@ class OpenID_Connect_Generic {
 	}
 
 	function match_regexes($url, $regexes) {
-		foreach ($regexes as $regex) {
-			$default_error_reporting = error_reporting(0);
+		// Entries that aren't valid regexes (plain URLs) would make preg_match() warn. Error reporting is
+		// switched off while matching and always switched back on afterwards.
+		$default_error_reporting = error_reporting(0);
+		$matched = false;
 
+		foreach ($regexes as $regex) {
 			if ($regex == $url || preg_match($regex, $url)) {
-				error_reporting($default_error_reporting);
-				return true;
+				$matched = true;
+				break;
 			}
 		}
 
-		return false;
+		error_reporting($default_error_reporting);
+		return $matched;
 	}
 
 	/**
@@ -292,8 +308,8 @@ class OpenID_Connect_Generic {
 	 */
 	function enforce_privacy_feeds( $content ) {
 		if ( $this->settings->enforce_privacy
-			&& ! OpenID_Connect_Generic::is_unprotected_url()
-			&& ! is_user_logged_in() ) {
+			&& ! is_user_logged_in()
+			&& ! $this->is_unprotected_request(...$this->get_request_urls()) ) {
 			$content = __( 'Private site', 'daggerhart-openid-connect-generic' );
 		}
 		return $content;
