@@ -701,6 +701,9 @@ class BCC_Login_Settings_Provider {
                 'a:1:{s:10:"subscriber";b:1;}'
             ) ) );
 
+            // Null when the query above failed. Read before the lookups below, whose queries reset the last error.
+            $member_ids = '' === $wpdb->last_error ? array() : null;
+
             // The plugin's shared accounts are left alone: deleting the shared subscriber account would log out
             // everyone signed in with it.
             foreach ( BCC_Login_Users::get_logins() as $info ) {
@@ -711,7 +714,6 @@ class BCC_Login_Settings_Provider {
             }
 
             // Of those, the ones who also belong to another site of the network. Null when a query failed.
-            $member_ids = '' === $wpdb->last_error ? array() : null;
             if ( is_multisite() && null !== $member_ids ) {
                 // Network administrators are left alone, whatever their role on this site.
                 $subscriber_ids = array_values( array_diff( $subscriber_ids, $this->get_network_admin_ids() ) );
