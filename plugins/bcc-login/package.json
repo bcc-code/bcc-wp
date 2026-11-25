@@ -23,7 +23,7 @@
 		"build": "wp-scripts build"
 	},
 	"dependencies": {
-		"primeicons": "^7.0.0",
+		"primeicons": "^8.0.2",
 		"primereact": "^10.9.7"
 	},
 	"devDependencies": {

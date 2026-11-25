@@ -8863,10 +8863,10 @@ prettier-linter-helpers@^1.0.1:
   resolved "https://registry.yarnpkg.com/wp-prettier/-/wp-prettier-3.9.6.tgz#52d283160fa7cbe0ca3a226a2fe3a9225cfad441"
   integrity sha512-rKjrWazF+8QexwTG4Y1Xmnnnp9SDNvaakDtXTRDHxhyudrelGQ5tqoviFtGUuE4fvMs4ck3pmgrZ2Ap202GTIQ==
 
-primeicons@^7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/primeicons/-/primeicons-7.0.0.tgz#6b25c3fdcb29bb745a3035bdc1ed5902f4a419cf"
-  integrity sha512-jK3Et9UzwzTsd6tzl2RmwrVY/b8raJ3QZLzoDACj+oTJ0oX7L9Hy+XnVwgo4QVKlKpnP/Ur13SXV/pVh4LzaDw==
+primeicons@^8.0.2:
+  version "8.0.2"
+  resolved "https://registry.yarnpkg.com/primeicons/-/primeicons-8.0.2.tgz#2bdcc8a9679791e7dd20b65c2c32121cd1aa5b38"
+  integrity sha512-o3UQey3nXMEQRAudVYZZWswz6mmnWpPnksYb7wIu4rEEVfdS3pLnxnmSJx5gKBRMer1MxnhJZG5QRDxVVJFNkA==
 
 primereact@^10.8.5:
   version "10.8.5"
