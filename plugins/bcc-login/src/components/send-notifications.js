@@ -42,15 +42,22 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
         try {
             showToast('info');
 
+            // A test send answers 200 with an empty body, which isn't JSON. parse: false still
+            // rejects any status outside 2xx, but doesn't try to read the body.
             await apiFetch({
                 path: '/bcc-login/v1/send-notifications',
                 method: 'POST',
                 data: { postId: postId || 0, testEmailAddress: testEmailAddress.trim() },
+                parse: false,
             });
 
             showToast('success');
         } catch (error) {
-            console.error('Error sending test notification:', error);
+            // With parse: false, an error status rejects with the raw Response, so log its status and text.
+            const detail = error instanceof window.Response
+                ? `Request failed (${error.status}): ${await error.text().catch(() => '')}`
+                : error;
+            console.error('Error sending test notification:', detail);
             showToast('error');
         }
     };
