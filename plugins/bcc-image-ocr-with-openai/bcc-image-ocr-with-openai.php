@@ -479,9 +479,10 @@ add_filter( 'render_block_core/image', function ( $block_content, $block ) {
 
     // 2) Inject a <figcaption> if the figure doesn't already have one.
     if ( $caption !== '' && stripos( $block_content, '<figcaption' ) === false ) {
-        $block_content = preg_replace(
+        // A callback, so the caption is inserted literally ("$1" or "\1" in it stay as they are).
+        $block_content = preg_replace_callback(
             '/<\/figure>/i',
-            '<figcaption>' . wp_kses_post( $caption ) . '</figcaption></figure>',
+            fn() => '<figcaption>' . wp_kses_post( $caption ) . '</figcaption></figure>',
             $block_content,
             1
         );
