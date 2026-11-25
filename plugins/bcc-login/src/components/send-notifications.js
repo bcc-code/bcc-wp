@@ -6,20 +6,16 @@ import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
 import { Badge } from 'primereact/badge';
 import { __ } from '@wordpress/i18n';
+// WordPress sets apiFetch up with the site's REST URL (any permalink setting or install folder) and the REST nonce.
+import apiFetch from '@wordpress/api-fetch';
 
 const SendNotifications = ({ label, postId, postType, status, targetGroupsCount, visibilityGroupsCount, isNotificationDryRun, isDirty, isAutoSaving }) => {
     const [visible, setVisible] = useState(false);
     const toast = useRef(null);
-    const [nonce, setNonce] = useState(null);
     const [translations, setTranslations] = useState(null);
     const [isOriginalPost, setIsOriginalPost] = useState(null);
     const [showTestSection, setShowTestSection] = useState(false);
     const [testEmailAddress, setTestEmailAddress] = useState('');
-
-    useEffect(() => {
-        const wpNonce = window?.wpApiSettings?.nonce || window?.bccLoginNonce;
-        setNonce(wpNonce || null);
-    }, []);
 
     const showToast = (status) => {
         const messages = {
@@ -46,21 +42,11 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
         try {
             showToast('info');
 
-            const response = await fetch('/wp-json/bcc-login/v1/send-notifications', {
+            await apiFetch({
+                path: '/bcc-login/v1/send-notifications',
                 method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-WP-Nonce': nonce
-                },
-                body: JSON.stringify({ postId: postId || 0, testEmailAddress: testEmailAddress.trim() })
+                data: { postId: postId || 0, testEmailAddress: testEmailAddress.trim() },
             });
-
-            if (!response.ok) {
-                const text = await response.text();
-                showToast('error');
-                throw new Error(`Request failed (${response.status}): ${text}`);
-            }
 
             showToast('success');
         } catch (error) {
@@ -70,32 +56,16 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
     };
 
     const sendNotifications = async () => {
-        if (!nonce) {
-            console.error('Missing REST nonce. Ensure wpApiSettings.nonce is localized.');
-            return;
-        }
-
         try {
             setVisible(false);
             showToast('info');
 
-            const response = await fetch('/wp-json/bcc-login/v1/send-notifications', {
+            const responseBody = await apiFetch({
+                path: '/bcc-login/v1/send-notifications',
                 method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-WP-Nonce': nonce
-                },
-                body: JSON.stringify({ postId: postId || 0 })
+                data: { postId: postId || 0 },
             });
 
-            if (!response.ok) {
-                const text = await response.text();
-                showToast('error');
-                throw new Error(`Request failed (${response.status}): ${text}`);
-            }
-
-            const responseBody = await response.json()
             if(responseBody) {
                 window.dispatchEvent(new CustomEvent('bcc:notificationsUpdated', {
                     detail: responseBody
@@ -113,10 +83,6 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
     useEffect(() => {
         if (!visible) return;
 
-        if (!nonce) {
-            console.error('Missing REST nonce. Ensure wpApiSettings.nonce is localized.');
-            return;
-        }
         if (!postId) {
             console.error('Missing postId.');
             return;
@@ -124,37 +90,16 @@ const SendNotifications = ({ label, postId, postType, status, targetGroupsCount,
 
         const fetchTranslations = async () => {
             try {
-                const response = await fetch(`/wp-json/bcc-login/v1/wpml-translations/${postId}`, {
-                    method: 'GET',
-                    credentials: 'same-origin',
-                    headers: {
-                        'X-WP-Nonce': nonce
-                    }
-                });
-
-                if (!response.ok) {
-                    const text = await response.text().catch(() => '');
-                    throw new Error(`Request failed (${response.status}): ${text}`);
-                }
-
-                // Try to parse JSON; fall back to text
-                let data = null;
-                try {
-                    data = await response.json();
-                    setTranslations(data);
-                    checkIfOriginalPost(data);
-                } catch {
-                    const text = await response.text();
-                    console.warn('Non-JSON response:', text);
-                    setTranslations([]);
-                }
+                const data = await apiFetch({ path: `/bcc-login/v1/wpml-translations/${postId}` });
+                setTranslations(data);
+                checkIfOriginalPost(data);
             } catch (error) {
                 console.error('Error getting WPML translations:', error);
             }
         };
 
         fetchTranslations();
-    }, [visible, nonce, postId]);
+    }, [visible, postId]);
 
     const checkIfOriginalPost = (translations) => {
         const isOriginal = translations.every(t => !t.is_original);
