@@ -1,9 +1,16 @@
-# Keeps the GitHub Actions in .github/workflows up to date, both those used by tag
-# (e.g. actions/checkout@v6) and those pinned to a commit with a version comment
-# (e.g. ncipollo/release-action@<sha> # v1.21.0).
+# Keeps the GitHub Actions in .github/workflows and the npm packages of the yarn workspace
+# up to date. New versions wait 7 days first.
 #
-# A change to a plugin's release workflow releases that plugin, so all updates come in one
-# pull request a month: one merge, one round of releases. New versions wait 7 days first.
+# GitHub Actions: both those used by tag (e.g. actions/checkout@v6) and those pinned to a
+# commit with a version comment (e.g. ncipollo/release-action@<sha> # v1.21.0). A change to a
+# plugin's release workflow releases that plugin, so all updates come in one pull request a
+# month: one merge, one round of releases.
+#
+# npm: the root package.json, the plugins' package.json files and yarn.lock. Minor and patch
+# updates come together in one pull request a month. Each major update comes in a pull request
+# of its own, since it may need changes elsewhere. A change to a plugin's package.json releases
+# that plugin. A change to only the root package.json and yarn.lock releases nothing, but pull
+# requests that change them still build bcc-login (see bcc-login-plugin-release.yml).
 version: 2
 updates:
   - package-ecosystem: "github-actions"
@@ -18,3 +25,19 @@ updates:
           - "*"
     commit-message:
       prefix: "ci"
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    cooldown:
+      default-days: 7
+    # Raise the version range in package.json too, so it shows what is actually installed.
+    versioning-strategy: "increase"
+    groups:
+      npm-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+    commit-message:
+      prefix: "build"
