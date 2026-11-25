@@ -4,10 +4,11 @@ import { Column } from 'primereact/column';
 import { __ } from '@wordpress/i18n';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
+// WordPress sets apiFetch up with the site's REST URL (any permalink setting or install folder) and the REST nonce.
+import apiFetch from '@wordpress/api-fetch';
 
 const SentNotificationsList = ({ sentNotifications, postId }) => {
     const [notifications, setNotifications] = useState(sentNotifications);
-    const [nonce, setNonce] = useState(null);
     const toast = useRef(null);
 
     useEffect(() => {
@@ -19,31 +20,16 @@ const SentNotificationsList = ({ sentNotifications, postId }) => {
         return () => window.removeEventListener('bcc:notificationsUpdated', handler);
     }, []);
 
-    useEffect(() => {
-        const wpNonce = window?.wpApiSettings?.nonce || window?.bccLoginNonce;
-        setNonce(wpNonce || null);
-    }, []);
-
     async function refreshStatistics(notificationId) {
         try {
             showToast('info');
 
-            const response = await fetch('/wp-json/bcc-login/v1/refresh-notification-statistics', {
+            const newNotifications = await apiFetch({
+                path: '/bcc-login/v1/refresh-notification-statistics',
                 method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-WP-Nonce': nonce
-                },
-                body: JSON.stringify({ postId: postId || 0, notificationId })
+                data: { postId: postId || 0, notificationId },
             });
 
-            if (!response.ok) {
-                const text = await response.text();
-                throw new Error(`Request failed (${response.status}): ${text}`);
-            }
-
-            const newNotifications = await response.json()
             setNotifications(newNotifications)
             showToast('success');
         } catch (error) {
