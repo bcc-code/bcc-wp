@@ -10,17 +10,7 @@
   },
   "devDependencies": {
     "@types/react": "^16.8.24",
-    "@types/wordpress__block-editor": "^2.2.9",
-    "@types/wordpress__components": "^9.8.6",
-    "@types/wordpress__compose": "^3.4.3",
-    "@types/wordpress__data": "^4.6.9",
-    "@types/wordpress__edit-post": "^3.5.4",
-    "@types/wordpress__element": "^2.14.1",
-    "@types/wordpress__hooks": "^2.4.1",
-    "@types/wordpress__i18n": "^3.11.0",
-    "@types/wordpress__plugins": "^2.3.7",
     "@wordpress/scripts": "^37.0.0",
-    "rimraf": "^3.0.2",
     "yarn": "^1.22.19"
   },
   "engines": {
@@ -28,5 +18,8 @@
   },
   "dependencies": {
     "primereact": "^10.8.5"
+  },
+  "resolutions": {
+    "serialize-javascript": "^7.1.3"
   }
 }
