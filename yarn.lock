@@ -8868,18 +8868,10 @@ primeicons@^8.0.2:
   resolved "https://registry.yarnpkg.com/primeicons/-/primeicons-8.0.2.tgz#2bdcc8a9679791e7dd20b65c2c32121cd1aa5b38"
   integrity sha512-o3UQey3nXMEQRAudVYZZWswz6mmnWpPnksYb7wIu4rEEVfdS3pLnxnmSJx5gKBRMer1MxnhJZG5QRDxVVJFNkA==
 
-primereact@^10.8.5:
-  version "10.8.5"
-  resolved "https://registry.yarnpkg.com/primereact/-/primereact-10.8.5.tgz#adc7dcb0ff10f269eee814d6f1e3409779870ea8"
-  integrity sha512-B1LeJdNGGAB8P1VRJE0TDYz6rZSDwxE7Ft8PLFjRYLO44+mIJNDsLYSB56LRJOoqUNRhQrRIe/5ctS5eyQAzwQ==
-  dependencies:
-    "@types/react-transition-group" "^4.4.1"
-    react-transition-group "^4.4.1"
-
-primereact@^10.9.7:
-  version "10.9.8"
-  resolved "https://registry.yarnpkg.com/primereact/-/primereact-10.9.8.tgz#45a4f45252454f287fdce59f190905ce08de0a40"
-  integrity sha512-kX0hOce2WpG24CzRJWlHrRPsvbCsOyBDqsHCC/p4W8okxHIdkOxxIkQBUVO0gRuh0Lxl5o7lmEEtUMzrlicf8g==
+primereact@^10.9.9:
+  version "10.9.9"
+  resolved "https://registry.yarnpkg.com/primereact/-/primereact-10.9.9.tgz#9f2f9dcd67aed7a441053b3adfafb088c186dddd"
+  integrity sha512-cM2mI1+usdIhQQQZre85Lv2GaiYrKaRlTUT+xXQSWwhPmel+YwhljNQ210mpjuY30aF3eQg6hU5Yl0VwJp0PWQ==
   dependencies:
     "@types/react-transition-group" "^4.4.1"
     react-transition-group "^4.4.1"
