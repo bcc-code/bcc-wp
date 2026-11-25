@@ -31,6 +31,10 @@ if (get_option('bcc_topbar') == 1) {
 
 function get_access_token_url(){
     $plugin_dir = constant( 'WP_PLUGIN_DIR' );
+    // get_home_path() is only loaded in wp-admin; these URLs are also needed on the front end.
+    if ( ! function_exists( 'get_home_path' ) ) {
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+    }
     $root_dir = get_home_path();
     $relative_plugin_dir = substr($plugin_dir, strlen($root_dir));
     return '/' . $relative_plugin_dir . '/bcc-signon/openid-connect-bcc-customizations/access-token.php';
@@ -38,6 +42,10 @@ function get_access_token_url(){
 
 function get_refesh_login_url(){
     $plugin_dir = constant( 'WP_PLUGIN_DIR' );
+    // get_home_path() is only loaded in wp-admin; these URLs are also needed on the front end.
+    if ( ! function_exists( 'get_home_path' ) ) {
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+    }
     $root_dir = get_home_path();
     $relative_plugin_dir = substr($plugin_dir, strlen($root_dir));
     return '/' . $relative_plugin_dir . '/bcc-signon/openid-connect-bcc-customizations/refresh-login.php';

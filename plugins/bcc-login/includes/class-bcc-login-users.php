@@ -12,6 +12,32 @@ class BCC_Login_Users {
         add_action( 'pre_user_query', array( $this, 'modify_user_query' ) );
         add_action( 'profile_update', array( $this, 'on_profile_update' ), 10, 2 );
         add_filter( 'map_meta_cap', array( $this, 'deny_editing_common_users' ), 10, 4 );
+        add_action( 'admin_menu', array( $this, 'remove_profile_menu_for_common_users' ) );
+        add_action( 'load-profile.php', array( $this, 'redirect_common_users_from_profile' ) );
+    }
+
+    /**
+     * Removes the Profile menu for common users, who can't edit their profile.
+     *
+     * @return void
+     */
+    function remove_profile_menu_for_common_users() {
+        if ( $this->is_common_user( wp_get_current_user() ) ) {
+            remove_menu_page( 'profile.php' );
+        }
+    }
+
+    /**
+     * Sends common users who open the profile screen to the front page, instead of WordPress's
+     * "Sorry, you are not allowed to edit this user." error.
+     *
+     * @return void
+     */
+    function redirect_common_users_from_profile() {
+        if ( $this->is_common_user( wp_get_current_user() ) ) {
+            wp_safe_redirect( home_url( '/' ) );
+            exit;
+        }
     }
 
     /**

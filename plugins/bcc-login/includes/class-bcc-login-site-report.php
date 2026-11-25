@@ -235,7 +235,7 @@ class BCC_Login_Site_Report {
         global $wpdb;
 
         // The users of this site and, of those, the ones "Delete subscribers" removes: those whose only role
-        // is subscriber. The plugin's common users are left out, as in the users list, since it recreates them.
+        // is subscriber. The plugin's common users are left out, as in the users list: "Delete subscribers" keeps them.
         $common_users = wp_list_pluck( BCC_Login_Users::get_logins(), 'login' );
         $counts = $wpdb->get_row( $wpdb->prepare(
             "SELECT COUNT(*) AS users, COALESCE(SUM(m.meta_value = %s), 0) AS subscribers

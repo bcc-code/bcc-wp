@@ -34,7 +34,7 @@ class BCC_Notifications
                         return new WP_REST_Response(array('error' => 'This post type is not allowed to sent notifications'), 400);
                     }
 
-                    if (!$this->can_send_notifications_for($post_id)) {
+                    if (!self::can_send_notifications_for($post_id)) {
                         return new WP_REST_Response(array('error' => 'You are not allowed to send notifications for this post'), 403);
                     }
 
@@ -95,9 +95,10 @@ class BCC_Notifications
     /**
      * Whether the current user may send notifications for a post. Only editors (and administrators)
      * send notifications: they must be able to edit the post, and to edit others' posts and publish
-     * posts of its type. Authors can't, not even for their own posts.
+     * posts of its type. Authors can't, not even for their own posts. The editor hides the
+     * "Send notifications" button from users who can't.
      */
-    private function can_send_notifications_for(int $post_id): bool {
+    public static function can_send_notifications_for(int $post_id): bool {
         $post_type = get_post_type_object(get_post_type($post_id));
 
         return $post_type

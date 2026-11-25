@@ -151,18 +151,31 @@ class BCC_WP_Proxy_Plugin {
 
 
     /**
+     * Returns the value of a request header, or null when it wasn't sent. Header names are matched
+     * whatever their case (HTTP/2 sends them in lower case). Reads $_SERVER, so it also works where
+     * apache_request_headers() doesn't exist, such as WP-CLI.
+     *
+     * The value is as $_SERVER holds it: raw until WordPress adds slashes to $_SERVER (wp_magic_quotes(),
+     * after plugins_loaded), slashed after that.
+     */
+    private function get_request_header( $name ) {
+        $key = 'HTTP_' . strtoupper( str_replace( '-', '_', $name ) );
+        return isset( $_SERVER[ $key ] ) ? $_SERVER[ $key ] : null;
+    }
+
+    /**
      * Checks if auth key has been provided in authorization header and returns the userID set by the proxy (if specified)
      */
     function authorize_proxy_request() {
-        $header = apache_request_headers();
-        if ( isset( $header['X-Wp-Proxy-Key'] )) {
-            if ( $this->is_valid_proxy_key( $header['X-Wp-Proxy-Key'] ) ) {
+        $proxy_key = $this->get_request_header( 'X-Wp-Proxy-Key' );
+        if ( isset( $proxy_key )) {
+            if ( $this->is_valid_proxy_key( $proxy_key ) ) {
 
                 /* Don't redirect to cannonical address if request is coming from proxy */
                 remove_filter('template_redirect','redirect_canonical');
 
-                if ( isset( $header['X-Wp-Proxy-User-Id'] )) {
-                    $userId = $header['X-Wp-Proxy-User-Id'];
+                $userId = $this->get_request_header( 'X-Wp-Proxy-User-Id' );
+                if ( isset( $userId )) {
                     if ($userId != '' && $userId != '0'){
                         return (int)$userId;
                     }
@@ -181,9 +194,11 @@ class BCC_WP_Proxy_Plugin {
      * Checks if API key has been provided in authorization header and returns 403 response if not found
      */
     function authorize_api_request() {
-        $header = apache_request_headers();
-         if ( isset( $header['X-Wp-Proxy-Key'] )) {
-            if ( $this->is_valid_proxy_key( $header['X-Wp-Proxy-Key'] ) ) {
+        // REST callbacks run after WordPress has added slashes to $_SERVER, so a key with a quote or
+        // backslash must be unslashed to match.
+        $proxy_key = wp_unslash( $this->get_request_header( 'X-Wp-Proxy-Key' ) );
+         if ( isset( $proxy_key )) {
+            if ( $this->is_valid_proxy_key( $proxy_key ) ) {
                 return true;
             }
          }
