@@ -34,6 +34,13 @@ updates:
       default-days: 7
     # Raise the version range in package.json too, so it shows what is actually installed.
     versioning-strategy: "increase"
+    ignore:
+      # primereact 11 needs React 19. bcc-login renders primereact inside the block editor,
+      # with the React that WordPress ships, and that is still 18.3 (up to 7.0 and trunk).
+      # Remove this once WordPress ships React 19. Minor and patch updates of 10.x still come.
+      - dependency-name: "primereact"
+        update-types:
+          - "version-update:semver-major"
     groups:
       npm-minor-and-patch:
         update-types:
