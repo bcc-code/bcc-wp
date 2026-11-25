@@ -177,6 +177,7 @@ registerPlugin("bcc-notifications", {
         isDirty: isEditedPostDirty(),
         isAutoSaving: isAutosavingPost(),
         postTypeSupportsNotifications: notificationPostTypes.includes(postType),
+        canSendNotifications: window.bccLoginCanSendNotifications === true,
         sentNotifications: sentNotifications
       };
     }),
@@ -184,7 +185,8 @@ registerPlugin("bcc-notifications", {
   ])((props) => (
     props.postTypeSupportsNotifications ? (
       <PluginPostStatusInfo className="bcc-login-notifications-plugin-post-status-info">
-        <SendNotifications label={__("Send notifications", "bcc-login")} {...props} />
+        {/* Only editors and administrators may send notifications (authors can't): others only see the sent ones. */}
+        {props.canSendNotifications && <SendNotifications label={__("Send notifications", "bcc-login")} {...props} />}
         <SentNotificationsList {...props} />
       </PluginPostStatusInfo>
     ) : null

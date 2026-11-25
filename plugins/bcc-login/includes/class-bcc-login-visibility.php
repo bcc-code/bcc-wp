@@ -919,6 +919,14 @@ class BCC_Login_Visibility {
             'before'
         );
 
+        // Whether the current user may send notifications for the post being edited, to show the button only then.
+        $post = get_post();
+        wp_add_inline_script(
+            $script_handle,
+            'var bccLoginCanSendNotifications = ' . ( $post && BCC_Notifications::can_send_notifications_for( $post->ID ) ? 'true' : 'false' ),
+            'before'
+        );
+
         $current_user = wp_get_current_user();
         wp_add_inline_script(
             $script_handle,

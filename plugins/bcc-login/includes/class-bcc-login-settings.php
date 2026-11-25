@@ -701,6 +701,15 @@ class BCC_Login_Settings_Provider {
                 'a:1:{s:10:"subscriber";b:1;}'
             ) ) );
 
+            // The plugin's shared accounts are left alone: deleting the shared subscriber account would log out
+            // everyone signed in with it.
+            foreach ( BCC_Login_Users::get_logins() as $info ) {
+                $common_user = get_user_by( 'login', $info['login'] );
+                if ( $common_user ) {
+                    $subscriber_ids = array_values( array_diff( $subscriber_ids, array( $common_user->ID ) ) );
+                }
+            }
+
             // Of those, the ones who also belong to another site of the network. Null when a query failed.
             $member_ids = '' === $wpdb->last_error ? array() : null;
             if ( is_multisite() && null !== $member_ids ) {
