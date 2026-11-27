@@ -41,6 +41,10 @@ This enables BCC’s new top bar widget, that you already see on this website.
 
 If you enable this, you can delete the old top bar script tag (See the documentation of the old top bar)
 
+## Notification Email Branding
+
+Under *Notifications*, this sets the branding of the emails the site sends through BCC Notifications: the colours, and the logo, organisation name, address and contact email in the footer. Enter the config name of your organisation's branding, for example `bcc-forbundet`, and ask the Notifications team which one to use. A config of an organisation your site may not send for makes sending fail. If the field is empty, BCC Notifications picks the branding.
+
 ## Member Organization
  
 If you want to identify the users which log in to your website by church, e.g. for displaying specific
