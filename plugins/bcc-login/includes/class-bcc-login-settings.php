@@ -22,6 +22,7 @@ class BCC_Login_Settings {
     public $notification_templates = array();
     public $notification_post_types = array();
     public $notification_dry_run = 0;
+    public $notification_email_config_name = '';
     public $full_content_access_groups = array();
     public $coreapi_audience;
     public $coreapi_base_url;
@@ -156,6 +157,7 @@ class BCC_Login_Settings_Provider {
         }
 
         $settings->notification_dry_run = get_option('bcc_notification_dry_run', 0);
+        $settings->notification_email_config_name = trim( (string) get_option('bcc_notification_email_config_name', '') );
         
         $notification_post_types_option = get_option('bcc_notification_post_types');
         if ($notification_post_types_option) {
@@ -283,6 +285,7 @@ class BCC_Login_Settings_Provider {
         register_setting( $this->option_name, 'bcc_notification_languages' );
         register_setting( $this->option_name, 'bcc_notification_post_types' );
         register_setting( $this->option_name, 'bcc_notification_dry_run' );
+        register_setting( $this->option_name, 'bcc_notification_email_config_name', array( 'sanitize_callback' => 'sanitize_text_field' ) );
         register_setting( $this->option_name, 'bcc_full_content_access_groups' );
         register_setting( $this->option_name, 'show_protected_menu_items' );
         register_setting( $this->option_name, 'bcc_track_clicks' );
@@ -468,6 +471,20 @@ class BCC_Login_Settings_Provider {
                     'name' => 'bcc_notification_dry_run',
                     'value' => $this->_settings->notification_dry_run,
                     'label' => 'Don\'t actually send notifications, just simulate them.'
+                )
+            );
+
+            add_settings_field(
+                'bcc_notification_email_config_name',
+                'Notification Email Branding',
+                array( $this, 'render_text_field' ),
+                $this->options_page,
+                'notifications',
+                array(
+                    'name' => 'bcc_notification_email_config_name',
+                    'value' => $this->_settings->notification_email_config_name,
+                    'description' => 'Config name of the branding BCC Notifications uses for emails from this site: the colours, and the logo, organisation name, address and contact email in the footer. Ask the Notifications team which one to use; sending fails with a config of an organisation this site may not send for. Leave empty to let BCC Notifications choose.',
+                    'example' => 'bcc-forbundet'
                 )
             );
 

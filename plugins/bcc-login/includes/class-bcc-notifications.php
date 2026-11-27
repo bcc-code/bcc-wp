@@ -305,14 +305,19 @@ class BCC_Notifications
                             $email_title = $this->replace_notification_params($templates["email_title"] ?: "", $item["post"], $wp_lang, $excerpt);
                             $email_body = $this->replace_notification_params($templates["email_body"] ?: "", $item["post"], $wp_lang, $excerpt);
 
-                            $email_payload[] = apply_filters('bcc_notification_email_payload', array(
+                            $email_payload_item = array(
                                 "language" => $payload_lang,
                                 "language_code" => $item_language_code,
                                 "subject" => $email_subject,
                                 "banner" => $item["image_url"] !== false ? $item["image_url"] : null,
                                 "title" => $email_title,
                                 "content" => $email_body,
-                            ), $post_id);
+                            );
+                            // Email branding in BCC Notifications; without it the API picks one for this site's client.
+                            if (!empty($this->settings->notification_email_config_name)) {
+                                $email_payload_item["configName"] = $this->settings->notification_email_config_name;
+                            }
+                            $email_payload[] = apply_filters('bcc_notification_email_payload', $email_payload_item, $post_id);
                         }
                     }
 
